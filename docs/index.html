@@ -223,7 +223,7 @@
           <a href="#workflow">Workflow</a>
           <a href="#install">Install</a>
           <a href="#faq">FAQ</a>
-          <a href="https://github.com/RikepilB/read-video" target="_blank" rel="noreferrer">GitHub ↗</a>
+          <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
         </nav>
       </header>
     </div>
@@ -241,7 +241,7 @@
         <p class="lede">Voidscape turns a local file or URL into grounded frames and timestamped text—while keeping cost, cloud processing, and model downloads visible before work begins.</p>
         <div class="actions">
           <a class="button primary" href="#sequence">See the workflow <span class="arrow">↓</span></a>
-          <a class="button secondary" href="https://github.com/RikepilB/read-video" target="_blank" rel="noreferrer">Read the source <span class="arrow">↗</span></a>
+          <a class="button secondary" href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">Read the source <span class="arrow">↗</span></a>
         </div>
         <div class="status-row" aria-label="Product highlights">
           <div class="status"><strong>local-first</strong>audio stays yours by default</div>
@@ -322,7 +322,7 @@
               <li class="capability-item"><h4>Local video and recordings</h4><p>Analyze demos, meetings, tutorials, screen captures, and personal archives from a local file.</p></li>
               <li class="capability-item"><h4>Public video URLs</h4><p>Bring a supported video URL into the same inspect → preview → read path, including individual YouTube links.</p></li>
               <li class="capability-item"><h4>Audio, captions, and transcripts</h4><p>Extract audio artifacts, use available captions, or transcribe locally before cloud analysis is approved.</p></li>
-              <li class="capability-item"><h4>Saved Instagram research</h4><p>An optional, user-observed workflow turns confirmed public Reel URLs into a queue for analysis.</p></li>
+              <li class="capability-item"><h4>Instagram URL helper</h4><p>A repository-only helper validates and deduplicates confirmed public Reel URLs; it is not an installed Voidscape command.</p></li>
               <li class="capability-item"><h4>Evidence an agent can use</h4><p>Give an agent timestamped frames, transcripts, and manifests instead of asking it to guess what happened in a video.</p></li>
             </ul>
           </section>
@@ -383,7 +383,7 @@
         <div class="install-grid" aria-label="Install and local demo commands">
           <article class="install-step">
             <b>01 / Install once</b>
-            <h3>Install Voidscape and keep read-video working.</h3>
+            <h3>Install Voidscape for Codex and shared agents.</h3>
             <p>The installer adds the guided Voidscape skill plus the legacy compatibility entry point.</p>
             <code class="install-command"><span class="prompt">$</span> .\scripts\install-skill.ps1</code>
           </article>
@@ -407,7 +407,7 @@
           <b>What the agent reads</b>
           <span>Open <code>manifest.json</code>, <code>transcript.txt</code>, and <code>frames/</code>, then answer with <code>[MM:SS]</code> citations. It reads evidence instead of guessing what happened in a video.</span>
         </div>
-        <div class="actions"><a class="button primary" href="https://github.com/RikepilB/read-video" target="_blank" rel="noreferrer">Open read-video on GitHub <span class="arrow">↗</span></a></div>
+        <div class="actions"><a class="button primary" href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">Open Voidscape on GitHub <span class="arrow">↗</span></a></div>
       </div>
     </section>
 
@@ -421,7 +421,8 @@
           <details><summary>Does Voidscape upload my media?</summary><p>Not by default. Local files, sidecar transcripts, and local transcription stay on your machine. Any cloud transcription route needs a current <code>--allow-cloud</code> approval; a first local model download needs its own <code>--allow-model-download</code>.</p></details>
           <details><summary>What files does “read” create?</summary><p>A work folder containing selected frames, a transcript when requested, and a manifest that maps frames to timestamps. An agent can turn those artifacts into a Markdown note; the CLI does not pretend to write a semantic note itself.</p></details>
           <details><summary>When should I inspect, preview, or read?</summary><p>Inspect is free source discovery. Preview is the cost and privacy decision. Read only follows once the path is acceptable and prepares the evidence an agent needs.</p></details>
-          <details><summary>Can I use it for saved Instagram research or voice notes?</summary><p>Yes. The repository includes an Instagram capture-to-analysis workflow and an audio-note workflow. Instagram capture is Codex-specific and user-observed; both preserve the same consent-first reading core.</p></details>
+          <details><summary>Can I use it for Instagram research or voice notes?</summary><p>Audio-only reads use the installed CLI. Instagram support is a repository-only URL helper and user-observed development workflow, not an installed command.</p></details>
+          <details><summary>What if the media needs my login?</summary><p>Public URLs are the baseline. For media you are permitted to access, the CLI can optionally use a local cookie export while a browser-connected agent works from tabs only after your site approval. Voidscape never extracts your browser credentials, and first-party account connections are future work.</p></details>
           <details><summary>What about Substack, RSS, scheduling, or a browser extension?</summary><p>Those are planned directions. They are not part of this installed release, and text articles are not sent through the video engine.</p></details>
         </div>
       </div>
@@ -430,8 +431,8 @@
 
   <footer>
     <div class="shell footer-inner">
-      <span>Voidscape is powered by the open-source <a href="https://github.com/RikepilB/read-video" target="_blank" rel="noreferrer">read-video</a> engine.</span>
-      <div class="footer-links"><a href="https://github.com/RikepilB/read-video/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/RikepilB/read-video/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a></div>
+      <span>Voidscape is an open-source, local-first media workflow.</span>
+      <div class="footer-links"><a href="https://github.com/RikepilB/void-scape/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/RikepilB/void-scape/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a></div>
     </div>
   </footer>
 </body>
