@@ -399,6 +399,8 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
                 "obtain explicit user consent, then rerun with --allow-model-download, or use "
                 "--transcribe-mode fast")
     end = end if end is not None else dur
+    if start < 0 or end <= start or (dur and end > dur):
+        raise ValueError(f"invalid time window: start={start:g}, end={end:g}, duration={dur:g}")
     window = max(0.1, end - start)
     n = frames if frames else adaptive_frames(window)
 
@@ -423,6 +425,8 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
             pins = pins[:n]
 
     wd = Path(workdir) if workdir else Path(tempfile.mkdtemp(prefix="readvideo_"))
+    if wd.exists() and any(wd.iterdir()):
+        raise ValueError(f"workdir must be empty to avoid mixing stale evidence: {wd}")
     wd.mkdir(parents=True, exist_ok=True)
 
     # Acquire the media file only when we actually need pixels or non-caption audio.
@@ -433,9 +437,16 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
         media = (_download(source_input, wd) if info["source"] == "url"
                  else str(Path(source_input).resolve()))
 
+    scoped_audio = start > 0 or end < dur
+    if (want_audio and scoped_audio and not info.get("sidecar_transcript")
+            and backend != "captions"):
+        media = _to_audio(media or source_input, wd, start=start, duration=window)
+
     result: dict[str, Any] = {"workdir": str(wd), "tier": tier,
                               "backend": backend if want_audio else "none",
-                              "frames": [], "frames_deduped": 0, "transcript": None}
+                              "frames": [], "frames_deduped": 0, "transcript": None,
+                              "window": {"start_s": start, "end_s": end,
+                                         "duration_s": window}}
     if want_frames:
         result["frames"], result["frames_deduped"] = _extract_frames(
             media, wd, n, start, window,
@@ -768,15 +779,20 @@ def _cues_to_text(raw: str) -> str:
     return "\n".join(out)
 
 
-def _to_audio(src: str, wd: Path) -> str:
+def _to_audio(src: str, wd: Path, start: float = 0.0,
+              duration: float | None = None) -> str:
     """Mono 16kHz 64kbps mp3 — ~0.5 MB/min, so ~50 min fits the providers' ~25 MB upload cap.
     (wav would be ~1.9 MB/min and blow the cap after ~13 min.)"""
     src = str(Path(src).resolve())
     out = str(wd / "audio.mp3")
     if Path(out).exists() and Path(out).stat().st_size > 0:
         return out                                    # reuse within a run (e.g. across a backend chain)
-    cp = run_cmd(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src,
-                  "-vn", "-acodec", "libmp3lame", "-ar", "16000", "-ac", "1", "-b:a", "64k", out])
+    window_args = (["-ss", str(start)] if start else [])
+    if duration is not None:
+        window_args += ["-t", str(duration)]
+    cp = run_cmd(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                  *window_args, "-i", src, "-vn", "-acodec", "libmp3lame",
+                  "-ar", "16000", "-ac", "1", "-b:a", "64k", out])
     if cp.returncode != 0:
         raise RuntimeError(f"audio extract failed: {cp.stderr.strip()[:200]}")
     return out

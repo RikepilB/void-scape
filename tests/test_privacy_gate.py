@@ -55,7 +55,7 @@ def test_cloud_chain_not_gated_when_sidecar_resolves_for_free(tmp_path, monkeypa
     monkeypatch.setattr(video, "_to_audio", lambda *args: calls.append("audio"))
     monkeypatch.setattr(video, "_api_transcribe", lambda *args: calls.append("upload"))
 
-    out = video.run("x.mp4", tier="audio", backend="groq", workdir=str(tmp_path))
+    out = video.run("x.mp4", tier="audio", backend="groq", workdir=str(tmp_path / "evidence"))
 
     assert calls == []
     assert out["transcript_chars"] > 0

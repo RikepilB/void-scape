@@ -60,7 +60,7 @@ def _load_workspace(path: Path) -> dict[str, Any]:
 def _defaults(workspace: dict[str, Any]) -> dict[str, Any]:
     return {
         "tier": workspace.get("default_tier", "both"),
-        "backend": workspace.get("default_backend", "captions"),
+        "backend": workspace.get("default_backend"),
         "agent_model": workspace.get("agent_model"),
         "whisper_model": workspace.get("whisper_model", "small"),
         "threshold": workspace.get("transcription_thorough_threshold_s", 45),
@@ -122,10 +122,12 @@ def inspect_source(args: argparse.Namespace) -> int:
 
 def _estimate_from_args(args: argparse.Namespace, workspace: dict[str, Any]) -> dict[str, Any]:
     defaults = _defaults(workspace)
+    backend = (getattr(args, "backend", None) or defaults["backend"]
+               or ("captions" if video.is_url(args.input) else "faster-whisper"))
     return video.estimate(
         args.input,
         getattr(args, "frames", None),
-        getattr(args, "backend", None) or defaults["backend"],
+        backend,
         getattr(args, "out_words", 600),
         getattr(args, "tier", None) or defaults["tier"],
         transcribe_mode=getattr(args, "transcribe_mode", "auto"),
@@ -220,7 +222,7 @@ def customize(args: argparse.Namespace) -> int:
         print("Voidscape customize — local folders and defaults only. API keys are never stored here.")
         args.inbox = _ask("Inbox folder", str(base.get("inbox_dir", _default_inbox())))
         args.library = _ask("Library folder", str(base.get("out_dir", _default_library())))
-        args.backend = _ask("Default backend", str(base.get("default_backend", "captions")))
+        args.backend = _ask("Default backend", str(base.get("default_backend", "faster-whisper")))
         args.whisper_model = _ask("Local Whisper model", str(base.get("whisper_model", "small")))
         args.thorough_threshold = float(_ask("Thorough-audio threshold in seconds", str(base.get("transcription_thorough_threshold_s", 45))))
     data = {
@@ -228,7 +230,7 @@ def customize(args: argparse.Namespace) -> int:
         "inbox_dir": args.inbox or base.get("inbox_dir") or str(_default_inbox()),
         "out_dir": args.library or base.get("out_dir") or str(_default_library()),
         "default_tier": base.get("default_tier", "both"),
-        "default_backend": args.backend or base.get("default_backend", "captions"),
+        "default_backend": args.backend or base.get("default_backend", "faster-whisper"),
         "whisper_model": args.whisper_model or base.get("whisper_model", "small"),
         "transcription_thorough_threshold_s": args.thorough_threshold if args.thorough_threshold is not None else base.get("transcription_thorough_threshold_s", 45),
     }
