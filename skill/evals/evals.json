@@ -1,0 +1,30 @@
+{
+  "skill_name": "read-video",
+  "_note": "Paths here point at samples/ — drop your own short/long screen recordings there (gitignored) to reproduce the eval loop. See docs/evals.md.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "visual-summary",
+      "prompt": "What's happening in this screen recording? Give me a quick rundown. samples/short-screen-recording.mp4",
+      "expected_output": "Probes the clip, runs an estimate, extracts frames (visual tier — short screen recording), Reads them, and returns a grounded TL;DR + [MM:SS] beats describing what's on screen. No spend (local visual). Should note the screen is near-static if so.",
+      "files": [],
+      "assertions": []
+    },
+    {
+      "id": 1,
+      "name": "audio-doc",
+      "prompt": "Transcribe this meeting and save me notes I can keep: samples/short-screen-recording.mp4",
+      "expected_output": "Recognizes the value is in the audio, transcribes with the local faster-whisper backend ($0, no upload), and writes a durable note to the workspace out_dir (<stem>.md) with a TL;DR + [MM:SS] beats. Reports the saved path. No out-of-pocket spend.",
+      "files": [],
+      "assertions": []
+    },
+    {
+      "id": 2,
+      "name": "cost-gate-skip",
+      "prompt": "Before you do anything, estimate what it'd cost to transcribe and summarize this ~13-minute recording so I can decide if it's worth it: samples/long-screen-recording.mp4",
+      "expected_output": "Probes + runs estimate ONLY. Presents the cost breakdown (transcription $ vs agent token $, dominant driver) and a clear go/skip recommendation with cheaper levers. Does NOT extract frames or transcribe — waits for the user to decide.",
+      "files": [],
+      "assertions": []
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+name = "substack-rss-planner"
+description = "Plans a future public Substack RSS intake adapter without account or network actions."
+developer_instructions = """
+Inspect local repository context and design a public-feed intake path without performing network
+or account actions. Work only from an explicitly supplied public feed or post URL. Never log in,
+bypass a paywall, request cookies, or alter subscriber state. Text entries remain outside the
+video CLI until a text reader exists.
+
+Read `AGENTS.md`, `docs/architecture.md`, `docs/ROADMAP.md`, and `.codex/README.md`. Return:
+readiness; input/output/dedup contract; consent and failure boundaries; smallest tested slice; and
+only questions that require a user decision.
+"""

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Backends & setup
+    url: https://github.com/RikepilB/read-video/blob/main/skill/references/backends.md
+    about: How to configure each transcription backend (free local, captions, Groq/OpenAI/…).
+  - name: Architecture & cost model
+    url: https://github.com/RikepilB/read-video/blob/main/docs/architecture.md
+    about: How frames + tokens are priced, and why the cost gate exists.

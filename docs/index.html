@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Voidscape turns personal media into timestamped evidence: local-first frames, transcripts, manifests, and visible cost and privacy gates.">
+  <title>Voidscape — personal media, made legible</title>
+  <style>
+    :root {
+      --ink: #030405;
+      --ink-raised: #0b0d12;
+      --night: #101528;
+      --line: rgba(236, 243, 255, .15);
+      --line-strong: rgba(236, 243, 255, .28);
+      --paper: #f3f6fb;
+      --mist: #c4ccdd;
+      --muted: #8f9ab0;
+      --blue: #75adff;
+      --blue-deep: #1c57dd;
+      --lilac: #8d91ff;
+      --shadow: 0 28px 90px rgba(0, 0, 0, .42);
+      --display: "Aptos Display", "Helvetica Neue", "Segoe UI", sans-serif;
+      --body: "Aptos", "Helvetica Neue", "Segoe UI", sans-serif;
+      --mono: "Cascadia Mono", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--ink); }
+    body {
+      margin: 0;
+      color: var(--paper);
+      background:
+        radial-gradient(ellipse 82% 38% at 50% 35%, rgba(46, 85, 190, .19), transparent 65%),
+        var(--ink);
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 1.5;
+      letter-spacing: -.015em;
+    }
+    a { color: inherit; text-decoration: none; }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+    .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .site-header {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      padding: 24px 0;
+      position: relative;
+      z-index: 5;
+    }
+    .wordmark { align-items: center; color: var(--paper); display: inline-flex; font: 680 19px/1 var(--display); gap: 9px; letter-spacing: -.055em; }
+    .wordmark span { background: linear-gradient(135deg, var(--blue), var(--lilac)); border-radius: 99px; box-shadow: 0 0 24px rgba(117, 173, 255, .55); display: block; height: 10px; width: 10px; }
+    .site-header nav { display: flex; gap: 24px; }
+    .site-header nav a { color: var(--mist); font-size: 13px; transition: color .2s ease; }
+    .site-header nav a:hover { color: var(--paper); }
+
+    .hero { min-height: 690px; overflow: hidden; padding: 104px 0 90px; position: relative; }
+    .halo, .halo::before, .halo::after { border-radius: 50%; filter: blur(1px); position: absolute; pointer-events: none; }
+    .halo { background: radial-gradient(circle at 42% 50%, rgba(173, 204, 255, .85), rgba(96, 133, 221, .48) 37%, rgba(33, 58, 142, .1) 68%, transparent 70%); height: 720px; left: 38%; opacity: .92; top: 82px; transform: translateX(-50%); width: 1030px; }
+    .halo::before { background: radial-gradient(ellipse, rgba(16, 46, 167, .74), transparent 68%); content: ""; height: 500px; left: -11%; top: 20%; transform: rotate(-24deg); width: 530px; }
+    .halo::after { background: radial-gradient(ellipse, rgba(189, 168, 255, .42), transparent 69%); content: ""; height: 380px; right: -4%; top: 27%; width: 540px; }
+    .grain { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E"); inset: 0; mix-blend-mode: soft-light; opacity: .11; pointer-events: none; position: absolute; }
+    .hero-copy { max-width: 810px; position: relative; z-index: 2; }
+    .hero h1 { font: 600 clamp(48px, 7.2vw, 100px)/.94 var(--display); letter-spacing: -.075em; margin: 0 0 28px; max-width: 780px; }
+    .hero h1 em { color: rgba(255, 255, 255, .5); font-style: normal; }
+    .hero .lede { color: rgba(243, 246, 251, .8); font-size: clamp(18px, 2.1vw, 23px); line-height: 1.35; margin: 0; max-width: 625px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+    .button { align-items: center; border-radius: 999px; display: inline-flex; font-size: 14px; font-weight: 650; gap: 11px; justify-content: center; min-height: 48px; padding: 0 20px; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+    .button:hover { transform: translateY(-2px); }
+    .button.primary { background: var(--paper); color: #080a0f; }
+    .button.primary:hover { background: #fff; }
+    .button.secondary { border: 1px solid rgba(255, 255, 255, .28); color: var(--paper); }
+    .button.secondary:hover { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .5); }
+    .button .arrow { font-size: 17px; line-height: 1; }
+    .status-row { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 78px; position: relative; z-index: 2; }
+    .status { border-left: 1px solid rgba(255, 255, 255, .36); color: var(--mist); font-size: 13px; padding-left: 12px; }
+    .status strong { color: var(--paper); display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .03em; margin-bottom: 2px; text-transform: uppercase; }
+    .signal-orbit { height: 530px; pointer-events: none; position: absolute; right: max(-80px, calc((100vw - 1180px) / 2 - 200px)); top: 73px; width: 520px; z-index: 1; }
+    .signal-orbit::before { border: 1px solid rgba(216, 230, 255, .2); border-radius: 50%; content: ""; height: 430px; left: 54px; position: absolute; top: 44px; transform: rotate(-17deg); width: 430px; animation: orbit-turn 28s linear infinite; }
+    .signal-orbit::after { border: 1px solid rgba(216, 230, 255, .11); border-radius: 50%; content: ""; height: 555px; left: -7px; position: absolute; top: -14px; transform: rotate(18deg); width: 555px; animation: orbit-turn 38s linear infinite reverse; }
+    .signal-card { backdrop-filter: blur(15px); background: linear-gradient(135deg, rgba(255, 255, 255, .32), rgba(208, 226, 255, .06)); border: 1px solid rgba(255, 255, 255, .38); border-radius: 20px; box-shadow: 0 22px 48px rgba(0, 0, 0, .2); color: rgba(10, 17, 35, .9); display: grid; height: 106px; padding: 16px; position: absolute; width: 178px; }
+    .signal-card b { font: 650 11px/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+    .signal-card span { align-self: end; font: 600 23px/.95 var(--display); letter-spacing: -.06em; }
+    .signal-card.one { left: 66px; top: 72px; transform: rotate(-13deg); animation: card-drift-one 8s ease-in-out infinite; }
+    .signal-card.two { right: 23px; top: 197px; transform: rotate(12deg); animation: card-drift-two 10s ease-in-out infinite; }
+    .signal-card.three { bottom: 50px; left: 163px; transform: rotate(-3deg); width: 145px; animation: card-drift-three 9s ease-in-out infinite; }
+    .signal-dot { background: #2059db; border-radius: 99px; box-shadow: 0 0 17px rgba(89, 145, 255, .85); height: 9px; justify-self: end; width: 9px; }
+    .soft-divider { height: 92px; overflow: hidden; position: relative; }
+    .soft-divider::before { background: linear-gradient(90deg, transparent, rgba(201, 222, 255, .16) 22%, rgba(117, 173, 255, .64) 50%, rgba(201, 222, 255, .16) 78%, transparent); content: ""; height: 1px; left: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); width: min(72vw, 900px); }
+    .soft-divider::after { background: radial-gradient(ellipse at center, rgba(73, 112, 221, .17), transparent 62%); content: ""; inset: 0; position: absolute; }
+    @keyframes orbit-turn { to { transform: rotate(343deg); } }
+    @keyframes card-drift-one { 0%, 100% { translate: 0 0; } 50% { translate: 15px -13px; } }
+    @keyframes card-drift-two { 0%, 100% { translate: 0 0; } 50% { translate: -14px 14px; } }
+    @keyframes card-drift-three { 0%, 100% { translate: 0 0; } 50% { translate: 5px -17px; } }
+
+    section { padding: 112px 0; position: relative; }
+    .section-head { align-items: end; display: flex; gap: 30px; justify-content: space-between; margin-bottom: 48px; }
+    .section-head h2 { font: 580 clamp(34px, 4vw, 58px)/1 var(--display); letter-spacing: -.062em; margin: 0; max-width: 680px; }
+    .section-head p { color: var(--muted); font-size: 15px; margin: 0; max-width: 300px; }
+
+    .commands { border-top: 1px solid var(--line-strong); }
+    .command { border-bottom: 1px solid var(--line); display: grid; gap: 16px 24px; grid-template-columns: 78px 1.1fr 1.6fr; padding: 27px 0; transition: background .2s ease, padding .2s ease; }
+    .command:hover { background: rgba(177, 203, 255, .06); padding-left: 13px; padding-right: 13px; }
+    .number { color: var(--blue); font: 600 12px/1.4 var(--mono); padding-top: 5px; }
+    .command h3 { font: 600 23px/1 var(--display); letter-spacing: -.045em; margin: 0; }
+    .command p { color: var(--mist); font-size: 15px; margin: 0; max-width: 470px; }
+    .command code { background: rgba(112, 157, 255, .08); border: 1px solid rgba(142, 179, 255, .18); border-radius: 8px; color: #a9caff; font: 11px/1.4 var(--mono); grid-column: 2 / -1; overflow-x: auto; padding: 11px 13px; white-space: nowrap; }
+
+    .gate-zone { background: linear-gradient(155deg, rgba(39, 62, 138, .37), rgba(13, 17, 31, .56) 57%, rgba(5, 7, 10, .9)); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); overflow: hidden; }
+    .gate-grid { display: grid; gap: 24px; grid-template-columns: 1.08fr .92fr; position: relative; }
+    .gate-copy h2 { font: 570 clamp(38px, 5vw, 68px)/.98 var(--display); letter-spacing: -.07em; margin: 0 0 22px; max-width: 610px; }
+    .gate-copy p { color: var(--mist); font-size: 17px; max-width: 500px; }
+    .proof { align-self: center; background: rgba(11, 15, 26, .63); border: 1px solid rgba(210, 225, 255, .22); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; padding: 10px; }
+    .proof-head { align-items: center; color: var(--muted); display: flex; font: 10px var(--mono); justify-content: space-between; letter-spacing: .06em; padding: 10px 10px 17px; text-transform: uppercase; }
+    .proof-screen { background: linear-gradient(145deg, #06101e, #111c38); border-radius: 13px; padding: 20px; }
+    .proof-screen img { border: 1px solid rgba(255, 255, 255, .13); border-radius: 9px; display: block; height: auto; width: 100%; }
+    .proof-stat { display: grid; gap: 3px; grid-template-columns: 1fr auto; margin-top: 17px; }
+    .proof-stat b { font: 650 13px var(--mono); }
+    .proof-stat span { color: var(--blue); font: 600 11px var(--mono); }
+    .proof-stat small { color: var(--muted); grid-column: 1 / -1; }
+    .estimate-command { color: #a9caff; font: 11px/1.4 var(--mono); margin: 0 0 14px; }
+    .estimate-lines { border-top: 1px solid rgba(210, 225, 255, .16); }
+    .estimate-line { border-bottom: 1px solid rgba(210, 225, 255, .1); color: var(--mist); display: flex; font: 12px var(--mono); justify-content: space-between; padding: 11px 0; }
+    .estimate-line span:last-child { color: var(--blue); text-align: right; }
+    .estimate-line.total { color: var(--paper); font-weight: 700; }
+    .estimate-line.total span:last-child { color: #b5bcff; }
+
+    .use-cases { background: #f0f4fb; color: #10131b; }
+    .use-cases .section-head h2 { color: #10131b; }
+    .use-cases .section-head p { color: #566174; }
+    .capability-board { background: #cbd3e0; border: 1px solid #cbd3e0; display: grid; gap: 1px; grid-template-columns: repeat(3, 1fr); overflow: hidden; }
+    .capability-column { background: #f8faff; min-height: 560px; padding: 28px 26px; }
+    .capability-column.next { background: #edf2fb; }
+    .capability-column.horizon { background: #e5eafa; }
+    .capability-index, .capability-status { color: #285ac9; font: 700 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .capability-status { color: #69748a; }
+    .capability-heading { color: #10131b; font: 570 clamp(25px, 2vw, 34px)/1.04 var(--display); letter-spacing: -.05em; margin: 13px 0 9px; }
+    .capability-intro { color: #566174; font-size: 14px; line-height: 1.5; margin: 0 0 28px; }
+    .capability-list { list-style: none; margin: 0; padding: 0; }
+    .capability-item { border-top: 1px solid #cbd3e0; padding: 18px 0 19px; }
+    .capability-item h4 { color: #10131b; font: 600 16px/1.15 var(--display); letter-spacing: -.025em; margin: 0 0 7px; }
+    .capability-item p { color: #566174; font-size: 13px; line-height: 1.5; margin: 0; }
+
+    .field-notes { padding-top: 0; }
+    .field-notes .section-head { margin-bottom: 36px; }
+    .case-files { display: grid; gap: 1px; grid-template-columns: repeat(2, 1fr); background: var(--line-strong); border: 1px solid var(--line-strong); }
+    .case-file { background: #0b0e15; min-height: 275px; padding: 30px; position: relative; }
+    .case-file::before { background: linear-gradient(110deg, rgba(102, 151, 255, .55), transparent 55%); content: ""; height: 1px; inset: 0 0 auto; position: absolute; }
+    .case-file h3 { font: 560 clamp(25px, 3vw, 37px)/1.03 var(--display); letter-spacing: -.055em; margin: 0 0 18px; max-width: 16ch; }
+    .case-file p { color: var(--mist); font-size: 15px; margin: 0; max-width: 42ch; }
+    .case-file footer { border: 0; color: var(--blue); font: 11px var(--mono); letter-spacing: .08em; margin-top: 42px; padding: 0; text-transform: uppercase; }
+
+    .start { padding-bottom: 130px; }
+    .start-panel { background: linear-gradient(120deg, #132f77, #4a62c8 47%, #7c7be7); border: 1px solid rgba(255, 255, 255, .32); border-radius: 24px; box-shadow: var(--shadow); overflow: hidden; padding: clamp(30px, 5vw, 64px); position: relative; }
+    .start-panel::after { background: radial-gradient(circle, rgba(255, 255, 255, .5), transparent 68%); content: ""; filter: blur(4px); height: 410px; opacity: .63; position: absolute; right: -150px; top: -170px; width: 580px; }
+    .start-panel > * { position: relative; z-index: 1; }
+    .start-panel h2 { font: 580 clamp(38px, 5vw, 68px)/.98 var(--display); letter-spacing: -.07em; margin: 0 0 14px; max-width: 690px; }
+    .start-intro { color: rgba(243, 246, 251, .8); font-size: 16px; margin: 0 0 34px; max-width: 660px; }
+    .install-grid { display: grid; gap: 13px; grid-template-columns: repeat(3, 1fr); max-width: 1000px; }
+    .install-step { background: rgba(3, 5, 10, .58); border: 1px solid rgba(255, 255, 255, .23); border-radius: 14px; display: flex; flex-direction: column; min-height: 230px; padding: 21px; }
+    .install-step:nth-child(2) { transform: translateY(18px); }
+    .install-step:nth-child(3) { background: rgba(3, 11, 31, .7); border-color: rgba(202, 221, 255, .45); transform: translateY(36px); }
+    .install-step b { color: #bcd3ff; font: 700 10px/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .install-step h3 { font: 600 23px/1.08 var(--display); letter-spacing: -.045em; margin: 30px 0 10px; }
+    .install-step p { color: rgba(225, 234, 255, .72); font-size: 13px; margin: 0; }
+    .install-command { background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .14); border-radius: 9px; color: #dbe5ff; display: block; font: 11px/1.7 var(--mono); margin-top: auto; overflow-wrap: anywhere; padding: 12px; white-space: pre-wrap; }
+    .install-command .prompt { color: #8bb7ff; }
+    .install-proof { border-top: 1px solid rgba(225, 236, 255, .36); color: rgba(243, 246, 251, .84); display: grid; font-size: 13px; gap: 16px; grid-template-columns: 150px 1fr; margin-top: 66px; max-width: 1000px; padding-top: 20px; }
+    .install-proof b { color: #dbe5ff; font: 700 10px/1.45 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+
+    .faq { background: linear-gradient(160deg, #07101f, #050609 68%); border-top: 1px solid var(--line); }
+    .faq-list { border-top: 1px solid var(--line-strong); max-width: 920px; }
+    .faq-list details { border-bottom: 1px solid var(--line); padding: 0; }
+    .faq-list summary { color: var(--paper); cursor: pointer; font: 580 clamp(20px, 2.5vw, 29px)/1.15 var(--display); letter-spacing: -.04em; list-style: none; padding: 24px 38px 24px 0; position: relative; }
+    .faq-list summary::-webkit-details-marker { display: none; }
+    .faq-list summary::after { color: var(--blue); content: "+"; font: 300 27px/1 var(--display); position: absolute; right: 4px; top: 21px; transition: transform .2s ease; }
+    .faq-list details[open] summary::after { transform: rotate(45deg); }
+    .faq-list p { color: var(--mist); font-size: 15px; line-height: 1.6; margin: 0; max-width: 690px; padding: 0 0 25px; }
+
+    footer { border-top: 1px solid var(--line); padding: 26px 0 42px; }
+    .footer-inner { align-items: center; color: var(--muted); display: flex; font-size: 12px; justify-content: space-between; }
+    .footer-inner a:hover { color: var(--paper); }
+    .footer-links { display: flex; gap: 20px; }
+
+    @media (max-width: 800px) {
+      .shell { width: min(100% - 28px, 1180px); }
+      .site-header nav { gap: 14px; }
+      .site-header nav a:nth-child(2) { display: none; }
+      .hero h1 { font-size: 43px; letter-spacing: -.065em; overflow-wrap: anywhere; }
+      .hero .lede { font-size: 17px; }
+      .hero { min-height: 630px; padding-top: 64px; }
+      .halo { left: 50%; top: 170px; width: 900px; }
+      .signal-orbit { opacity: .55; right: -110px; top: 145px; transform: scale(.76); transform-origin: top right; }
+      .section-head { align-items: start; display: block; }
+      .section-head p { margin-top: 22px; }
+      .command { gap: 11px; grid-template-columns: 45px 1fr; }
+      .command p { grid-column: 2; }
+      .command code { grid-column: 2; margin-top: 7px; white-space: normal; }
+      .gate-grid, .capability-board, .install-grid { grid-template-columns: 1fr; }
+      .capability-column { min-height: 0; }
+      .case-files { grid-template-columns: 1fr; }
+      .install-step:nth-child(n) { transform: none; }
+      .install-proof { grid-template-columns: 1fr; margin-top: 20px; }
+      .footer-inner { align-items: start; flex-direction: column; gap: 14px; }
+    }
+    @media (max-width: 480px) {
+      .site-header nav { display: none; }
+      .signal-orbit { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="shell">
+      <header class="site-header">
+        <a class="wordmark" href="#top" aria-label="Voidscape home"><span></span>Voidscape</a>
+        <nav aria-label="Primary navigation">
+          <a href="#sequence">Sequence</a>
+          <a href="#screening">Screening</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#install">Install</a>
+          <a href="#faq">FAQ</a>
+          <a href="https://github.com/RikepilB/read-video" target="_blank" rel="noreferrer">GitHub ↗</a>
+        </nav>
+      </header>
+    </div>
+
+    <section class="hero" id="top">
+      <div class="halo" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="signal-orbit" aria-hidden="true">
+        <div class="signal-card one"><b>source</b><span>00:42</span></div>
+        <div class="signal-card two"><b>signal</b><span>2.4M</span></div>
+        <div class="signal-card three"><b>approved</b><i class="signal-dot"></i></div>
+      </div>
+      <div class="shell hero-copy">
+        <h1>Make the media you keep <em>legible.</em></h1>
+        <p class="lede">Voidscape turns a local file or URL into grounded frames and timestamped text—while keeping cost, cloud processing, and model downloads visible before work begins.</p>
+        <div class="actions">
+          <a class="button primary" href="#sequence">See the workflow <span class="arrow">↓</span></a>
+          <a class="button secondary" href="https://github.com/RikepilB/read-video" target="_blank" rel="noreferrer">Read the source <span class="arrow">↗</span></a>
+        </div>
+        <div class="status-row" aria-label="Product highlights">
+          <div class="status"><strong>local-first</strong>audio stays yours by default</div>
+          <div class="status"><strong>cost-aware</strong>preview before processing</div>
+          <div class="status"><strong>agent-native</strong>frames + citations, not guesswork</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="soft-divider" aria-hidden="true"></div>
+
+    <section class="shell" id="sequence">
+      <div class="section-head">
+        <div>
+          <h2>Three deliberate moves. One clear decision.</h2>
+        </div>
+        <p>Start with source facts, preview the boundary, then prepare artifacts an agent can inspect.</p>
+      </div>
+      <div class="commands" aria-label="Voidscape command sequence">
+        <article class="command">
+          <span class="number">01 /</span>
+          <h3>Inspect the source.</h3>
+          <p>Inspect duration, resolution, audio, captions, and local sidecars before deciding what the task actually needs.</p>
+          <code>python skill/scripts/voidscape.py inspect "clip.mp4"</code>
+        </article>
+        <article class="command">
+          <span class="number">02 /</span>
+          <h3>Preview the tradeoff.</h3>
+          <p>Separate transcription spend from vision-token cost, flag dependencies, and show whether approval is required.</p>
+          <code>python skill/scripts/voidscape.py preview "clip.mp4" --tier both --backend captions</code>
+        </article>
+        <article class="command">
+          <span class="number">03 /</span>
+          <h3>Read with consent.</h3>
+          <p>Extract only the frames and transcript you approved, then hand agents artifacts they can cite and inspect.</p>
+          <code>python skill/scripts/voidscape.py read "clip.mp4" --tier both --backend captions</code>
+        </article>
+      </div>
+    </section>
+
+    <section class="gate-zone" id="screening" aria-labelledby="gate-title">
+      <div class="shell gate-grid">
+        <div class="gate-copy">
+          <h2 id="gate-title">See the cost before you press play.</h2>
+          <p>Preview is a decision point, not a receipt. It exposes the frame plan, transcription path, cloud boundary, and model-download state before reading changes anything.</p>
+        </div>
+        <figure class="proof">
+          <figcaption class="proof-head"><span>Pre-flight report</span><span>voidscape preview</span></figcaption>
+          <div class="proof-screen">
+            <p class="estimate-command">$ voidscape.py preview "clip.mp4" --tier both</p>
+            <div class="estimate-lines" aria-label="Illustrative estimate fields">
+              <div class="estimate-line"><span>source scan</span><span>duration + captions</span></div>
+              <div class="estimate-line"><span>frame plan</span><span>count + vision tokens</span></div>
+              <div class="estimate-line"><span>transcription path</span><span>local / cloud / download</span></div>
+              <div class="estimate-line"><span>consent state</span><span>required if applicable</span></div>
+              <div class="estimate-line total"><span>decision</span><span>visible before read</span></div>
+            </div>
+            <div class="proof-stat"><b>Nothing is implied</b><span>GATED</span><small>An API key in the environment is not consent. A cloud path or first model download must be approved explicitly.</small></div>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="use-cases" id="workflow">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <h2>What can read now—and where the system can grow.</h2>
+          </div>
+          <p>Every direction is explicitly labeled: working today, designed next, or longer-term exploration.</p>
+        </div>
+        <div class="capability-board">
+          <section class="capability-column">
+            <span class="capability-index">01 / Available now</span>
+            <h3 class="capability-heading">Read the media you already have.</h3>
+            <p class="capability-intro">A local-first pipeline for evidence, pricing, and agent-ready outputs.</p>
+            <ul class="capability-list">
+              <li class="capability-item"><h4>Local video and recordings</h4><p>Analyze demos, meetings, tutorials, screen captures, and personal archives from a local file.</p></li>
+              <li class="capability-item"><h4>Public video URLs</h4><p>Bring a supported video URL into the same inspect → preview → read path, including individual YouTube links.</p></li>
+              <li class="capability-item"><h4>Audio, captions, and transcripts</h4><p>Extract audio artifacts, use available captions, or transcribe locally before cloud analysis is approved.</p></li>
+              <li class="capability-item"><h4>Saved Instagram research</h4><p>An optional, user-observed workflow turns confirmed public Reel URLs into a queue for analysis.</p></li>
+              <li class="capability-item"><h4>Evidence an agent can use</h4><p>Give an agent timestamped frames, transcripts, and manifests instead of asking it to guess what happened in a video.</p></li>
+            </ul>
+          </section>
+
+          <section class="capability-column next">
+            <span class="capability-status">02 / Designed next</span>
+            <h3 class="capability-heading">Add trusted ways in.</h3>
+            <p class="capability-intro">The next steps extend source capture without changing the consent-first reading core.</p>
+            <ul class="capability-list">
+              <li class="capability-item"><h4>Private YouTube queue capture</h4><p>Queue videos from a user-owned private playlist through the official Data API, then keep the normal analysis flow.</p></li>
+              <li class="capability-item"><h4>Image and carousel reading</h4><p>Apply the same inspect-before-send model to visual posts, slides, and image collections.</p></li>
+              <li class="capability-item"><h4>More audio source adapters</h4><p>Bring saved talks, podcasts, and voice material into a consistent local transcription workflow.</p></li>
+              <li class="capability-item"><h4>Reusable capture adapters</h4><p>Extract a shared interface only after the Instagram and YouTube paths prove the common behavior.</p></li>
+            </ul>
+          </section>
+
+          <section class="capability-column horizon">
+            <span class="capability-status">03 / Exploration, not promised</span>
+            <h3 class="capability-heading">A broader personal media system.</h3>
+            <p class="capability-intro">Directions worth testing after product, privacy, platform, and legal review.</p>
+            <ul class="capability-list">
+              <li class="capability-item"><h4>More saved-content sources</h4><p>Potential adapters for X bookmarks, TikTok favorites, LinkedIn saves, newsletters, and RSS collections.</p></li>
+              <li class="capability-item"><h4>Posts, articles, and threads</h4><p>Extend the evidence model beyond media to web reading, written research, and saved knowledge.</p></li>
+              <li class="capability-item"><h4>Agent tools and MCP packaging</h4><p>Make approved analysis artifacts easier for agent environments to discover and use.</p></li>
+              <li class="capability-item"><h4>Guided installation and hosted product</h4><p>Lower the setup barrier only after the local product, user controls, and operating model are ready.</p></li>
+              <li class="capability-item"><h4>Universal extension and multi-model reading</h4><p>Research directions—not current commitments—until their safety, cost, and platform constraints are validated.</p></li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="field-notes shell" aria-labelledby="field-notes-title">
+      <div class="section-head">
+        <div>
+          <h2 id="field-notes-title">Built from footage, not hypotheticals.</h2>
+        </div>
+        <p>Voidscape is useful when a recording contains information an agent cannot safely infer from a title, thumbnail, or prompt.</p>
+      </div>
+      <div class="case-files">
+        <article class="case-file">
+          <h3>Saved learning video to research note.</h3>
+          <p>Bring a confirmed public Reel or video URL into a local queue, inspect it through the normal gate, then keep a timestamped note instead of another forgotten save.</p>
+          <footer>Research workflow / available now</footer>
+        </article>
+        <article class="case-file">
+          <h3>Voice memo to project decision.</h3>
+          <p>Transcribe a recorded brainstorm locally, preserve the evidence, and let an agent compare ideas against the words that were actually said.</p>
+          <footer>Audio evidence / available now</footer>
+        </article>
+      </div>
+    </section>
+
+    <section class="start shell" id="install">
+      <div class="start-panel">
+        <h2>From clone to first proof.</h2>
+        <p class="start-intro">Install Voidscape, optionally set your local Library, then use a key-free fixture to inspect, preview, and read evidence. No paid or remote step is implied.</p>
+        <div class="install-grid" aria-label="Install and local demo commands">
+          <article class="install-step">
+            <b>01 / Install once</b>
+            <h3>Install Voidscape and keep read-video working.</h3>
+            <p>The installer adds the guided Voidscape skill plus the legacy compatibility entry point.</p>
+            <code class="install-command"><span class="prompt">$</span> .\scripts\install-skill.ps1</code>
+          </article>
+          <article class="install-step">
+            <b>02 / Customize locally</b>
+            <h3>Choose an Inbox and Library when you need them.</h3>
+            <p>Review local folders and transcription defaults first. Preferences save only with explicit confirmation.</p>
+            <code class="install-command"><span class="prompt">$</span> python skill/scripts/voidscape.py customize</code>
+          </article>
+          <article class="install-step">
+            <b>03 / Prove the flow</b>
+            <h3>Use original footage, then read the evidence.</h3>
+            <p>The fixture needs no account, key, or copyrighted media.</p>
+            <code class="install-command"><span class="prompt">$</span> python scripts/create-demo-fixture.py
+<span class="prompt">$</span> python skill/scripts/voidscape.py inspect samples/build-week-demo.mp4
+<span class="prompt">$</span> python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions
+<span class="prompt">$</span> python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output</code>
+          </article>
+        </div>
+        <div class="install-proof">
+          <b>What the agent reads</b>
+          <span>Open <code>manifest.json</code>, <code>transcript.txt</code>, and <code>frames/</code>, then answer with <code>[MM:SS]</code> citations. It reads evidence instead of guessing what happened in a video.</span>
+        </div>
+        <div class="actions"><a class="button primary" href="https://github.com/RikepilB/read-video" target="_blank" rel="noreferrer">Open read-video on GitHub <span class="arrow">↗</span></a></div>
+      </div>
+    </section>
+
+    <section class="faq" id="faq">
+      <div class="shell">
+        <div class="section-head">
+          <div><h2>Questions worth answering before you hand media to an agent.</h2></div>
+          <p>Voidscape makes the boundary visible: what stays local, what costs, and what exists today.</p>
+        </div>
+        <div class="faq-list">
+          <details><summary>Does Voidscape upload my media?</summary><p>Not by default. Local files, sidecar transcripts, and local transcription stay on your machine. Any cloud transcription route needs a current <code>--allow-cloud</code> approval; a first local model download needs its own <code>--allow-model-download</code>.</p></details>
+          <details><summary>What files does “read” create?</summary><p>A work folder containing selected frames, a transcript when requested, and a manifest that maps frames to timestamps. An agent can turn those artifacts into a Markdown note; the CLI does not pretend to write a semantic note itself.</p></details>
+          <details><summary>When should I inspect, preview, or read?</summary><p>Inspect is free source discovery. Preview is the cost and privacy decision. Read only follows once the path is acceptable and prepares the evidence an agent needs.</p></details>
+          <details><summary>Can I use it for saved Instagram research or voice notes?</summary><p>Yes. The repository includes an Instagram capture-to-analysis workflow and an audio-note workflow. Instagram capture is Codex-specific and user-observed; both preserve the same consent-first reading core.</p></details>
+          <details><summary>What about Substack, RSS, scheduling, or a browser extension?</summary><p>Those are planned directions. They are not part of this installed release, and text articles are not sent through the video engine.</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <span>Voidscape is powered by the open-source <a href="https://github.com/RikepilB/read-video" target="_blank" rel="noreferrer">read-video</a> engine.</span>
+      <div class="footer-links"><a href="https://github.com/RikepilB/read-video/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/RikepilB/read-video/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a></div>
+    </div>
+  </footer>
+</body>
+</html>

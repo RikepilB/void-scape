@@ -1,0 +1,46 @@
+# --- Personal machine config (absolute paths to YOUR vault) — never commit ---
+skill/workspace.json
+workspace.json
+
+# --- Local media + generated transcripts (private content) ---
+samples/*
+!samples/.gitkeep
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.m4a
+*.mp3
+*.srt
+*.vtt
+
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+cookies*.txt
+
+# --- Session/process scratch (never repo content) ---
+20[0-9][0-9]-[01][0-9]-[0-3][0-9]-*-this-session-is-*.txt
+task-*-brief.md
+task-*-report.md
+# root handoff.md is an internal per-session artifact written by the harness's compaction hook;
+# this project's own docs/handoff/ tree is the durable, intentionally-public record.
+/handoff.md
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

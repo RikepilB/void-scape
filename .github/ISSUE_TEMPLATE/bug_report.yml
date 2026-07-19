@@ -1,0 +1,62 @@
+name: Bug report
+description: Something in the skill or the engine misbehaves
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please don't paste API keys, full file paths you'd rather keep private, or
+        transcript content you don't want public.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what did you get instead?
+      placeholder: "estimate reported $0 but run still called a paid API…"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The exact command(s) and (if relevant) the kind of input (local file / URL, duration).
+      placeholder: |
+        1. python skill/scripts/video.py estimate "clip.mp4" --tier both --backend faster-whisper --human
+        2. ...
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output / error
+      description: The JSON or error the engine printed (redact anything sensitive).
+      render: shell
+  - type: dropdown
+    id: where
+    attributes:
+      label: Which part?
+      options:
+        - probe
+        - estimate (cost gate)
+        - run (frames)
+        - run (transcription backend)
+        - the skill prompt / Codex behavior
+        - workspace / config
+        - other
+    validations:
+      required: true
+  - type: input
+    id: backend
+    attributes:
+      label: Transcription backend (if relevant)
+      placeholder: faster-whisper / groq / captions / …
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      placeholder: |
+        OS: Windows 11 / macOS 14 / Ubuntu 24.04
+        Python: 3.12
+        ffmpeg: 7.x  ·  yt-dlp: yes/no  ·  faster-whisper: 1.x
+      render: text
