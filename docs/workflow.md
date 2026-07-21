@@ -39,16 +39,23 @@ commands into a safe, predictable behavior when Codex reads a video for you.
 
 ## The cost-gate rule (the differentiator)
 
-After `estimate`, Codex reads two flags:
+After `estimate`, Codex reads four independent decisions:
 
-- **`free: true` and `needs_install: false`** → no out-of-pocket spend, dependencies present → **proceed**
-  (still mention it if the *token* job is large, e.g. a long URL with 100 frames).
-- **`free: false`** (a provider gets billed) **or** **`needs_install: true`** → **stop.** Show the `--human`
-  estimate: the total, the dominant driver, the backend. Then ask the user to **run as-is / pick a cheaper
-  backend / skip.** Don't spend on an API, and don't install anything, until the user says yes.
+- **`requires_cloud_approval: true`** → **stop.** Audio could leave the machine. Add
+  `--allow-cloud` only after a current explicit yes for that previewed scope and backend chain.
+- **`needs_model_download: true`** → **stop separately.** Add `--allow-model-download` only after
+  the user approves that model acquisition.
+- **`needs_install: true`** → **stop.** Explain the missing local dependency before installing it.
+- **`free: false`** → **stop.** Show the `--human` estimate, including transcription dollars,
+  API-equivalent agent cost, dominant driver, and backend. Ask: run / cheaper backend / skip.
 
-The principle: **audio is never silently sent to a cloud API**, and money/installs are never spent without an
-explicit yes. This is the behavior that separates the skill from an agent improvising `ffmpeg` commands.
+Proceed only when none of those fields requires action, or when the matching action was approved
+for this invocation. Still mention unusually large agent-token estimates even when transcription is
+free.
+
+The principle: **audio is never silently sent to a cloud API**, and money, installs, or first model
+downloads never happen without the matching explicit yes. An API key or a previous approval is not
+consent for the current invocation.
 
 ## Output contract
 

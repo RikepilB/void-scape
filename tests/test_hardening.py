@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 import video
 
 
@@ -98,3 +100,25 @@ def test_ytdlp_meta_passes_cookie_args(monkeypatch, tmp_path):
     video.ytdlp_meta("https://www.instagram.com/reel/abc123/")
     assert "--cookies" in seen["args"]
     assert str(cookies) in seen["args"]
+
+
+def test_ytdlp_meta_reports_real_error_after_dependency_warning(monkeypatch):
+    def fake_run_cmd(_args):
+        class CP:
+            returncode = 1
+            stdout = ""
+            stderr = (
+                "requests/__init__.py: RequestsDependencyWarning: dependency mismatch\n"
+                "  warnings.warn(\n"
+                "ERROR: [Instagram] media needs authentication; use --cookies FILE"
+            )
+        return CP()
+
+    monkeypatch.setattr(video, "run_cmd", fake_run_cmd)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        video.ytdlp_meta("https://www.instagram.com/reel/example/")
+
+    message = str(exc_info.value)
+    assert "media needs authentication" in message
+    assert "RequestsDependencyWarning" not in message

@@ -1,7 +1,9 @@
 # Transcription backends
 
 Read this when a backend errors (missing key / not installed) or when the user asks which to use.
-The `run` cascade tries free sources first, then the backend you pass. Pass `--backend <name>` to force one.
+A matching local sidecar always wins. Otherwise `run` uses the backend you pass; it never silently
+crosses from a local route to a cloud service. Pass a comma-separated list such as
+`--backend "groq,openai"` only when you explicitly want an ordered fallback chain.
 
 | backend | `--backend` | $/min | cost | data leaves machine? | setup |
 |---|---|---|---|---|---|

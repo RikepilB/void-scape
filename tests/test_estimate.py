@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 import video
 
 
@@ -19,6 +21,7 @@ def fake_probe_info():
 
 def patched_estimate(monkeypatch, **kw):
     monkeypatch.setattr(video, "probe", lambda inp: fake_probe_info())
+    kw.setdefault("backend", "faster-whisper")
     return video.estimate("x.mp4", pr=video.DEFAULT_PRICING, **kw)
 
 
@@ -44,7 +47,8 @@ def test_custom_legacy_pixel_estimator_is_supported(monkeypatch):
                         "vision_estimator": "legacy_pixels_750"},
     }}
     monkeypatch.setattr(video, "probe", lambda inp: fake_probe_info())
-    o = video.estimate("x.mp4", pr=pricing, agent_model="legacy-test")
+    o = video.estimate("x.mp4", pr=pricing, agent_model="legacy-test",
+                       backend="faster-whisper")
     assert o["per_frame_tokens"] == 197
     assert o["vision_estimator"] == "legacy_pixels_750"
 
@@ -60,6 +64,12 @@ def test_estimate_notes_dedup_for_visual_tiers(monkeypatch):
     assert "dedup" in patched_estimate(monkeypatch)["note"]
     assert "dedup" in patched_estimate(monkeypatch, tier="visual")["note"]
     assert "note" not in patched_estimate(monkeypatch, tier="audio")
+
+
+def test_estimate_rejects_captions_only_when_source_has_none(monkeypatch):
+    with pytest.raises(RuntimeError, match="source has no captions"):
+        patched_estimate(monkeypatch, tier="audio", backend="captions")
+
 
 def test_estimate_ignores_cloud_chain_when_sidecar_resolves_for_free(monkeypatch):
     """A sidecar transcript short-circuits _transcribe() before the chain is ever consulted, so
@@ -95,7 +105,7 @@ def test_cli_omitted_agent_model_falls_through_to_pricing_json_active(monkeypatc
     monkeypatch.setattr(video, "probe", lambda inp: fake_probe_info())
     monkeypatch.setattr(video, "load_pricing", lambda: custom_pricing)
 
-    assert video.main(["estimate", "x.mp4"]) == 0
+    assert video.main(["estimate", "x.mp4", "--backend", "faster-whisper"]) == 0
 
     out = json.loads(capsys.readouterr().out)
     assert out["agent_model"] == "gpt-5.6-luna"

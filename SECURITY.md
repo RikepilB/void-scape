@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Open a [GitHub issue](https://github.com/RikepilB/read-video/issues) or, for anything sensitive,
+Open a [GitHub issue](https://github.com/RikepilB/void-scape/issues) or, for anything sensitive,
 email the address on the maintainer's GitHub profile. There's no bug bounty — this is a single-
 maintainer open-source project — but reports are read and acted on.
 
@@ -28,9 +28,9 @@ use, and undeclared permissions — all true, all necessary for a tool whose job
 - **Keys never touch disk via this tool.** They're read only from environment variables
   (`os.environ`) — never from `.env`, never logged, never written into any output file this skill
   produces.
-- **No SDK, no telemetry.** The cloud calls are hand-built `urllib` requests to the documented
-  provider endpoint and nothing else; there's no analytics/telemetry dependency in this codebase
-  to exfiltrate through.
+- **Minimal SDK surface, no telemetry.** OpenAI-compatible audio calls use hand-built `urllib`
+  requests. The optional Gemini backend lazily imports `google-genai` only when selected. The
+  project includes no analytics or telemetry dependency.
 
 If you want zero cloud capability, don't set any of the four API-key environment variables and
 don't pass `--allow-cloud` — the tool then only ever exercises `captions`/`sidecar`/local

@@ -62,39 +62,45 @@ hard cap = min(budget, 100, duration × 2)
 
 ### Per-frame token math
 
-Codex's vision cost is roughly `(width × height) / 750` tokens. Frames are downscaled to **512 px wide**
-(`scale=512:-2` in ffmpeg, preserving aspect, even height) *before* Codex reads them — which is the single
-biggest lever on cost:
+Frames are downscaled to **512 px wide** (`scale=512:-2` in ffmpeg, preserving aspect and an even
+height) before the agent reads them. The selected model entry in `pricing.json` chooses the vision
+estimator. GPT-5.6 uses the `openai_patch32` estimator:
 
 ```python
-height          = round(512 × src_h / src_w)        # assume 16:9 if resolution unknown
-per_frame_tokens = ceil(512 × height / 750)
+height           = round(512 × src_h / src_w)       # assume 16:9 if resolution unknown
+per_frame_tokens = ceil(512 / 32) × ceil(height / 32)
 frames_tokens    = n_frames × per_frame_tokens
 ```
+
+The engine retains `legacy_pixels_750` for older pricing presets, but it is not the active GPT-5.6
+calculation. `estimate` reports both `agent_model` and `vision_estimator` so the basis is visible at
+the gate.
 
 Transcript tokens are estimated at `duration_min × 200` (~150 wpm × ~1.33 tokens/word).
 
 All rates live in **`pricing.json`** (`transcription_per_min`, `model_per_mtok._active`, `frame.target_width`)
 so they can be re-tuned without touching code.
 
-## The backend cascade
+## Backend selection and explicit fallback chains
 
-Transcription backends are tried cheapest-and-most-private first. The skill prompt encodes this preference;
-the engine implements each path:
+The guided CLI defaults to captions for URLs and `faster-whisper` for local media. A sidecar beside
+local media always short-circuits transcription. Otherwise, the selected backend is used as-is;
+Voidscape does not silently move from a local path to a cloud provider. Comma-separated backends
+form an explicit fallback chain in the order the user supplies:
 
 ```
-sidecar .srt/.vtt   (free, already on disk)
-   └─► URL captions  (free, yt-dlp)
-        └─► faster-whisper / trx   (free, local CPU, audio never leaves the machine)
-             └─► Groq               (~$0.0007/min, cheapest API)
-                  └─► OpenAI-mini / OpenAI / OpenRouter
-                       └─► Gemini   (~$0.037/min)
+matching sidecar .srt/.vtt/.txt   (automatic, free, already on disk)
+selected backend                  (captions, local engine, or one cloud provider)
+explicit chain                    (--backend "groq,openai", tried left to right)
 ```
 
-The paid backends are all **OpenAI-compatible** `/audio/transcriptions` endpoints, hit with a hand-built
-multipart body over pure-stdlib `urllib` — **no SDK install**. Two robustness details matter:
+Groq, OpenAI, and OpenRouter use **OpenAI-compatible** `/audio/transcriptions` endpoints through a
+hand-built multipart body over pure-stdlib `urllib`. Gemini is the exception: selecting it lazily
+imports the optional `google-genai` SDK. No provider SDK is imported on local or captions paths.
+Two robustness details matter:
 
-- **mp3, not wav.** For the **API** path, audio is extracted as mono 16 kHz **64 kbps mp3** (~0.5 MB/min), so
+- **mp3, not wav.** For the **OpenAI-compatible API** path, audio is extracted as mono 16 kHz
+  **64 kbps mp3** (~0.5 MB/min), so
   ~50 minutes fits the providers' ~25 MB upload cap. (wav at ~1.9 MB/min blows the cap after ~13 min.) Local
   backends skip this encode and read the media directly (see Performance below).
 - **Groq's WAF.** Groq sits behind Cloudflare, which 403s the default `urllib` User-Agent — so requests send
@@ -160,8 +166,10 @@ estimate(input, tier, backend)
 
 run(input, tier, backend, [start,end,frames,workdir])
   ├─ acquire media (download URL, or use the local path) — only if pixels/non-caption audio are needed
-  ├─ frames:    ffmpeg fps=n/window, scale=512:-2        → workdir/frames/*.jpg (+ [MM:SS] in manifest)
-  ├─ transcript: backend cascade → mp3 → engine/API      → workdir/transcript.txt
+  ├─ frames:    parallel fast input seeks + scale=512:-2  → workdir/frames/*.jpg
+  │              (whole-stream fps filter is fallback only)
+  ├─ transcript: selected source window → sidecar or selected backend/chain → workdir/transcript.txt
+  │              (all cue/segment timestamps stay on the absolute source timeline)
   └─ manifest.json mapping every frame to its timestamp
 
 → Codex `Read`s the frames + transcript and writes the grounded answer.

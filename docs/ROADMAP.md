@@ -18,10 +18,13 @@ developers, by AI agents, and by non-technical people, not just by one person's 
 - **Local-first / privacy-first** — never send captured content to any cloud service without an
   explicit gate the user approves.
 - **Harness-neutral where feasible** — reuse Thread C's multi-harness packaging pattern
-  (`SKILL.md` + `scripts/install-skill.*`) so new pieces install the same way on Codex,
-  Codex, Gemini CLI, Copilot CLI.
+  (`SKILL.md` + `scripts/install-skill.*`) so new pieces install the same way on Codex and
+  compatible runtimes.
 - **Small, independently spec'd modules** — one platform or one media type per cycle, never a
   big-bang rewrite. This is the same discipline that kept Threads A/C/D/E reviewable.
+- **Compose with specialist tools** — accept durable sidecars and exported evidence instead of
+  rebuilding mature transcription, editing, translation, or live-dictation products. Voidscape's
+  responsibility is the governed, multimodal handoff to an agent.
 - **Legal/ToS risk is a first-class constraint** — each platform's automation gets its own
   terms-of-service and rate-limit review before it ships past "just for me," and especially
   before any hosted/SaaS use.
@@ -134,9 +137,11 @@ not a feature bolted onto this one.
 
 - **6.1** Product design pass: what "as a service" concretely means — connect-your-account and
   auto-process saved items, a paste-a-link one-off tool, or both.
-- **6.2** Auth, multi-tenancy, billing — none of this exists today; genuinely new infrastructure,
-  not a generalization of the CLI.
-- **6.3** LLM SDK integration layer (Vercel AI SDK + Anthropic/OpenAI/others) — replaces this
+- **6.2** Auth, multi-tenancy, billing — replace the current user-exported cookie bridge with
+  provider connections that show requested scopes, ask permission, store credentials safely, and
+  support revocation. None of this exists today; it is genuinely new infrastructure, not a
+  generalization of the CLI.
+- **6.3** LLM SDK integration layer (OpenAI SDK or a provider-neutral adapter) — replaces this
   project's own agent-token cost *estimate* with real per-user billing/usage metering.
 - **6.4** **Legal review — a hard gate before any public launch.** Automating captures from other
   people's accounts at SaaS scale is a materially different ToS/rate-limit/abuse-risk situation
@@ -195,7 +200,15 @@ for task management, skill creation, and agent specialization across the fleet.
   method is a browser extension instead of an API.
   - **Next step when picked up:** file as GitHub issues (one per platform-adapter idea + one for
     the multi-model orchestration layer) and/or a dedicated milestone, then run `grill-with-docs`
-    before any spec work — do not start coding from this paragraph alone.
+  before any spec work — do not start coding from this paragraph alone.
+
+## Parked idea — post-submission orchestration
+
+**Do not implement before the 2026-07-21 submission.** Revisit the three scoped options after the
+deadline: a full background-job system, a thin demo slice, or a zero-code operating workflow. Any
+implementation must separately design source-platform output routing, Windows Task Scheduler or
+equivalent scheduling, a headless Codex worker, failure recovery, and explicit privacy/approval
+gates. GitHub issue #6 owns this follow-up.
 
 ## Open questions (flagged, not decided here)
 

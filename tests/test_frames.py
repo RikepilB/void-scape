@@ -52,7 +52,7 @@ def test_audio_tier_includes_frames_deduped_key(static_clip, tmp_path, monkeypat
     """Verify that run() output always includes frames_deduped key, even on audio-only tier."""
     # Monkeypatch _transcribe to return a stub result without network access
     def mock_transcribe(inp, info, media, wd, backend, transcribe_mode="auto",
-                        allow_model_download=False):
+                        allow_model_download=False, window_start=None, window_end=None):
         # Create a dummy transcript file
         tpath = wd / "transcript.txt"
         tpath.write_text("dummy transcript", encoding="utf-8")
