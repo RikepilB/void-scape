@@ -176,6 +176,10 @@
     .faq-list summary::after { color: var(--blue); content: "+"; font: 300 27px/1 var(--display); position: absolute; right: 4px; top: 21px; transition: transform .2s ease; }
     .faq-list details[open] summary::after { transform: rotate(45deg); }
     .faq-list p { color: var(--mist); font-size: 15px; line-height: 1.6; margin: 0; max-width: 690px; padding: 0 0 25px; }
+    .faq-more { align-items: center; display: flex; gap: 16px; margin-top: 28px; }
+    .faq-more p { color: var(--muted); font-size: 13px; margin: 0; padding: 0; }
+    .faq-more a { color: var(--blue); font: 700 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .faq-more a:hover { color: var(--paper); }
 
     footer { border-top: 1px solid var(--line); padding: 26px 0 42px; }
     .footer-inner { align-items: center; color: var(--muted); display: flex; font-size: 12px; justify-content: space-between; }
@@ -185,7 +189,6 @@
     @media (max-width: 800px) {
       .shell { width: min(100% - 28px, 1180px); }
       .site-header nav { gap: 14px; }
-      .site-header nav a:nth-child(2) { display: none; }
       .hero h1 { font-size: 43px; letter-spacing: -.065em; overflow-wrap: anywhere; }
       .hero .lede { font-size: 17px; }
       .hero { min-height: 630px; padding-top: 64px; }
@@ -204,7 +207,8 @@
       .footer-inner { align-items: start; flex-direction: column; gap: 14px; }
     }
     @media (max-width: 480px) {
-      .site-header nav { display: none; }
+      .site-header { align-items: flex-start; flex-direction: column; gap: 18px; }
+      .site-header nav { flex-wrap: wrap; gap: 12px 16px; max-width: 100%; }
       .signal-orbit { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -218,12 +222,12 @@
       <header class="site-header">
         <a class="wordmark" href="#top" aria-label="Voidscape home"><span></span>Voidscape</a>
         <nav aria-label="Primary navigation">
-          <a href="#sequence">Sequence</a>
-          <a href="#screening">Screening</a>
-          <a href="#workflow">Workflow</a>
           <a href="#install">Install</a>
+          <a href="guide.html">Guide</a>
           <a href="#faq">FAQ</a>
           <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
         </nav>
       </header>
     </div>
@@ -238,9 +242,10 @@
       </div>
       <div class="shell hero-copy">
         <h1>Make the media you keep <em>legible.</em></h1>
-        <p class="lede">Voidscape turns a local file or URL into grounded frames and timestamped text—while keeping cost, cloud processing, and model downloads visible before work begins.</p>
+        <p class="lede">Transcription is one channel. Voidscape turns a local file or URL into frames, timestamped text, and a manifest an agent can inspect together—after cost, cloud processing, and model downloads are made visible.</p>
         <div class="actions">
           <a class="button primary" href="#sequence">See the workflow <span class="arrow">↓</span></a>
+          <a class="button secondary" href="guide.html">Guide: how it works <span class="arrow">→</span></a>
           <a class="button secondary" href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">Read the source <span class="arrow">↗</span></a>
         </div>
         <div class="status-row" aria-label="Product highlights">
@@ -321,14 +326,16 @@
             <ul class="capability-list">
               <li class="capability-item"><h4>Local video and recordings</h4><p>Analyze demos, meetings, tutorials, screen captures, and personal archives from a local file.</p></li>
               <li class="capability-item"><h4>Public video URLs</h4><p>Bring a supported video URL into the same inspect → preview → read path, including individual YouTube links.</p></li>
-              <li class="capability-item"><h4>Audio, captions, and transcripts</h4><p>Extract audio artifacts, use available captions, or transcribe locally before cloud analysis is approved.</p></li>
+              <li class="capability-item"><h4>Audio, captions, and transcript sidecars</h4><p>Use available captions, transcribe locally, or reuse a matching SRT, VTT, or text sidecar without generating it again.</p></li>
+              <li class="capability-item"><h4>Scoped visual reads</h4><p>Choose visual, audio, or both; limit work to a time window; and keep output timestamps pinned to the source timeline.</p></li>
+              <li class="capability-item"><h4>Agent-native protocol</h4><p>Machine-readable envelopes, stable exit codes, and a discovery manifest let an agent plan and handle failures explicitly.</p></li>
               <li class="capability-item"><h4>Instagram URL helper</h4><p>A repository-only helper validates and deduplicates confirmed public Reel URLs; it is not an installed Voidscape command.</p></li>
-              <li class="capability-item"><h4>Evidence an agent can use</h4><p>Give an agent timestamped frames, transcripts, and manifests instead of asking it to guess what happened in a video.</p></li>
+              <li class="capability-item"><h4>One inspectable evidence bundle</h4><p>Give an agent selected frames, timestamped text, and a source manifest together instead of asking it to infer a video from its title.</p></li>
             </ul>
           </section>
 
           <section class="capability-column next">
-            <span class="capability-status">02 / Designed next</span>
+            <span class="capability-status">02 / Coming soon — planned</span>
             <h3 class="capability-heading">Add trusted ways in.</h3>
             <p class="capability-intro">The next steps extend source capture without changing the consent-first reading core.</p>
             <ul class="capability-list">
@@ -340,7 +347,7 @@
           </section>
 
           <section class="capability-column horizon">
-            <span class="capability-status">03 / Exploration, not promised</span>
+            <span class="capability-status">03 / Exploring — not promised</span>
             <h3 class="capability-heading">A broader personal media system.</h3>
             <p class="capability-intro">Directions worth testing after product, privacy, platform, and legal review.</p>
             <ul class="capability-list">
@@ -423,8 +430,8 @@
           <details><summary>When should I inspect, preview, or read?</summary><p>Inspect is free source discovery. Preview is the cost and privacy decision. Read only follows once the path is acceptable and prepares the evidence an agent needs.</p></details>
           <details><summary>Can I use it for Instagram research or voice notes?</summary><p>Audio-only reads use the installed CLI. Instagram support is a repository-only URL helper and user-observed development workflow, not an installed command.</p></details>
           <details><summary>What if the media needs my login?</summary><p>Public URLs are the baseline. For media you are permitted to access, the CLI can optionally use a local cookie export while a browser-connected agent works from tabs only after your site approval. Voidscape never extracts your browser credentials, and first-party account connections are future work.</p></details>
-          <details><summary>What about Substack, RSS, scheduling, or a browser extension?</summary><p>Those are planned directions. They are not part of this installed release, and text articles are not sent through the video engine.</p></details>
         </div>
+        <div class="faq-more"><a href="faq.html">Browse all questions <span aria-hidden="true">→</span></a><p>26 answers on setup, evidence, privacy, sign-in, and what comes next.</p></div>
       </div>
     </section>
   </main>
@@ -432,7 +439,7 @@
   <footer>
     <div class="shell footer-inner">
       <span>Voidscape is an open-source, local-first media workflow.</span>
-      <div class="footer-links"><a href="https://github.com/RikepilB/void-scape/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/RikepilB/void-scape/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a></div>
+      <div class="footer-links"><a href="guide.html">Guide</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/RikepilB/void-scape/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/RikepilB/void-scape/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a></div>
     </div>
   </footer>
 </body>

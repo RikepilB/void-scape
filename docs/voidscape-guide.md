@@ -42,6 +42,18 @@ If a preview says cloud approval or a model download is required, stop and decid
 `--allow-cloud` or `--allow-model-download` only after the user explicitly approved that exact
 action.
 
+## Public URLs and signed-in sources
+
+Local files and public media URLs are the reproducible baseline. Voidscape began as Richard's
+personal workflow for media in accounts where he was already signed in, but those private folders
+and sessions are test inputs, not global defaults.
+
+For an account-only source, the user signs in themselves and controls all access. A browser-connected
+agent can help select an item after explicit site approval. The media CLI needs its own optional
+Netscape cookie export through `READ_VIDEO_YTDLP_COOKIES`; browser access is not automatically shared
+with `yt-dlp`. See [Public and authenticated sources](authenticated-sources.md) for the safe setup,
+Chrome requirements, VPN troubleshooting, and current limitations.
+
 ## Customize and import
 
 `customize` writes a local `workspace.json` next to the installed Voidscape skill. Its settings are
@@ -67,11 +79,12 @@ the raw engine's stable JSON envelope:
 python scripts/video.py estimate "clip.mp4" --tier both --backend captions --envelope --compact
 ```
 
-The repository's Codex `/voidscape` router groups general media work and existing source
-workflows. Instagram capture remains deliberately source-specific: it needs a signed-in browser,
-an explicit watch confirmation for live actions, append-before-unsave protection, and its existing
-subagents. Voidscape does not include a scheduler; Task Scheduler, cron, or an agent harness owns
-the schedule and must carry the consent flags explicitly.
+The installed Voidscape skill teaches an agent the guided commands above; the concrete interface is
+`python scripts/voidscape.py ...`. Repository-only helpers and source-specific Codex agents are
+development surfaces, not installed `/voidscape` subcommands. Instagram capture remains deliberately
+source-specific: it needs a signed-in browser, explicit confirmation for live actions, and
+append-before-unsave protection. Voidscape does not include a scheduler; Task Scheduler, cron, or an
+agent harness owns the schedule and must carry the consent flags explicitly.
 
 ## Availability
 
@@ -80,8 +93,8 @@ the schedule and must carry the consent flags explicitly.
 | Local recordings, videos, demos, and voice material | Available now |
 | Supported public video URLs | Available now; platform access varies |
 | Agent-readable frames, transcripts, manifest, and timestamp citations | Available now |
-| Instagram saved-Reel capture | Available now in the repository's Codex workflow |
-| Audio notes | Available now in the repository's Codex workflow |
+| Instagram saved-Reel capture | User-observed repository workflow; requires the user's signed-in Chrome session and is not an installed command |
+| Audio-only reads | Available now through the installed CLI; an agent can author a note from the resulting evidence |
 | Private YouTube queue | Designed next |
 | Substack/RSS articles and Markdown conversion | Planned; not a video-engine feature yet |
 | Hosted product, universal extension, scheduled product workflows | Exploration only |

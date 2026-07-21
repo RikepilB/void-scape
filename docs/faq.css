@@ -1,0 +1,46 @@
+@import url("legal.css");
+
+html { scroll-behavior: smooth; }
+main { padding-top: 70px; }
+.faq-hero { margin-bottom: 72px; }
+.faq-hero h1 { max-width: 900px; }
+.faq-hero .lede { margin-bottom: 34px; }
+.category-nav {
+  border-bottom: 1px solid var(--line-strong);
+  border-top: 1px solid var(--line-strong);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.category-nav a {
+  border-right: 1px solid var(--line);
+  color: var(--mist);
+  font: 700 10px/1.4 var(--mono);
+  letter-spacing: .07em;
+  padding: 14px 16px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.category-nav a:hover { background: rgba(117, 173, 255, .09); color: var(--paper); }
+.faq-category { border-top: 1px solid var(--line-strong); padding: 62px 0; scroll-margin-top: 28px; }
+.faq-category:first-of-type { border-top: 0; }
+.category-label { color: var(--blue); font: 700 10px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.faq-category h2 { font: 600 clamp(31px, 4.5vw, 55px)/1 var(--display); letter-spacing: -.065em; margin: 13px 0 16px; }
+.category-intro { color: var(--muted); font-size: 15px; margin: 0 0 28px; max-width: 680px; }
+.faq-list { border-top: 1px solid var(--line-strong); max-width: 920px; }
+.faq-list details { border-bottom: 1px solid var(--line); }
+.faq-list summary { color: var(--paper); cursor: pointer; font: 580 clamp(19px, 2.3vw, 27px)/1.15 var(--display); letter-spacing: -.04em; list-style: none; padding: 22px 40px 22px 0; position: relative; }
+.faq-list summary::-webkit-details-marker { display: none; }
+.faq-list summary::after { color: var(--blue); content: "+"; font: 300 27px/1 var(--display); position: absolute; right: 4px; top: 19px; transition: transform .2s ease; }
+.faq-list details[open] summary::after { transform: rotate(45deg); }
+.faq-list p { color: var(--mist); font-size: 15px; line-height: 1.65; margin: 0; max-width: 710px; padding: 0 0 24px; }
+.faq-list a { color: #a9caff; }
+.faq-callout { background: rgba(117, 173, 255, .08); border: 1px solid rgba(117, 173, 255, .28); border-radius: 14px; color: var(--mist); margin-top: 12px; max-width: 800px; padding: 18px 20px; }
+.faq-callout strong { color: var(--paper); }
+
+@media (max-width: 560px) {
+  main { padding-top: 52px; }
+  .faq-hero { margin-bottom: 48px; }
+  .category-nav a { border-bottom: 1px solid var(--line); flex: 1 1 46%; }
+  .faq-category { padding: 46px 0; }
+}

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Voidscape privacy notice: what stays local, what reaches third parties, and what the project does not collect.">
+  <link rel="canonical" href="https://voidscape.club/privacy.html">
+  <link rel="stylesheet" href="legal.css">
+  <title>Privacy — Voidscape</title>
+</head>
+<body>
+  <div class="shell">
+    <header class="site-header">
+      <a class="wordmark" href="index.html" aria-label="Voidscape home"><span></span>Voidscape</a>
+      <nav aria-label="Primary navigation">
+        <a href="index.html#install">Install</a>
+        <a href="index.html#faq">FAQ</a>
+        <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
+        <a href="privacy.html" aria-current="page">Privacy</a>
+        <a href="terms.html">Terms</a>
+      </nav>
+    </header>
+  </div>
+
+  <main class="shell">
+    <span class="eyebrow">Prototype notice / updated 2026-07-20</span>
+    <h1>Privacy, in plain sight.</h1>
+    <p class="lede">Voidscape has no hosted media service, account database, or telemetry pipeline. The important boundary is which command you choose: local processing, a public source request, a model download, or an explicitly approved cloud transcription.</p>
+
+    <div class="draft-notice"><strong>DRAFT — not reviewed by counsel.</strong> This page accurately describes the current open-source prototype, but it is not legal advice or a substitute for a professionally reviewed privacy policy before a hosted or commercial launch.</div>
+
+    <section class="summary-grid" aria-label="Privacy summary">
+      <article class="summary-card"><b>Website</b><h2>No Voidscape tracking.</h2><p>The static project site sets no Voidscape cookies, creates no account, runs no analytics, and accepts no media upload.</p></article>
+      <article class="summary-card"><b>CLI</b><h2>Local by default.</h2><p>Frames, transcripts, manifests, configuration, and local media stay on the machine unless you choose a networked operation.</p></article>
+      <article class="summary-card"><b>Choice</b><h2>Approval before transfer.</h2><p>Cloud audio and first-time model downloads have separate approval gates. An environment key is never treated as consent.</p></article>
+    </section>
+
+    <section class="legal-section">
+      <h2>What the website collects</h2>
+      <p>The Voidscape website is a static site served through Vercel. Voidscape does not add forms, authentication, advertising, analytics, cookies, pixels, or browser storage. Vercel and the network providers between you and the site may receive ordinary request data such as IP address, user agent, requested URL, and timestamps under their own policies.</p>
+      <p>Following a link to GitHub, a media platform, or a separately hosted feedback form moves you to that provider. Review the provider's notice before submitting information.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>Field-level disclosure</h2>
+      <p>This is the practical data map for the current CLI and skill bundle.</p>
+      <div class="data-list">
+        <div class="data-row"><strong>Local media</strong><span>Read from the path you provide to inspect, preview, or process. Voidscape has no server that receives it.</span><span class="status">Local by default</span></div>
+        <div class="data-row"><strong>Frames and transcripts</strong><span>Written to the local work directory you choose, together with the manifest and run metadata.</span><span class="status">Local files</span></div>
+        <div class="data-row"><strong>Public media URLs</strong><span>The source host receives a request when `yt-dlp` or related tooling inspects or downloads the URL.</span><span class="status">Source request</span></div>
+        <div class="data-row"><strong>API keys</strong><span>Read only from environment variables when you select a compatible cloud backend. Voidscape does not write them to outputs or load `.env` files.</span><span class="status">Environment only</span></div>
+        <div class="data-row"><strong>Cloud transcription audio</strong><span>Sent to the provider you explicitly select only after `--allow-cloud`. The chosen provider's retention and training terms apply.</span><span class="status">Approval required</span></div>
+        <div class="data-row"><strong>Local model files</strong><span>Downloaded from the model host only when a required model is missing and `--allow-model-download` approval is given.</span><span class="status">Approval required</span></div>
+        <div class="data-row"><strong>Cookie export</strong><span>An optional, user-created Netscape cookie file can be passed to `yt-dlp`. Voidscape never discovers browser credentials and does not copy the file into the repository.</span><span class="status">User controlled</span></div>
+        <div class="data-row"><strong>Community feedback</strong><span>If you choose to use a separately linked third-party form, that provider processes the response. Never submit secrets, cookies, private media, or confidential URLs.</span><span class="status">Optional</span></div>
+      </div>
+    </section>
+
+    <section class="legal-section">
+      <h2>What still requires trust</h2>
+      <ul>
+        <li>The operating system and installed tools such as Python, ffmpeg, yt-dlp, and a selected local transcription backend.</li>
+        <li>The source platform when you inspect or download a URL, including its access logs and account rules.</li>
+        <li>The selected cloud transcription provider when you approve an upload.</li>
+        <li>The model host when you approve a first-time model download.</li>
+        <li>GitHub when you visit the site, repository, issue tracker, Security page, or License page.</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>Retention, deletion, and control</h2>
+      <p>Voidscape has no project-operated database and therefore no central account or media record to delete. You control the local inputs, output directories, workspace configuration, environment variables, model cache, and optional cookie file. Delete those items using your operating system when you no longer need them.</p>
+      <p>For data sent to a source host, cloud transcription provider, model host, GitHub, or feedback-form provider, use that provider's controls and retention policy.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>Security and questions</h2>
+      <p>Read the project's <a href="https://github.com/RikepilB/void-scape/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security documentation</a>. Report public problems through GitHub Issues. For sensitive reports, use the contact address on the maintainer's GitHub profile rather than posting details publicly.</p>
+      <p>This notice will be updated if Voidscape adds accounts, hosted storage, analytics, a first-party feedback form, or other project-operated data collection.</p>
+    </section>
+
+    <a class="back-link" href="index.html">← Back to Voidscape</a>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <span>Voidscape is an open-source, local-first media workflow.</span>
+      <div class="footer-links"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/RikepilB/void-scape/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/RikepilB/void-scape/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a></div>
+    </div>
+  </footer>
+</body>
+</html>

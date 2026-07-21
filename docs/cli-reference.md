@@ -173,12 +173,16 @@ after the user has reviewed the matching estimate and explicitly consented.
 
 | var | used by |
 |---|---|
-| `GROQ_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` / `GEMINI_API_KEY` | the matching paid backend |
+| `GROQ_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` / `GEMINI_API_KEY` (`GOOGLE_API_KEY` also accepted for Gemini) | the matching paid backend |
 | `READ_VIDEO_WHISPER_MODEL` | override faster-whisper size (`tiny`/`base`/`small`/`medium`/`large-v3`) or a model-dir path |
 | `READ_VIDEO_WHISPER_DIR` | faster-whisper `download_root` / cache dir |
 | `READ_VIDEO_TRANSCRIPTION_THOROUGH_THRESHOLD_S` | seconds above which `auto` uses the thorough faster-whisper profile |
+| `READ_VIDEO_YTDLP_COOKIES` | optional path to a user-exported Netscape `cookies.txt` for a site the user is permitted to access |
 
 Keys are read **only** from the environment — never from `.env`.
+
+Voidscape does not extract browser cookies. Keep cookie files outside the repository and follow the
+[authenticated-source guide](authenticated-sources.md).
 
 ## Config files (in the skill dir)
 

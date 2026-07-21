@@ -1,17 +1,31 @@
 # Voidscape
 
+[Website](https://voidscape.club) ·
+[GitHub repository](https://github.com/RikepilB/void-scape)
+
 **Turn media you keep into local, timestamped evidence an agent can use.**
 
-Voidscape is the guided product layer for the open-source `read-video` engine. Give it a local
-recording or supported video URL and it prepares frames, a transcript, and a manifest an agent can
-inspect. Before anything paid, remote, or first-time-heavy happens, you see the cost and privacy
-gate.
+Transcription is one channel, not the finished product. Give Voidscape a local recording or
+supported video URL and it prepares selected frames, timestamped text, and a manifest an agent can
+inspect together. Before anything paid, remote, or first-time-heavy happens, you see the cost and
+privacy gate.
+
+Voidscape is the guided product layer for the open-source `read-video` engine. Its focus is the
+decision and evidence boundary around an agent read: inspect the source, preview cost and consent,
+then create only the approved artifacts. A matching `.srt`, `.vtt`, or `.txt` transcript can be
+reused as a free local sidecar instead of being generated again.
 
 `read-video` remains the stable engine and compatibility name for existing scripts and automations.
 
-> Status: local videos, recordings, voice material, public video URLs, and the Instagram capture
-> workflow are available today. Substack/RSS intake, scheduled workflows, universal capture, and a
-> hosted product are planned—not shipped.
+## Codebase Map
+
+[![Codebase scan](docs/foglamp-scan.png)](https://foglamp.dev/scan/voidscape-8fd1nx)
+
+AI-generated map of the architecture (models, tools, integrations, flows) — **[view interactive on Foglamp →](https://foglamp.dev/scan/voidscape-8fd1nx)**
+
+> Status: the installed bundle reads local videos, recordings, audio, and supported public video
+> URLs. The repository contains an optional Instagram capture helper, but it is not installed as a
+> Voidscape command. Substack/RSS intake, scheduling, universal capture, and hosting are not shipped.
 
 ## Start here
 
@@ -64,6 +78,12 @@ python skill/scripts/voidscape.py read "meeting.mp4" --workdir out
 whether audio would leave your machine. `read` prepares the approved `frames/`, `transcript.txt`,
 and `manifest.json` artifacts. Then ask your agent to use them and cite moments as `[MM:SS]`.
 
+Public URLs are the baseline. If a site requires your login, Voidscape can optionally pass a
+user-exported Netscape `cookies.txt` to `yt-dlp`; it never extracts browser credentials itself.
+Browser-guided saved collections additionally need the ChatGPT Chrome extension and a Chrome-control
+capability in the agent harness. These are separate from CLI authentication. Follow the
+[public/authenticated source guide](docs/authenticated-sources.md) before using account-only media.
+
 For a reproducible, key-free first run:
 
 ```powershell
@@ -72,6 +92,11 @@ python skill/scripts/voidscape.py inspect samples/build-week-demo.mp4
 python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions
 python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output
 ```
+
+Testing with other people? Use the short, privacy-aware
+[community prototype protocol](docs/community-testing.md) and its local
+`survey-cli` questionnaire to capture task completion, consent clarity, timestamp usefulness, and
+the exact points where testers need help.
 
 ## Use it with an agent
 
@@ -84,17 +109,18 @@ agent should:
 3. stop for explicit consent when cloud processing or a model download is required;
 4. read the resulting artifacts and answer with timestamp citations.
 
-The repository's Codex router also supports `/voidscape inspect`, `preview`, `read`,
-`customize`, `doctor`, `capture instagram`, `process instagram`, and `audio`. Existing
-`/read-video`, `/instagram-capture`, `/ig-pipeline`, and `/read-audio` commands still work.
+The installed skill teaches an agent the same `inspect → preview → read` flow. The concrete,
+judge-testable interface is `python skill/scripts/voidscape.py ...`; repository-only agent files
+under `.codex/agents/` are development helpers, not installed slash commands.
 
 ## Choose the right path
 
 | Need | Use | What happens |
 | --- | --- | --- |
 | Understand a local recording, demo, meeting, or screen capture | `inspect → preview → read` | Frames, transcript, and manifest stay local by default. |
-| Save a voice memo or call as a searchable note | `/voidscape audio ...` | Existing audio workflow transcribes locally, then an agent writes the Markdown note. |
-| Turn saved Instagram learning Reels into research | `/voidscape capture instagram` then `process instagram` | Codex-only, user-observed capture queue and source-specific analysis workflow. |
+| Read a voice memo or call | `read ... --tier audio` | The CLI prepares a local transcript; an agent can then author a note from that evidence. |
+| Prepare an Instagram Reel URL | Repository helper (not installed) | `scripts/instagram_capture_helper.py` validates and deduplicates confirmed URLs; browser capture remains a user-observed development workflow. |
+| Work from a signed-in saved collection | Browser selection, then `inspect -> preview -> read` on one permitted media URL | The user signs in and approves browser access; private collection automation is not shipped. |
 | Run from an agent, hook, or schedule | `voidscape.py ... --json` or raw `video.py ... --envelope --compact` | Non-interactive commands; Voidscape does not ship a scheduler. |
 | Read a Substack series or RSS feed | Planned | Text/RSS ingestion is not part of the video engine yet. |
 
@@ -127,10 +153,18 @@ Voidscape.
 
 ### Can I automate it?
 
-Yes. Use `customize` with flags and `--yes`, then call `voidscape.py` with explicit flags and
-`--json`, or call the raw engine with `--envelope --compact`. Use your own Task Scheduler, cron, or
-agent hook. Review cloud and model-download consent in the job definition; Voidscape never assumes
-it.
+The CLI is non-interactive when given explicit flags, so it can be called by your own scripts or
+agent hooks. Voidscape does not ship a scheduler or unattended worker. Any automation remains
+responsible for preserving the cloud and model-download approval gates.
+
+### What if a URL works in Chrome but not in the CLI?
+
+Your browser may be signed in while the CLI is anonymous. Start with a public URL. For media your
+account is permitted to access, export cookies for only that site, keep the file outside the repo,
+and set `READ_VIDEO_YTDLP_COOKIES`. VPNs, expired sessions, platform extractor changes, and missing
+Chrome site approval are separate common causes. See the
+[authentication and troubleshooting guide](docs/authenticated-sources.md) and the
+[browser/CLI test matrix](docs/chrome-use-case-matrix.md).
 
 ## Advanced engine interface
 
@@ -156,12 +190,23 @@ See the [guided workflow and automation guide](docs/voidscape-guide.md),
 
 Run `python skill/scripts/voidscape.py doctor` to see what is ready without changing anything.
 
-## Build Week evidence
+## Built with Codex
 
-Voidscape was built with Codex and GPT-5.6 on top of the `read-video` engine. The Build Week work
-adds GPT-5.6 32×32 patch estimates, adaptive local transcription, explicit cloud/model-download
-consent enforcement, a reproducible fixture, and an opt-in agent protocol. See the
-[submission runbook](docs/build-week-submission.md) and [project draft](docs/devpost-draft.md).
+Voidscape began from Richard Pillaca's existing `read-video` engine; the import is explicitly
+separated in [Build Week provenance](docs/BUILD_WEEK_PROVENANCE.md). Richard chose the product
+problem and boundaries: local-first processing, `inspect → preview → read`, separate approval for
+cloud transfer and model downloads, source-timeline citations, and deferring unattended
+orchestration.
+
+Codex accelerated the repository migration and audit, exposed mismatches between claims and the
+installed package, reproduced the scoped-timestamp defect, wrote regression tests and fixes, and
+hardened the judge install path. GPT-5.6 is the target agent model for reading the resulting frames
+and transcript; the preview reports its vision-token estimate before that evidence is consumed.
+The final submission should claim only work visible in dated post-import commits and the selected
+Codex `/feedback` session.
+
+See the [submission runbook](docs/build-week-submission.md) and
+[project draft](docs/devpost-draft.md).
 
 ## License
 

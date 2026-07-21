@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Answers about installing, using, and trusting Voidscape's local-first media workflow.">
+  <title>Voidscape FAQ — local-first media answers</title>
+  <link rel="stylesheet" href="faq.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="site-header">
+      <a class="wordmark" href="index.html" aria-label="Voidscape home"><span></span>Voidscape</a>
+      <nav aria-label="Primary navigation">
+        <a href="index.html#install">Install</a>
+        <a href="guide.html">Guide</a>
+        <a href="faq.html" aria-current="page">FAQ</a>
+        <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+      </nav>
+    </header>
+  </div>
+
+  <main class="shell">
+    <section class="faq-hero">
+      <span class="eyebrow">Voidscape FAQ / 26 answers</span>
+      <h1>Know the boundary before you hand media to an agent.</h1>
+      <p class="lede">Voidscape makes source access, local evidence, cost, and approval visible. These answers distinguish what ships today from workflows still being designed.</p>
+      <nav class="category-nav" aria-label="FAQ categories">
+        <a href="#getting-started">Start</a><a href="#evidence-results">Evidence</a><a href="#privacy-cost">Privacy</a><a href="#sources-sign-in">Sources</a><a href="#agents-follow-up">Agents</a><a href="#troubleshooting-roadmap">Roadmap</a>
+      </nav>
+    </section>
+
+    <section class="faq-category" id="getting-started">
+      <span class="category-label">01 / Basics</span>
+      <h2>Getting started</h2>
+      <p class="category-intro">Install the skill, check the local tools, then start with media you can safely access.</p>
+      <div class="faq-list">
+        <details><summary>What is Voidscape?</summary><p>Voidscape is a local-first CLI and agent skill for turning a local video/audio file or supported public media URL into frames, a timestamped transcript, and a manifest an agent can cite.</p></details>
+        <details><summary>What do I need before I install it?</summary><p>You need Python 3.10+, <code>ffmpeg</code>, and <code>ffprobe</code>. <code>yt-dlp</code> is needed for URLs. Local speech transcription additionally uses <code>faster-whisper</code>. Run <code>doctor</code> to see what is ready.</p></details>
+        <details><summary>How do I install it?</summary><p>From the repository, run <code>.\scripts\install-skill.ps1</code> on Windows or <code>bash scripts/install-skill.sh</code> on macOS, Linux, or Git Bash. The installer adds Voidscape plus the read-video compatibility skill.</p></details>
+        <details><summary>Do I need an agent subscription?</summary><p>The CLI can create evidence without a subscription. An agent is what reads that evidence into a grounded answer or Markdown note. Standalone semantic report generation is a future optional direction, not a current CLI claim.</p></details>
+      </div>
+    </section>
+
+    <section class="faq-category" id="evidence-results">
+      <span class="category-label">02 / Outputs</span>
+      <h2>Evidence and results</h2>
+      <p class="category-intro">The CLI prepares verifiable inputs. An agent uses them to answer rather than guessing from a title or thumbnail.</p>
+      <div class="faq-list">
+        <details><summary>When should I inspect, preview, or read?</summary><p><code>inspect</code> discovers source facts. <code>preview</code> exposes cost, privacy, and dependencies. <code>read</code> prepares the approved evidence.</p></details>
+        <details><summary>What files does read create?</summary><p>A work folder contains selected <code>frames/</code>, a <code>transcript.txt</code> when audio is selected, and <code>manifest.json</code> mapping frames to source timestamps.</p></details>
+        <details><summary>Can I get timestamp citations?</summary><p>Yes. The agent should ground answers in the transcript and frames and cite the source timeline as <code>[MM:SS]</code>. Captions and transcripts can contain recognition errors, so important claims should be checked against the evidence.</p></details>
+        <details><summary>Does Voidscape write the final summary itself?</summary><p>Not today. The CLI writes evidence. The installed agent skill instructs an agent to create a short TL;DR and timestamped beats, and to save an agent-authored Markdown result when a local Library is configured.</p></details>
+      </div>
+    </section>
+
+    <section class="faq-category" id="privacy-cost">
+      <span class="category-label">03 / Trust boundary</span>
+      <h2>Privacy and cost</h2>
+      <p class="category-intro">The product's core rule is inspect, preview, then read. Paid, remote, or first-time-heavy work is visible before it happens.</p>
+      <div class="faq-list">
+        <details><summary>Does Voidscape upload my media?</summary><p>Not by default. Local files, sidecar subtitles, and local transcription stay on your machine. A cloud transcription route requires a current <code>--allow-cloud</code> approval.</p></details>
+        <details><summary>What does preview show?</summary><p>It estimates transcription cost and API-equivalent agent-token cost, identifies the dominant driver, shows the backend chain, and tells you whether a cloud approval, model download, or local dependency is needed.</p></details>
+        <details><summary>What is the difference between cloud approval and model-download approval?</summary><p>Cloud approval controls sending audio to a selected provider. Model-download approval controls acquiring a local speech model. They are separate decisions and one does not imply the other.</p></details>
+        <details><summary>Where do API keys live?</summary><p>Only in environment variables that you set. Voidscape does not scan browser storage, credentials, or <code>.env</code> files, and its workspace preferences store paths and defaults rather than API keys.</p></details>
+      </div>
+    </section>
+
+    <section class="faq-category" id="sources-sign-in">
+      <span class="category-label">04 / Access</span>
+      <h2>Sources and sign-in</h2>
+      <p class="category-intro">Start with local files and public URLs. Signed-in sources are optional and remain under the user's control.</p>
+      <div class="faq-list">
+        <details><summary>Which sources work today?</summary><p>Local videos, recordings, and audio are supported. Public YouTube and other platform URLs work through <code>yt-dlp</code> when the platform allows access. Platform behavior can change.</p></details>
+        <details><summary>What if the media needs my login?</summary><p>For media you are permitted to access, you can provide a user-exported Netscape-format <code>cookies.txt</code> path through <code>READ_VIDEO_YTDLP_COOKIES</code>. Keep that file private and outside the repository.</p></details>
+        <details><summary>Does Voidscape read my browser cookies or passwords?</summary><p>No. It never discovers or extracts browser credentials. A cookie export is optional, local, and chosen by the user for a specific source.</p></details>
+        <details><summary>Can I use signed-in Instagram saves?</summary><p>A user-observed repository workflow can help select a permitted saved Reel in a signed-in Chrome session, then the normal media flow handles a confirmed URL. It is not an installed generic Instagram command. Any unsave action needs a separate explicit confirmation after evidence is safely recorded.</p></details>
+        <details><summary>Why might a URL work in Chrome but fail in the CLI?</summary><p>Your browser may be signed in while the CLI is anonymous. Expired sessions, VPNs, regional restrictions, platform extractor changes, and missing site permissions can also cause failures. Start with a public URL and read the authenticated-source guide when needed.</p></details>
+      </div>
+    </section>
+
+    <section class="faq-category" id="agents-follow-up">
+      <span class="category-label">05 / What happens next</span>
+      <h2>Agents and follow-up work</h2>
+      <p class="category-intro">Evidence makes an agent more useful, but it does not remove human judgment or approval.</p>
+      <div class="faq-list">
+        <details><summary>Can an agent answer a specific question about the media?</summary><p>Yes. Ask the agent after Voidscape prepares the evidence. The answer should be direct, grounded in the selected artifacts, and include timestamps for factual claims.</p></details>
+        <details><summary>Can an agent create a research note?</summary><p>Yes. When a workspace Library is configured, the agent can save an authored Markdown note there. The CLI does not claim semantic authorship of that note.</p></details>
+        <details><summary>Can an agent draft an email from a video?</summary><p>It can draft an email based on evidence and timestamps. Sending email is a separate external action that must remain visible to you and require your explicit approval.</p></details>
+        <details><summary>Can Voidscape schedule or run unattended?</summary><p>No scheduler or unattended worker ships with Voidscape. You can call the non-interactive CLI from your own tools, but your automation must preserve every cloud and model-download approval gate.</p></details>
+      </div>
+    </section>
+
+    <section class="faq-category" id="troubleshooting-roadmap">
+      <span class="category-label">06 / Limits and next steps</span>
+      <h2>Troubleshooting and roadmap</h2>
+      <p class="category-intro">A useful boundary is more trustworthy than a broad claim. These are the present limits and the next directions.</p>
+      <div class="faq-list">
+        <details><summary>What if there are no captions?</summary><p>Choose a local transcription backend such as <code>faster-whisper</code>, or preview a cloud backend and explicitly approve it. Captions-only mode correctly stops when a source has none.</p></details>
+        <details><summary>What if local transcription is not ready?</summary><p>Run <code>doctor</code>. It reports Python, FFmpeg, FFprobe, yt-dlp, workspace status, and optional local speech support. Install only the missing tool you have chosen to use.</p></details>
+        <details><summary>Can it read Substack, RSS, threads, articles, or carousels?</summary><p>Not through the installed media engine today. Text/RSS ingestion, visual posts, image collections, and broader saved-content adapters are planned work and should not be described as current commands.</p></details>
+        <details><summary>Can it process X, LinkedIn, TikTok, or more Instagram workflows?</summary><p>Direct public media URLs may work when their platform allows yt-dlp access. Dedicated platform adapters, collection workflows, and browser-extension automation need separate product, platform, and safety work before shipping.</p></details>
+        <details><summary>Can I delete the work folder after I finish?</summary><p>Yes, once you no longer need the frames, transcript, or manifest for follow-up questions. Keep any Markdown note you want to preserve. Delete only folders you recognize and control.</p></details>
+      </div>
+      <aside class="faq-callout"><strong>Need a concrete first run?</strong> Use the key-free demo fixture from the <a href="index.html#install">Install section</a>, then ask an agent a question about the resulting evidence.</aside>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <span>Voidscape is an open-source, local-first media workflow.</span>
+      <div class="footer-links"><a href="guide.html">Guide</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/RikepilB/void-scape/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/RikepilB/void-scape/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a></div>
+    </div>
+  </footer>
+</body>
+</html>

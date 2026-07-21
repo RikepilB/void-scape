@@ -15,7 +15,7 @@ def _local_info():
     }
 
 
-def test_run_extracts_only_approved_audio_window(tmp_path, monkeypatch):
+def test_run_extracts_only_approved_audio_window_on_source_timeline(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr(video, "probe", lambda _inp: _local_info())
     monkeypatch.setattr(video, "_have", lambda _module: True)
@@ -35,8 +35,42 @@ def test_run_extracts_only_approved_audio_window(tmp_path, monkeypatch):
                        start=10.0, end=30.0, workdir=str(tmp_path / "evidence"))
 
     assert calls == [(str(Path("clip.mp4").resolve()), 10.0, 20.0)]
-    assert Path(result["transcript"]).read_text(encoding="utf-8") == "[00:00] scoped"
+    assert Path(result["transcript"]).read_text(encoding="utf-8") == "[00:10] scoped"
     assert result["window"] == {"start_s": 10.0, "end_s": 30.0, "duration_s": 20.0}
+
+
+def test_scoped_sidecar_keeps_only_cues_inside_window(tmp_path, monkeypatch):
+    sidecar = tmp_path / "clip.srt"
+    sidecar.write_text(
+        "1\n00:00:05,000 --> 00:00:06,000\nbefore\n\n"
+        "2\n00:00:15,000 --> 00:00:16,000\ninside\n\n"
+        "3\n00:00:25,000 --> 00:00:26,000\nafter\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        video, "probe", lambda _inp: {**_local_info(), "sidecar_transcript": str(sidecar)}
+    )
+
+    result = video.run(
+        "clip.mp4", tier="audio", start=10.0, end=20.0,
+        workdir=str(tmp_path / "evidence"),
+    )
+
+    assert Path(result["transcript"]).read_text(encoding="utf-8") == "[00:15] inside"
+
+
+def test_scoped_plain_text_sidecar_fails_instead_of_leaking_full_transcript(tmp_path, monkeypatch):
+    sidecar = tmp_path / "clip.txt"
+    sidecar.write_text("full un-timestamped transcript", encoding="utf-8")
+    monkeypatch.setattr(
+        video, "probe", lambda _inp: {**_local_info(), "sidecar_transcript": str(sidecar)}
+    )
+
+    with pytest.raises(RuntimeError, match="cannot be safely limited"):
+        video.run(
+            "clip.mp4", tier="audio", start=10.0, end=20.0,
+            workdir=str(tmp_path / "evidence"),
+        )
 
 
 def test_run_rejects_nonempty_workdir_before_media_work(tmp_path, monkeypatch):

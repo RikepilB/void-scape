@@ -21,15 +21,21 @@ samples/*
 !.env.example
 *.key
 *.pem
-cookies*.txt
+*cookies*.txt
+.foglamp/
+
+# --- Local user-research responses (may contain participant feedback) ---
+/research/responses/
+*survey-responses*.json
+*survey-responses*.csv
 
 # --- Session/process scratch (never repo content) ---
 20[0-9][0-9]-[01][0-9]-[0-3][0-9]-*-this-session-is-*.txt
 task-*-brief.md
 task-*-report.md
-# root handoff.md is an internal per-session artifact written by the harness's compaction hook;
-# this project's own docs/handoff/ tree is the durable, intentionally-public record.
+# Private agent handoff/session artifacts — never publish.
 /handoff.md
+/docs/handoff/
 
 # --- Python ---
 __pycache__/

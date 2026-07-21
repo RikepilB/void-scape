@@ -145,6 +145,13 @@ def _ytdlp_cookie_args() -> list[str]:
     return []
 
 
+def _ytdlp_error(stderr: str) -> str:
+    """Prefer yt-dlp's actionable error over unrelated warnings emitted before it."""
+    errors = [line.strip() for line in stderr.splitlines()
+              if line.lstrip().startswith("ERROR:")]
+    return (errors[-1] if errors else (stderr.strip() or "unknown error"))[:400]
+
+
 # --------------------------------------------------------------------------- probe
 def ffprobe_local(path: str) -> dict[str, Any]:
     path = str(Path(path).resolve())      # a relative name starting with '-' must not read as a flag
@@ -182,7 +189,7 @@ def find_sidecar(path: str) -> str | None:
 def ytdlp_meta(url: str) -> dict[str, Any]:
     cp = run_cmd(["yt-dlp", "--no-warnings", "--skip-download", "-J", *_ytdlp_cookie_args(), url])
     if cp.returncode != 0:
-        raise RuntimeError(f"yt-dlp metadata failed: {cp.stderr.strip()[:200]}")
+        raise RuntimeError(f"yt-dlp metadata failed: {_ytdlp_error(cp.stderr)}")
     info = json.loads(cp.stdout)
     if info.get("_type") == "playlist" and info.get("entries"):
         info = info["entries"][0]
@@ -322,6 +329,11 @@ def estimate(inp: str, frames: int | None = None, backend: str = "captions",
     # A sidecar transcript short-circuits _transcribe() before the chain is ever consulted (see
     # _transcribe()), so it's free regardless of what backend/chain was passed.
     has_sidecar = bool(info.get("sidecar_transcript"))
+    if (want_audio and not has_sidecar and chain == ["captions"]
+            and not info.get("captions_available")):
+        raise RuntimeError(
+            "source has no captions; choose faster-whisper for local transcription or preview "
+            "a cloud backend before granting consent")
     rates = ([pr["transcription_per_min"].get(b, 0.0) for b in chain]
              if want_audio and not has_sidecar else [])
     rate = max(rates) if rates else 0.0
@@ -453,7 +465,9 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
             int(pr.get("frame", {}).get("target_width", 512)), dedup=dedup, pins=pins)
     if want_audio:
         tpath, text = _transcribe(source_input, info, media, wd, backend, transcribe_mode,
-                                  allow_model_download)
+                                  allow_model_download,
+                                  start if scoped_audio else None,
+                                  end if scoped_audio else None)
         result["transcript"] = tpath
         result["transcript_chars"] = len(text)
     (wd / "manifest.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
@@ -466,7 +480,7 @@ def _download(url: str, wd: Path) -> str:
                   "--concurrent-fragments", "8", "-o", out, "--no-warnings",
                   *_ytdlp_cookie_args(), url])
     if cp.returncode != 0:
-        raise RuntimeError(f"yt-dlp download failed: {cp.stderr.strip()[:200]}")
+        raise RuntimeError(f"yt-dlp download failed: {_ytdlp_error(cp.stderr)}")
     files = sorted(wd.glob("source.*"))
     if not files:
         raise RuntimeError("download produced no file")
@@ -667,10 +681,13 @@ def _dedupe_jobs(jobs: list[tuple[float, Path, bool]], thumbs: list[bytes],
 # --------------------------------------------------------------------------- transcription
 def _transcribe(orig: str, info: dict[str, Any], media: str | None,
                 wd: Path, backend: str, transcribe_mode: str = "auto",
-                allow_model_download: bool = False) -> tuple[str, str]:
+                allow_model_download: bool = False,
+                window_start: float | None = None,
+                window_end: float | None = None) -> tuple[str, str]:
     # A sidecar transcript is free and beats any backend, so it short-circuits the whole chain.
     if info.get("sidecar_transcript"):
-        return _save_transcript(wd, _read_sidecar(info["sidecar_transcript"]))
+        return _save_transcript(
+            wd, _read_sidecar(info["sidecar_transcript"], window_start, window_end))
     # `backend` may be a comma-separated chain ("openrouter,groq"): try each in order and fall through
     # on any failure — out of credits, rate limit, missing key, not installed. Lets you spend a
     # limited/cheaper key first and fall back to another without re-running. A single backend is just a
@@ -678,12 +695,12 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
     chain = _backend_chain(backend)
     if len(chain) == 1:
         return _transcribe_one(orig, info, media, wd, chain[0], transcribe_mode,
-                               allow_model_download)
+                               allow_model_download, window_start, window_end)
     errors: list[str] = []
     for b in chain:
         try:
             return _transcribe_one(orig, info, media, wd, b, transcribe_mode,
-                                   allow_model_download)
+                                   allow_model_download, window_start, window_end)
         except Exception as ex:
             errors.append(f"{b}: {type(ex).__name__}: {str(ex)[:140]}")
             print(f"[read-video] backend '{b}' failed -> falling back to next in chain. {errors[-1]}",
@@ -693,26 +710,35 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
 
 def _transcribe_one(orig: str, info: dict[str, Any], media: str | None,
                     wd: Path, backend: str, transcribe_mode: str = "auto",
-                    allow_model_download: bool = False) -> tuple[str, str]:
+                    allow_model_download: bool = False,
+                    window_start: float | None = None,
+                    window_end: float | None = None) -> tuple[str, str]:
     if backend == "captions" and info["source"] == "url":
-        text = _fetch_captions(orig, wd)
+        text = _fetch_captions(orig, wd, window_start, window_end)
         if text:
             return _save_transcript(wd, text)
         raise RuntimeError("no captions found for this URL; pick a local backend "
                            "(faster-whisper / trx) or an API backend, then re-run")
     # Engines that need real audio.
     if backend == "trx" and which("trx"):
-        return _save_transcript(wd, _trx(media or orig))
+        text = _trx(media or orig)
+        return _save_transcript(wd, _shift_transcript_timestamps(text, window_start or 0.0))
     if backend in ("faster-whisper", "local") and _have("faster_whisper"):
         # faster-whisper decodes audio itself (PyAV/ffmpeg), so hand it the media directly instead of
         # paying for a separate lossy mp3 pass — that pass exists only to fit the API upload cap.
-        return _save_transcript(wd, _faster_whisper(media or orig, duration_s=info.get("duration_s"),
-                                                   transcribe_mode=transcribe_mode,
-                                                   allow_model_download=allow_model_download))
+        duration_s = ((window_end - window_start)
+                      if window_start is not None and window_end is not None
+                      else info.get("duration_s"))
+        text = _faster_whisper(media or orig, duration_s=duration_s,
+                               transcribe_mode=transcribe_mode,
+                               allow_model_download=allow_model_download)
+        return _save_transcript(wd, _shift_transcript_timestamps(text, window_start or 0.0))
     if backend in BACKEND_API:
-        return _save_transcript(wd, _api_transcribe(backend, _to_audio(media or orig, wd)))
+        text = _api_transcribe(backend, _to_audio(media or orig, wd))
+        return _save_transcript(wd, _shift_transcript_timestamps(text, window_start or 0.0))
     if backend == "gemini":
-        return _save_transcript(wd, _gemini(_to_audio(media or orig, wd)))
+        text = _gemini(_to_audio(media or orig, wd))
+        return _save_transcript(wd, _shift_transcript_timestamps(text, window_start or 0.0))
     raise RuntimeError(
         f"no usable transcription backend for '{backend}'. Options: add a sidecar .srt/.vtt, "
         f"use captions (URL), `pip install faster-whisper`, install trx, or set an API key. "
@@ -725,12 +751,20 @@ def _save_transcript(wd: Path, text: str) -> tuple[str, str]:
     return str(p), text or ""
 
 
-def _read_sidecar(path: str) -> str:
+def _read_sidecar(path: str, window_start: float | None = None,
+                  window_end: float | None = None) -> str:
     raw = Path(path).read_text(encoding="utf-8", errors="ignore")
-    return raw if path.lower().endswith(".txt") else _cues_to_text(raw)
+    if path.lower().endswith(".txt"):
+        if window_start is not None:
+            raise RuntimeError(
+                "plain-text sidecar cannot be safely limited to a time window; use a timestamped "
+                ".srt/.vtt sidecar or a transcription backend")
+        return raw
+    return _cues_to_text(raw, window_start, window_end)
 
 
-def _fetch_captions(url: str, wd: Path) -> str | None:
+def _fetch_captions(url: str, wd: Path, window_start: float | None = None,
+                    window_end: float | None = None) -> str | None:
     out = str(wd / "caps")
     run_cmd(["yt-dlp", "--skip-download", "--write-subs", "--write-auto-subs",
              "--sub-format", "vtt", "--sub-langs", "en.*,en",
@@ -738,21 +772,27 @@ def _fetch_captions(url: str, wd: Path) -> str | None:
     vtts = sorted(wd.glob("caps*.vtt"))
     if not vtts:
         return None
-    return _cues_to_text(vtts[0].read_text(encoding="utf-8", errors="ignore"))
+    return _cues_to_text(
+        vtts[0].read_text(encoding="utf-8", errors="ignore"), window_start, window_end)
 
 
-def _cues_to_text(raw: str) -> str:
+def _cues_to_text(raw: str, window_start: float | None = None,
+                  window_end: float | None = None) -> str:
     """Flatten VTT/SRT cues to '[MM:SS] line', stripping tags and rolling-caption duplicates."""
-    lines: list[tuple[str, str]] = []
+    lines: list[tuple[float, str, str]] = []
     cur_ts: str | None = None
+    cur_seconds: float | None = None
     buf: list[str] = []
 
     def flush() -> None:
-        nonlocal buf, cur_ts
-        if cur_ts and buf:
+        nonlocal buf, cur_ts, cur_seconds
+        in_window = (cur_seconds is not None
+                     and (window_start is None or cur_seconds >= window_start)
+                     and (window_end is None or cur_seconds < window_end))
+        if cur_ts and buf and in_window:
             txt = re.sub(r"<[^>]+>", "", " ".join(buf)).strip()
             if txt:
-                lines.append((cur_ts, txt))
+                lines.append((cur_seconds or 0.0, cur_ts, txt))
         buf = []
 
     for ln in raw.splitlines():
@@ -761,13 +801,14 @@ def _cues_to_text(raw: str) -> str:
         if m:
             flush()
             hh, mm, ss = int(m[1]), int(m[2]), int(m[3])
-            cur_ts = f"{hh * 60 + mm:02d}:{ss:02d}"
+            cur_seconds = float(hh * 3600 + mm * 60 + ss)
+            cur_ts = _ts(cur_seconds)
         elif s and s != "WEBVTT" and not s.isdigit():
             buf.append(s)
     flush()
 
     out, prev = [], None
-    for ts, txt in lines:
+    for _seconds, ts, txt in lines:
         if txt == prev:                          # exact rolling duplicate
             continue
         if prev is not None and txt.startswith(prev + " "):
@@ -777,6 +818,20 @@ def _cues_to_text(raw: str) -> str:
         out.append(f"[{ts}] {txt}")
         prev = txt
     return "\n".join(out)
+
+
+_TRANSCRIPT_TS_RE = re.compile(r"\[(\d+(?::\d{1,2}){1,2})\]")
+
+
+def _shift_transcript_timestamps(text: str, offset: float) -> str:
+    """Move timestamps from a clipped audio timeline back onto the source timeline."""
+    if not text or offset <= 0:
+        return text
+    if _TRANSCRIPT_TS_RE.search(text):
+        return _TRANSCRIPT_TS_RE.sub(
+            lambda match: f"[{_ts(_parse_timestamp(match.group(1)) + offset)}]", text)
+    return "\n".join(
+        f"[{_ts(offset)}] {line}" for line in text.splitlines() if line.strip())
 
 
 def _to_audio(src: str, wd: Path, start: float = 0.0,

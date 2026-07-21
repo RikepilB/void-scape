@@ -1,50 +1,100 @@
-# Demo shot list — read-video (OpenAI Build Week 2026 submission)
+# Demo shot list — Voidscape (OpenAI Build Week 2026)
 
-- **Tool**: OpenScreen (CLI/terminal demo — cinematic zoom on the JSON output is the whole point)
-- **Target total length**: ~2:40 (Devpost hard cap: under 3:00)
-- **Date drafted**: 2026-07-17
+- **Tool**: OpenScreen
+- **Target total length**: 85 seconds
+- **Date revised**: 2026-07-20
 - **Source file**: `docs/demo-shot-list.md`
-- **Devpost requirement**: narration must cover how **both** Codex and GPT-5.6 were used — beats
-  6 and 7 carry that explicitly, don't cut them for time.
+- **Format**: 16:9, 1080p, English voiceover, MP4
+- **Submission requirement**: show the working project and explain specifically how Codex and
+  GPT-5.6 were used. Do not cut beats 4 or 7.
 
-## Pre-recording setup (do once, before hitting record)
+This is the primary judge cut. The separate 59-second community-feedback cut remains in
+`docs/community-showcase-shot-list.md`.
+
+## Pre-recording setup
+
+Use a clean PowerShell window at the repository root. Increase the terminal font until one command
+and its output remain readable at 1080p. Close private tabs, notifications, API-key terminals, and
+personal media.
+
+Run before recording:
 
 ```powershell
-cd read-video
-python scripts/create-demo-fixture.py                       # samples/build-week-demo.mp4 + .srt
-Copy-Item samples/build-week-demo.mp4 samples/privacy-proof.mp4   # no sidecar -> actually triggers the cloud gate
+python scripts/create-demo-fixture.py
+Copy-Item samples/build-week-demo.mp4 samples/privacy-proof.mp4
 ```
-Also have ready: **one real spoken audio/video clip you own, longer than 45 seconds** (a voice
-memo, a recorded call, anything with actual speech) for beat 5 — the synthetic fixture has no
-real speech, so it can't demonstrate the fast/thorough transcription difference. Do not use
-anything copyrighted or containing someone else's likeness without consent.
+
+The copied file has no matching sidecar transcript, so the final cloud command reaches the consent
+gate. Use fresh workdir names for every take; Voidscape deliberately rejects non-empty evidence
+folders.
+
+Prepare these tabs/windows:
+
+1. `https://voidscape.club`
+2. PowerShell at the repository root
+3. File Explorer open to the fresh evidence workdir
+4. README at “Built with Codex” and `docs/BUILD_WEEK_PROVENANCE.md`
 
 ## Beats
 
-| # | Screen / state | Click sequence / command | Narration line | Target duration |
+| # | Screen / state | Exact sequence | Voiceover | Target |
 |---|---|---|---|---|
-| 1 | Terminal, empty prompt | (talking head or terminal only) | "Coding agents can read images and text. They can't watch video — and when a tool bolts that on, it usually hides two things: what it costs, and whether your audio just left the machine." | 20s |
-| 2 | Terminal, repo root | `.\scripts\install-skill.ps1` then `python scripts/create-demo-fixture.py` | "One-command install into Codex or Codex. This fixture is generated locally — no API key, no copyrighted media, reproducible by any judge." | 25s |
-| 3 | Terminal, estimate output | `python skill/scripts/video.py estimate samples/build-week-demo.mp4 --tier both --backend captions --agent-model gpt-5.6-terra --human` — let the JSON/table sit on screen, zoom into `cost_usd`, `agent_model`, `vision_estimator`, `model_download` | "Before anything runs, estimate prices the whole job — GPT-5.6's real 32×32 patch accounting, not a rough guess — and tells you if a model needs downloading or a backend needs approval. This is the gate: nothing spends or leaves the machine past this point without you saying so." | 30s |
-| 4 | Terminal, run output → Codex reading frames | `python skill/scripts/video.py run samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output`, then have Codex read the manifest/frames/transcript and answer a question with `[MM:SS]` citations | "Approved, it runs locally and free. Codex reads the frames and the sidecar transcript and answers grounded in the actual timestamps — not a hallucinated summary." | 25s |
-| 5 | Terminal, two transcript runs side by side | `python skill/scripts/video.py run <your-real-clip> --tier audio --backend faster-whisper --transcribe-mode fast --workdir out-fast` then `python skill/scripts/video.py run <your-real-clip> --tier audio --backend faster-whisper --transcribe-mode thorough --workdir out-thorough`; scroll both transcripts | "On real speech past 45 seconds, thorough mode switches to a bigger model, tunes the VAD, and drops previous-text conditioning — you can see the difference on the same clip." | 25s |
-| 6 | Terminal, rejected run | `python skill/scripts/video.py run samples/privacy-proof.mp4 --tier audio --backend openai` (no `--allow-cloud`) — let the `PermissionError` sit on screen | "And this is the boundary that actually matters: a cloud backend in the chain gets rejected before the file is even converted to audio — an API key sitting in your environment is never treated as consent. That gate, the GPT-5.6 patch-token accounting, and the adaptive transcription tiers were all built and tested inside Codex this week." | 25s |
-| 7 | Talking head or terminal + browser tab on the GitHub repo | Show repo / README / SECURITY.md briefly | "Codex implemented the gate logic, the pricing math, and the test suite end to end; the calls on where to draw the line — the 45-second threshold, local-first by default, how conservative the fallback pricing should be — were mine. Full breakdown is in the repo." | 20s |
-| 8 | Landing page (rikepilb.github.io/read-video) scrolled to case files | Scroll past hero, pause on the two case-file cards | "It's not a demo toy — it's already processed over a hundred real videos into a personal knowledge base, and helped pick a real hackathon project from a voice memo." | 15s |
-| 9 | GitHub repo root | End on repo URL + license badge | "MIT-licensed, link in the description." | 5s |
+| 1 | Payoff first: one selected frame beside `transcript.txt` | Open a prepared evidence folder. Highlight `[00:04]`, then show the matching frame. | “Voidscape turns a video an AI agent cannot inspect into frames, timestamped text, and a manifest it can verify.” | 8s |
+| 2 | Landing-page hero | Switch to `voidscape.club`; hold on “Make the media you keep legible.” | “I built it for the recordings, demos, and saved videos that are useful but hard to search.” | 7s |
+| 3 | Guided inspect | Run `python skill/scripts/voidscape.py inspect samples/build-week-demo.mp4`. Auto-zoom once on duration, audio, sidecar, and suggested scope. | “Inspect discovers what is present without processing or uploading the source.” | 10s |
+| 4 | Guided preview — GPT-5.6 integration | Run `python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions`. Hold on `agent=gpt-5.6-terra`, `vision=openai_patch32`, token counts, cost, and the local-next-step line. | “Preview prices the job before it runs. GPT-5.6 reads the selected evidence, and Voidscape estimates its 32-by-32 vision patches so scope and API-equivalent cost are visible first.” | 16s |
+| 5 | Read and inspectable artifacts | Run `python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output-take1`. Switch to File Explorer and open `frames/`, `transcript.txt`, and `manifest.json`. | “Read prepares only the approved evidence. Here it stays local and free, and an agent can answer from the source timeline instead of guessing from a title.” | 17s |
+| 6 | Privacy proof | Run `python skill/scripts/voidscape.py read samples/privacy-proof.mp4 --tier audio --backend openai --workdir samples/privacy-proof-output-take1` without `--allow-cloud`. Hold on the rejection. | “A cloud backend is blocked before conversion or upload. A key is never consent; cloud transfer and local model downloads have separate approval gates.” | 12s |
+| 7 | Codex contribution, provenance, close | Show README “Built with Codex,” then `BUILD_WEEK_PROVENANCE.md`, ending on the current GitHub URL. | “I chose the local-first boundary and inspect-preview-read flow. During Build Week, Codex audited my existing engine, found timestamp and installer defects, added regression coverage, and helped make the judge path reproducible. The imported baseline and new work are separated in the repo.” | 15s |
 
-## Notes
+**Total: 85 seconds.**
 
-- Beats are ordered by narrative (problem → gate → payoff → privacy proof → collaboration →
-  impact → close), not by CLI subcommand order.
-- Beat 6 depends on the **pre-recording setup**'s `privacy-proof.mp4` copy — the main fixture has
-  a sidecar transcript and will NOT trigger the gate (verified; this was a real bug caught and
-  fixed in this same branch — see `docs/build-week-submission.md`'s evidence section).
-- Beat 5 needs a real spoken clip the presenter owns — not the synthetic fixture. If none is ready
-  by recording time, cut beat 5 and redistribute its 25s across beats 3/4/6 rather than delaying
-  the whole recording — the Devpost deadline doesn't move.
-- Keep narration lines close to verbatim above; they were written to hit both "Codex" and
-  "GPT-5.6" usage explicitly, which Devpost's submission requirements call out by name.
-- After recording, review with `read-video --tier visual` against this table beat-by-beat before
-  calling it done — silent screen-only pass is enough to check pacing/coverage; audio narration
-  quality is a separate manual listen.
+## OpenScreen edit instructions
+
+- Use one auto-zoom on beat 3 and one on beat 4; add a manual zoom for the rejection in beat 6.
+- Set each zoom long enough to read the highlighted fields; avoid cursor-follow zoom while commands
+  are printing.
+- Trim command-entry pauses, but keep at least a one-second hold after every result.
+- Smooth the cursor path between `frames/`, `transcript.txt`, and `manifest.json`.
+- Add on-device English captions and manually correct `Voidscape`, `Codex`, `GPT-5.6`,
+  `FFmpeg`, and flag names.
+- Use a restrained dark gradient background and no more than one annotation: an arrow pointing to
+  the consent rejection.
+- Export MP4 at 1080p, 30 fps, 16:9, with no watermark.
+
+## Capture rules
+
+- Narration is required. A music-only screencast is not eligible.
+- Keep the video in English, or add an English translation to the submission.
+- Do not show browser cookies, environment variables, account names, private paths, API keys,
+  personal media, or unrelated tabs.
+- Do not claim roadmap items as shipped. The demo covers only local/public media evidence,
+  inspect/preview/read, GPT-5.6 cost estimation, artifacts, and consent gates.
+- Do not show the old `read-video` repository or Pages URL. End on
+  `https://github.com/RikepilB/void-scape` and use `https://voidscape.club` as the product URL.
+
+## Review pass after recording
+
+The human records and edits the video in OpenScreen; this workflow does not automate the GUI or
+modify the video file. After export, review the MP4 with Voidscape:
+
+```powershell
+python skill/scripts/voidscape.py inspect "PATH\TO\voidscape-demo.mp4"
+python skill/scripts/voidscape.py preview "PATH\TO\voidscape-demo.mp4" --tier both --backend faster-whisper
+```
+
+Because this submission requires voiceover, use `both` for the final review. If preview reports a
+first-time model download, stop and decide before adding `--allow-model-download`. Then read into
+a fresh workdir and compare every beat against this table. The review output should be a concrete
+OpenScreen edit list; it must not alter the video automatically.
+
+## Final checklist
+
+- [ ] 85 seconds or shorter; comfortably below the official 3-minute limit.
+- [ ] Public YouTube upload.
+- [ ] English voiceover is clear with captions enabled.
+- [ ] Working inspect, preview, read, artifacts, and privacy rejection are visible.
+- [ ] Codex contribution is specific, not decorative.
+- [ ] GPT-5.6 integration and patch estimator are visible and explained.
+- [ ] Current website and GitHub URLs appear in the end card/description.
+- [ ] No secrets, personal content, or unsupported roadmap claims are visible.

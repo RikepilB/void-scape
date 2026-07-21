@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A plain-language, consent-first walkthrough of how Voidscape turns media into grounded evidence.">
+  <title>Voidscape Guide — from source to evidence</title>
+  <link rel="stylesheet" href="faq.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="site-header">
+      <a class="wordmark" href="index.html" aria-label="Voidscape home"><span></span>Voidscape</a>
+      <nav aria-label="Primary navigation">
+        <a href="index.html#install">Install</a>
+        <a href="guide.html" aria-current="page">Guide</a>
+        <a href="faq.html">FAQ</a>
+        <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+      </nav>
+    </header>
+  </div>
+
+  <main class="shell">
+    <section class="faq-hero">
+      <span class="eyebrow">Guide / a grounded media story</span>
+      <h1>From “what is in this?” to evidence you can inspect.</h1>
+      <p class="lede">Transcription is one channel, not the final result. Voidscape prepares the visual and audio evidence an agent needs, while making three small decisions visible so you stay in control of what happens to your media.</p>
+      <nav class="category-nav" aria-label="Guide sections">
+        <a href="#start">Start</a><a href="#inspect">Inspect</a><a href="#preview">Preview</a><a href="#read">Read</a><a href="#ask">Ask</a><a href="#next">Coming soon</a>
+      </nav>
+    </section>
+
+    <section class="faq-category" id="start">
+      <span class="category-label">Before you begin</span>
+      <h2>Choose one file or public URL you are allowed to use.</h2>
+      <p class="category-intro">A meeting recording, screen capture, voice memo, demo, or supported public video URL is enough. Start with the key-free demo fixture if you want to see the flow without an account, API key, or personal media.</p>
+      <aside class="faq-callout"><strong>Available today.</strong> Local video and audio, supported public URLs, captions, local transcription, frames, timestamped transcripts, and a manifest that connects evidence to the original timeline.</aside>
+    </section>
+
+    <section class="faq-category" id="inspect">
+      <span class="category-label">01 / Inspect</span>
+      <h2>Look before you process.</h2>
+      <p class="category-intro">Inspect reads source facts: duration, resolution, audio, captions, and local sidecars. Nothing is uploaded or transformed. You learn what is actually available before choosing a path.</p>
+      <pre><code>python skill/scripts/voidscape.py inspect "clip.mp4"</code></pre>
+      <aside class="faq-callout"><strong>Already have a transcript?</strong> Put a matching <code>.srt</code>, <code>.vtt</code>, or <code>.txt</code> file beside local media. Voidscape can reuse that sidecar locally; timestamped SRT/VTT is required when reading only a time window.</aside>
+    </section>
+
+    <section class="faq-category" id="preview">
+      <span class="category-label">02 / Preview</span>
+      <h2>See the tradeoff before you approve it.</h2>
+      <p class="category-intro">Preview explains the frame plan, transcription route, expected dependencies, and API-equivalent vision estimate. If audio would leave your computer or a local model must download for the first time, Voidscape stops for a separate explicit approval.</p>
+      <pre><code>python skill/scripts/voidscape.py preview "clip.mp4" --tier both --backend captions</code></pre>
+      <aside class="faq-callout"><strong>Your decision point.</strong> <code>--allow-cloud</code> and <code>--allow-model-download</code> are never implied by having a key, a browser session, or an earlier run.</aside>
+    </section>
+
+    <section class="faq-category" id="read">
+      <span class="category-label">03 / Read</span>
+      <h2>Create only the evidence you chose.</h2>
+      <p class="category-intro">After the preview is acceptable, read selects frames and creates a transcript and manifest in a work folder. The output is deliberately inspectable: you can open the files, check the moments, and keep or delete the folder when you are done.</p>
+      <pre><code>python skill/scripts/voidscape.py read "clip.mp4" --tier both --backend captions --workdir out</code></pre>
+    </section>
+
+    <section class="faq-category" id="ask">
+      <span class="category-label">Then / Ask</span>
+      <h2>Give the artifacts to an agent, not just a title.</h2>
+      <p class="category-intro">Open <code>frames/</code>, <code>transcript.txt</code>, and <code>manifest.json</code>. Ask for a summary, decision note, or answer to a concrete question—and ask the agent to cite moments as <code>[MM:SS]</code>. The CLI prepares evidence; an agent authors the interpretation.</p>
+      <aside class="faq-callout"><strong>Good prompt:</strong> “What decision was made around 05:12? Quote the transcript and cite the timestamp.”</aside>
+    </section>
+
+    <section class="faq-category" id="next">
+      <span class="category-label">Coming soon / planning lock</span>
+      <h2>Useful directions, clearly not shipped.</h2>
+      <p class="category-intro">These are planning-lock items, not commands or product promises. Each needs its own privacy, platform, and implementation review before it becomes available.</p>
+      <div class="faq-list">
+        <details><summary>Private YouTube queue capture</summary><p>Designed around a user-owned private playlist and the official YouTube Data API. The current CLI can read an individual permitted URL; queue capture is coming soon.</p></details>
+        <details><summary>Images, carousels, articles, RSS, and saved posts</summary><p>Planned expansions beyond the present media engine. They are not current installed inputs.</p></details>
+        <details><summary>More source adapters and agent/MCP packaging</summary><p>Possible ways to make approved evidence easier to collect and use across environments. Not a current public API surface.</p></details>
+        <details><summary>Hosted service, browser extension, and unattended workflows</summary><p>Exploration only—not a promise. These would require separate product design, legal review, account controls, and consent rules.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <span>Voidscape is an open-source, local-first media workflow.</span>
+      <div class="footer-links"><a href="index.html">Home</a><a href="faq.html">FAQ</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub</a></div>
+    </div>
+  </footer>
+</body>
+</html>
