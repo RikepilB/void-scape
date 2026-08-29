@@ -35,8 +35,8 @@
     <section class="faq-category" id="start">
       <span class="category-label">Before you begin</span>
       <h2>Choose one file or public URL you are allowed to use.</h2>
-      <p class="category-intro">A meeting recording, screen capture, voice memo, demo, or supported public video URL is enough. Start with the key-free demo fixture if you want to see the flow without an account, API key, or personal media.</p>
-      <aside class="faq-callout"><strong>Available today.</strong> Local video and audio, supported public URLs, captions, local transcription, frames, timestamped transcripts, and a manifest that connects evidence to the original timeline.</aside>
+      <p class="category-intro">One local image, a filename-ordered carousel folder, a meeting recording, screen capture, voice memo, demo, or supported public video URL is enough. Start with the key-free demo fixture if you want to see the flow without an account, API key, or personal media.</p>
+      <aside class="faq-callout"><strong>Available today.</strong> Local images and carousels, local video and audio, supported public URLs, captions, local transcription, ordered visual evidence, timestamped transcripts, and a source manifest.</aside>
     </section>
 
     <section class="faq-category" id="inspect">
@@ -58,14 +58,14 @@
     <section class="faq-category" id="read">
       <span class="category-label">03 / Read</span>
       <h2>Create only the evidence you chose.</h2>
-      <p class="category-intro">After the preview is acceptable, read selects frames and creates a transcript and manifest in a work folder. The output is deliberately inspectable: you can open the files, check the moments, and keep or delete the folder when you are done.</p>
+      <p class="category-intro">After the preview is acceptable, read creates an inspectable work folder. Video can produce frames, transcript, and manifest; an image or non-recursive carousel produces ordered byte-preserving images and a manifest. Source files are never changed.</p>
       <pre><code>python skill/scripts/voidscape.py read "clip.mp4" --tier both --backend captions --workdir out</code></pre>
     </section>
 
     <section class="faq-category" id="ask">
       <span class="category-label">Then / Ask</span>
       <h2>Give the artifacts to an agent, not just a title.</h2>
-      <p class="category-intro">Open <code>frames/</code>, <code>transcript.txt</code>, and <code>manifest.json</code>. Ask for a summary, decision note, or answer to a concrete question—and ask the agent to cite moments as <code>[MM:SS]</code>. The CLI prepares evidence; an agent authors the interpretation.</p>
+      <p class="category-intro">Open <code>manifest.json</code> plus <code>frames/</code>, <code>transcript.txt</code>, or <code>images/</code>. Ask for a summary or a concrete answer. The agent cites video moments as <code>[MM:SS]</code> and carousel positions as <code>[image 1]</code>. The CLI prepares evidence; an agent authors the interpretation.</p>
       <aside class="faq-callout"><strong>Good prompt:</strong> “What decision was made around 05:12? Quote the transcript and cite the timestamp.”</aside>
     </section>
 
@@ -75,7 +75,7 @@
       <p class="category-intro">These are planning-lock items, not commands or product promises. Each needs its own privacy, platform, and implementation review before it becomes available.</p>
       <div class="faq-list">
         <details><summary>Private YouTube queue capture</summary><p>Designed around a user-owned private playlist and the official YouTube Data API. The current CLI can read an individual permitted URL; queue capture is coming soon.</p></details>
-        <details><summary>Images, carousels, articles, RSS, and saved posts</summary><p>Planned expansions beyond the present media engine. They are not current installed inputs.</p></details>
+        <details><summary>Articles, RSS, and saved posts</summary><p>Planned source adapters beyond the current image and media engines. They are not current installed inputs.</p></details>
         <details><summary>More source adapters and agent/MCP packaging</summary><p>Possible ways to make approved evidence easier to collect and use across environments. Not a current public API surface.</p></details>
         <details><summary>Hosted service, browser extension, and unattended workflows</summary><p>Exploration only—not a promise. These would require separate product design, legal review, account controls, and consent rules.</p></details>
       </div>

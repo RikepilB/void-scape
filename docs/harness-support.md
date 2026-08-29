@@ -3,10 +3,33 @@
 Voidscape is the primary installed skill. `read-video` is installed alongside it as a compatibility
 facade for existing automations and direct `video.py` calls.
 
+Browser and phone control belong to the agent harness, not the media engine. An approved browser
+connection may let a harness select permitted media in signed-in tabs; Voidscape then runs on the
+host that can access the selected media and its local files. Browser access does not authenticate
+`yt-dlp`.
+
 `read-video`'s engine (`skill/scripts/video.py`) is a Python CLI with no Codex runtime dependency —
 anything that can run a shell command and read a file can drive it via
 `probe → estimate → [gate] → run`. This doc covers how the *skill* (the `SKILL.md` prompt that
 tells an agent how to drive that CLI) gets discovered by different agent harnesses.
+
+## Browser and remote-control capabilities
+
+| Environment | What the harness can do | What Voidscape does | Remote condition |
+| --- | --- | --- | --- |
+| Codex or Work in ChatGPT desktop with Chrome | Use approved signed-in tabs, click, type, inspect rendered state, and use developer data when enabled | Run the local CLI and read its evidence bundle | ChatGPT Remote can steer the paired host from mobile; the host must remain awake, online, and available |
+| Claude Code with Claude in Chrome | Use signed-in sites, test browser flows, and inspect DOM, console, and network state | Run the local Voidscape CLI beside the coding session | Claude Code Remote Control continues the running host session from mobile or web |
+| Claude Cowork in the cloud | Continue cloud work across desktop, web, and mobile | Use Voidscape only when the session can reach the media and CLI | Local files or local Chrome still require the connected desktop path |
+| Other tool-capable harness | Execute the JSON CLI and read local evidence | Preserve the same gates and citations | Discovery, transport, permissions, approval, and host routing are harness-specific |
+
+Official documentation:
+
+- https://developers.openai.com/codex/chrome-extension
+- https://developers.openai.com/codex/remote-connections
+- https://developers.openai.com/codex/app/browser
+- https://docs.anthropic.com/en/docs/claude-code/chrome
+- https://docs.anthropic.com/en/docs/claude-code/remote-control
+- https://support.anthropic.com/en/articles/12012173-getting-started-with-claude-for-chrome
 
 ## The two install locations
 
@@ -69,3 +92,7 @@ so a plain overlay copy leaves them alone automatically.
 Agent SDK / custom-bot integration and non-interactive automation (cron, n8n, etc.) are different
 integration modes than "another CLI agent reads a SKILL.md" and are not covered by this document
 or the installers. They remain post-submission roadmap work.
+
+The CLI is model-neutral. That does not mean one extension automatically supports every model and harness.
+Each integration still needs a transport, tool discovery, permissions, approval handling,
+and local or remote host routing. A model without tool access cannot run Voidscape directly.

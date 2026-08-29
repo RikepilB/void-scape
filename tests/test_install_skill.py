@@ -32,6 +32,7 @@ def test_install_copies_primary_and_compatibility_skills(tmp_path):
     for install_root in (root, agents_root):
         assert (install_root / "voidscape" / "SKILL.md").exists()
         assert (install_root / "voidscape" / "scripts" / "video.py").exists()
+        assert (install_root / "voidscape" / "scripts" / "image.py").exists()
         assert (install_root / "read-video" / "scripts" / "video.py").exists()
 
 

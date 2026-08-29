@@ -23,6 +23,10 @@ Richard's folders to demonstrate Voidscape's core CLI.
 
 These solve different problems and should not be described as one feature:
 
+**Browser access does not become CLI authentication.** A browser-connected agent may inspect a tab
+the user is permitted to view, but that connection does not silently transfer Chrome cookies to
+`yt-dlp`. Voidscape never reads browser credentials, cookies, storage, or secrets.
+
 1. The [ChatGPT Chrome extension](https://chromewebstore.google.com/detail/chatgpt/hehggadaopoacecdllhhajmbjkdcmajg)
    connects ChatGPT/Codex to tabs after the user approves site access. It is useful for navigating a
    saved collection or inspecting an authenticated page.
@@ -31,6 +35,8 @@ These solve different problems and should not be described as one feature:
 3. A Netscape-format `cookies.txt` lets `yt-dlp`, and therefore the Voidscape CLI, make a request
    using the user's existing site session. The ChatGPT extension does not automatically give the CLI
    those cookies.
+4. Mobile remote control steers the connected execution host. It does not move local files, browser
+   sessions, or CLI credentials onto the phone.
 
 None of these is required for local files or normally accessible public URLs.
 

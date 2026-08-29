@@ -48,24 +48,25 @@ interfaces need to exist before anything else in this roadmap makes sense:
 - **Capture axis** — bookmark / saved-collection / folder → queue file. Today:
   `instagram_capture_helper.py` does this for one platform via Codex Chrome control browser
   automation, writing to `urls.md`.
-- **Read axis** — media → frames/transcript/text → notes. Today: `video.py`'s
-  `probe → estimate → run`, video-only.
+- **Read axis** - media to ordered evidence. `video.py` handles video and audio.
+  `image.py`, implemented on `feat/image-carousel-reader`, handles local images and carousels.
+  The guided CLI dispatches between these focused readers. A generic reader interface remains
+  deferred until article intake supplies a third concrete shape.
 
 **Milestone 0.1 — Capture-adapter interface.** Separate what `instagram_capture_helper.py` does
 that's IG-specific (selectors, auth, saved-collection shape) from what's generic (append-to-queue,
 dedup via unsave-or-mark, dry-run-first, abort-cleanly-on-selector-break). Define that interface
 once, so a new platform is "implement this interface," not "copy and rewrite the whole thing."
 
-**Milestone 0.2 — Media-reader interface.** Same exercise for `video.py`: separate
-video-specific mechanics (frame extraction, fps/duration tiering) from generic mechanics
-(cost-gate shape, output note template). This is where the already-parked **Thread B** (extend
-media types) and **Thread F** (transcription thoroughness tiers) naturally become the first real
-test cases of this interface.
+**Milestone 0.2 — Media-reader interface (deferred).** `video.py` and `image.py` remain focused
+concrete readers. Revisit a generic interface only after local/article URL and RSS intake provides
+a third concrete reader shape; until then, do not extract an abstraction from the two current
+readers.
 
 ## Phase 1 — Media-type expansion (the "read" side)
 
-- **1.1 Images** — static posts and carousels (today: skipped entirely — see Thread E's
-  `[SKIPPED]` marker convention). Vision-only tier, no transcript.
+- **1.1 Local images and carousels** - implemented on `feat/image-carousel-reader`; local
+  verification is complete, but commit, merge, and deployment remain a separate shipping decision.
 - **1.2 Audio-only** — podcasts, voice memos, X Spaces, LinkedIn audio posts. Reuses the existing
   transcription-backend cascade almost as-is.
 - **1.3 Blog / post / text** — Substack articles, LinkedIn posts, X threads, long-form blogs. No
@@ -178,18 +179,13 @@ or restrict based on that data.
   block automation risks Instagram ToS violation and account suspension. Same legal-review gate
   applies before this starts, regardless of which phase it's filed under.
 
-## Parked idea — universal browser-extension agent + multi-model reader
+## Next-project candidate — universal browser-extension reader
 
 **Not authorized for implementation. Next-endeavors only, raised 2026-07-17 (mid Build Week —
-explicitly deferred by the user to stay focused on the current submission).** Vision: a much
-bigger evolution than Phase 0-6 above — instead of one-off capture adapters per platform (IG done,
-YouTube spec'd), a generic **browser-extension-driven agent** any harness (Codex Chrome control,
-ChatGPT's browser tooling, etc.) can drive to access and interact with video/content across
-Instagram, LinkedIn, Substack, X, "anything with a browser." Paired with **multi-model
-specialization** instead of one active pricing preset: Gemini for search-context and native video
-understanding, Grok (or similar) for video/transcript reading, GPT for DOM-awareness/browser-
-optimization/tab-and-window handling, and a cheap open-source all-in-one orchestrator (e.g. Kimi)
-for task management, skill creation, and agent specialization across the fleet.
+explicitly deferred by the user to stay focused on the current submission).** The existing CLI
+manifest and `{ok,data,error,meta}` envelope are the portable core. A universal browser bridge
+still needs a transport, tool schemas, permission and approval handling, host routing, and a
+per-platform policy review. It requires a separate design and security review.
 
 - **Why parked, not scoped:** this is a different shape of project than the CLI-first, one-adapter-
   at-a-time discipline every phase above follows (see the "not a pre-designed interface" rule
@@ -202,13 +198,41 @@ for task management, skill creation, and agent specialization across the fleet.
     the multi-model orchestration layer) and/or a dedicated milestone, then run `grill-with-docs`
   before any spec work — do not start coding from this paragraph alone.
 
-## Parked idea — post-submission orchestration
+## Orchestration — reassessed 2026-08-28 (was: parked until after the submission)
 
-**Do not implement before the 2026-07-21 submission.** Revisit the three scoped options after the
-deadline: a full background-job system, a thin demo slice, or a zero-code operating workflow. Any
-implementation must separately design source-platform output routing, Windows Task Scheduler or
-equivalent scheduling, a headless Codex worker, failure recovery, and explicit privacy/approval
-gates. GitHub issue #6 owns this follow-up.
+Parked during Build Week, revisited after the 2026-07-21 submission shipped. The three scoped
+options are preserved below; the decision is which one is live now and what the other two are
+waiting on. GitHub issue #6 tracked this reassessment and is closed by it.
+
+**The three options, unchanged:**
+
+1. **Full background-job system** — scheduled unattended capture and read, with a queue, failure
+   recovery, and durable state.
+2. **Thin demo slice** — a single scripted end-to-end run, enough to show the shape without the
+   supporting infrastructure.
+3. **Zero-code operating workflow** — a documented manual loop over the CLI that already ships,
+   adding no code and no new privacy surface.
+
+**Decision: option 3 now, options 1 and 2 deferred behind the capture-adapter interface.**
+
+- **Live now — the zero-code operating loop.** Operate the existing CLI by hand:
+  `inspect → preview → read`, with the cost gate answered per run and the output filed by the
+  user. No scheduler, no worker, no new credential handling. This is what "orchestration" means
+  in this repo today.
+- **Deferred — background job execution (option 1) and the demo slice (option 2).** Both target
+  a capture-adapter surface that does not exist yet. Milestone 0.1 deliberately extracts that
+  interface *after* a second real adapter exists (see Suggested sequencing above, and Phase 2.5).
+  Building a scheduler against today's one-off scripts means rebuilding it once 0.1 lands, so
+  these wait for: private YouTube queue → articles/RSS → adapter extraction.
+- **Deferred — source-platform output routing.** Same reason: routing is a property of the
+  adapter interface, not of any single script. Designing it per-script now hard-codes exactly
+  what Phase 0.1 exists to generalize.
+- **Deferred — scheduling/headless worker and its privacy gates.** Windows Task Scheduler or
+  equivalent, a headless Codex worker, and failure recovery stay unscoped. The privacy and
+  approval gates are the load-bearing part and get designed *with* the adapter interface, not
+  bolted onto it afterward — an unattended worker is the first thing in this project that would
+  act on the user's accounts without a human in the loop, so it inherits the same explicit-gate
+  rule as every cloud spend (see Guiding principles).
 
 ## Open questions (flagged, not decided here)
 

@@ -1,4 +1,5 @@
 """The public skill stays Codex-first and does not name unsupported harness tools."""
+import json
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -17,6 +18,14 @@ PRIVACY_PAGE = REPO / "docs" / "privacy.html"
 TERMS_PAGE = REPO / "docs" / "terms.html"
 FAQ_PAGE = REPO / "docs" / "faq.html"
 GUIDE_PAGE = REPO / "docs" / "guide.html"
+README = REPO / "README.md"
+CLI_REFERENCE = REPO / "docs" / "cli-reference.md"
+DEMO_SHOT_LIST = REPO / "docs" / "demo-shot-list.md"
+HARNESS_SUPPORT = REPO / "docs" / "harness-support.md"
+CHROME_MATRIX = REPO / "docs" / "chrome-use-case-matrix.md"
+ROADMAP = REPO / "docs" / "ROADMAP.md"
+IMAGE_DESIGN = REPO / "docs" / "superpowers" / "specs" / "2026-07-21-image-carousel-reader-design.md"
+IMAGE_PLAN = REPO / "docs" / "superpowers" / "plans" / "2026-07-21-image-carousel-reader.md"
 
 
 def test_skill_md_is_codex_first():
@@ -42,6 +51,39 @@ def test_authenticated_source_guide_keeps_access_layers_explicit():
         "Chrome-control skill",
         "VPN",
         "not a Voidscape dependency",
+    ):
+        assert required in content
+
+
+def test_browser_and_remote_docs_keep_host_boundary_explicit():
+    readme = README.read_text(encoding="utf-8")
+    harness = HARNESS_SUPPORT.read_text(encoding="utf-8")
+    auth = AUTH_GUIDE.read_text(encoding="utf-8")
+    matrix = CHROME_MATRIX.read_text(encoding="utf-8")
+
+    assert "docs/harness-support.md" in readme
+    for required in (
+        "ChatGPT Remote",
+        "Claude Code Remote Control",
+        "host must remain awake",
+        "local Voidscape CLI",
+        "A model without tool access cannot run Voidscape directly",
+    ):
+        assert required in harness
+    assert "Browser access does not become CLI authentication" in auth
+    assert "Vendor-documented" in matrix
+    assert "Richard-tested" in matrix
+
+
+def test_harness_docs_do_not_claim_automatic_universal_support():
+    content = HARNESS_SUPPORT.read_text(encoding="utf-8")
+    assert "does not mean one extension automatically supports every model and harness" in content
+    for required in (
+        "transport",
+        "tool discovery",
+        "permissions",
+        "approval",
+        "host routing",
     ):
         assert required in content
 
@@ -195,6 +237,32 @@ def test_guide_claims_only_shipped_agent_surface():
     assert "installed CLI" in content
 
 
+def test_local_image_and_carousel_reader_is_documented_in_release_candidate_sources():
+    skill = SKILL_MD.read_text(encoding="utf-8")
+    readme = README.read_text(encoding="utf-8")
+    reference = CLI_REFERENCE.read_text(encoding="utf-8")
+    guide = VOIDSCAPE_GUIDE.read_text(encoding="utf-8")
+    landing = LANDING_PAGE.read_text(encoding="utf-8")
+    demo = DEMO_SHOT_LIST.read_text(encoding="utf-8")
+
+    available = landing.split("01 / Available now", 1)[1].split(
+        "02 / Coming soon", 1,
+    )[0]
+    planned = landing.split("02 / Coming soon", 1)[1]
+    assert "Image and carousel reading" in available
+    assert "Image and carousel reading" not in planned
+    for content in (skill, readme, reference, guide):
+        assert "image.py manifest --compact" in content
+        assert "[image 1]" in content
+        assert "non-recursive" in content
+        assert "100 images" in content
+    assert "must contain exactly one frame" in reference
+    assert "Animated APNG and WebP inputs are unsupported" in reference
+    assert "45–60 second image/carousel demo" in demo
+    assert "slide1.png" in demo
+    assert "slide10.png" in demo
+
+
 def test_submission_records_live_pages_and_published_provenance():
     submission = SUBMISSION.read_text(encoding="utf-8")
     provenance = PROVENANCE.read_text(encoding="utf-8")
@@ -223,3 +291,46 @@ def test_import_audit_covers_every_distributable_component_and_private_exclusion
         "generated demo videos",
     ):
         assert required in content
+
+
+def test_roadmap_and_image_plan_match_local_release_state():
+    roadmap = ROADMAP.read_text(encoding="utf-8")
+    design = IMAGE_DESIGN.read_text(encoding="utf-8")
+    plan = IMAGE_PLAN.read_text(encoding="utf-8")
+
+    assert "Local images and carousels" in roadmap
+    assert "implemented on `feat/image-carousel-reader`" in roadmap
+    assert "separate design and security review" in roadmap
+    assert "**Status:** Implemented and verified locally; not yet shipped" in design
+    assert "**Status:** Completed locally; awaiting a separate shipping decision" in plan
+
+
+def test_image_design_probe_schema_matches_the_stable_implementation_names():
+    design = IMAGE_DESIGN.read_text(encoding="utf-8")
+    schema_text = design.split("Probe data shape:", 1)[1].split(
+        "```json", 1,
+    )[1].split("```", 1)[0]
+    schema = json.loads(schema_text)
+
+    assert schema["within_limit"] is True
+    assert "items" not in schema
+    assert set(schema["images"][0]) == {
+        "index", "source", "source_name", "width", "height", "bytes",
+    }
+
+
+def test_completed_image_plan_snippets_teach_current_contracts():
+    plan = IMAGE_PLAN.read_text(encoding="utf-8")
+
+    for required in (
+        "return natural, path.name.casefold(), path.name",
+        '"-count_frames"',
+        '"nb_read_frames"',
+        "expected exactly one frame",
+        '"within_limit": len(images) <= MAX_IMAGES',
+        'raise ValueError("out_words cannot be negative")',
+        "drivers_usd",
+        'model_rate["output"]',
+        'args.agent_model or _defaults(workspace)["agent_model"]',
+    ):
+        assert required in plan
