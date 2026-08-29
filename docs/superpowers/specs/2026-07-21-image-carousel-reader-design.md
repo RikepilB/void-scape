@@ -1,8 +1,8 @@
 # Local image and carousel reader design
 
 **Date:** 2026-07-21  
-**Status:** Implemented and verified locally; not yet shipped
-**Branch:** `feat/image-carousel-reader`
+**Status:** Shipped in PR #9 (merged 2026-08-28)
+**Branch:** merged to `main` via PR #9
 
 ## Goal
 
