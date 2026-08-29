@@ -177,3 +177,29 @@ run(input, tier, backend, [start,end,frames,workdir])
 
 See [cli-reference.md](cli-reference.md) for exact arguments and JSON shapes, and
 [workflow.md](workflow.md) for how the agent is told to drive all this.
+
+## Media readers (video, image, article)
+
+Voidscape's read axis is three focused engines, not one generic pipeline:
+
+| Module | Inputs | Evidence |
+|---|---|---|
+| `video.py` | Local media + video/audio URLs | `frames/`, optional `transcript.txt`, `[MM:SS]` citations |
+| `image.py` | Local image or carousel folder | `images/`, `[image N]` citations |
+| `article.py` | Local HTML/Markdown/RSS/Atom; non-video URLs | `entries/`, `[article N]` / `[entry N]` citations |
+
+`voidscape.py` dispatches `inspect → preview → read` to each engine's `probe → estimate → run`.
+Discovery order: image path, then article path, then video (default).
+
+**Shared protocol, separate implementations.** All three CLIs expose the same command names and
+exit-code map and can emit the `{ok,data,error,meta}` envelope defined in `video.py`. Image and
+article readers import envelope, error classification, and pricing helpers from `video.py`; they do
+not share a reader base class. Probe fields, approval gates, and workdir layouts differ on purpose.
+
+Cost and privacy gates are unchanged: estimate surfaces spend/download/fetch requirements; `run`
+raises `PermissionError` (exit 4) until the user passes `--allow-cloud` and/or
+`--allow-model-download` (video) or `--allow-fetch` / voidscape `--allow-cloud` (article URLs).
+`manifest.json` is written only after successful evidence preparation.
+
+Full comparison and the Phase 0.2 decision live in
+[`docs/superpowers/specs/2026-08-28-media-reader-interface-reassessment.md`](superpowers/specs/2026-08-28-media-reader-interface-reassessment.md).

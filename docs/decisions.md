@@ -97,3 +97,28 @@ adapter ships — ROADMAP.md's phase ordering updated to reflect this.
 **Alternatives considered:** Keep Watch Later (rejected: official API docs say it is inaccessible). Browser automation for Watch Later (rejected for this adapter because the earlier decision explicitly chose the official API to avoid selector fragility). Leave the playlist untouched and rely only on content dedup (rejected: loses the visible pending queue signal that made the IG unsave marker useful).
 
 **Consequences:** One-time setup changes from "use Watch Later" to "create or choose a private queue playlist." The implementation plan must document OAuth, playlist ID/title configuration, quota cost (`playlistItems.list` is 1 unit; `playlistItems.delete` is 50 units), and the fact that `youtube.readonly` is insufficient for deletion.
+
+---
+
+### 2026-08-28 — Media-reader interface: protocol yes, generic implementation no (issue #15)
+
+**Context:** Milestone 0.2 deferred a generic reader interface until a third concrete shape existed.
+`article.py` (local HTML/Markdown, RSS/Atom, non-video URLs) shipped alongside `image.py` and
+`video.py`. GitHub issue #15 asked to compare discovery, probe, estimate, approvals, evidence, and
+errors across all three before extracting anything.
+
+**Decision:** Document a **small shared protocol** — each reader exposes `manifest` / `probe` /
+`estimate` / `run` with the same exit-code map and optional `{ok,data,error,meta}` envelope;
+`voidscape.py` maps `inspect → preview → read`. **Do not** add a shared reader implementation
+layer or base class. Keep `video.py`, `image.py`, and `article.py` as focused siblings; image and
+article continue importing envelope, pricing, and error helpers from `video.py`.
+
+**Alternatives considered:** No documented interface (rejected — agents already depend on manifest/
+envelope parity). Shared implementation / base class (rejected — probe fields, cost drivers,
+approval gates, and evidence layouts differ materially; a generic layer would hide real differences
+or leak video knobs into text readers).
+
+**Consequences:** ROADMAP milestone 0.2 closed by spec, not refactor. New readers follow the
+protocol checklist in `docs/superpowers/specs/2026-08-28-media-reader-interface-reassessment.md`.
+Revisit extraction only after a fourth reader duplicates substantial CLI boilerplate without
+masking behavioral differences. Regression tests in `tests/test_media_reader_protocol.py`.

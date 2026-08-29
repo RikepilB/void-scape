@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import article as article_engine
 import image as image_engine
 import video
 
@@ -106,6 +107,10 @@ def _is_image_source(value: str) -> bool:
     return image_engine.is_image_input(video.resolve_input(value))
 
 
+def _is_article_source(value: str) -> bool:
+    return article_engine.is_article_input(video.resolve_input(value))
+
+
 def _print_image_skipped(result: dict[str, Any]) -> None:
     skipped = result.get("skipped") or []
     if skipped:
@@ -115,10 +120,26 @@ def _print_image_skipped(result: dict[str, Any]) -> None:
         print(f"  Skipped: {details}")
 
 
+def _print_article_skipped(result: dict[str, Any]) -> None:
+    skipped = result.get("skipped") or []
+    if skipped:
+        details = ", ".join(
+            f"{entry.get('title') or entry.get('name', '?')} ({entry['reason']})"
+            for entry in skipped
+        )
+        print(f"  Skipped: {details}")
+
+
 def inspect_source(args: argparse.Namespace) -> int:
     try:
         image_source = _is_image_source(args.input)
-        info = image_engine.probe(args.input) if image_source else video.probe(args.input)
+        article_source = False if image_source else _is_article_source(args.input)
+        if image_source:
+            info = image_engine.probe(args.input)
+        elif article_source:
+            info = article_engine.probe(args.input)
+        else:
+            info = video.probe(args.input)
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
@@ -132,6 +153,21 @@ def inspect_source(args: argparse.Namespace) -> int:
         print("  Order: " + ", ".join(item["source_name"] for item in info["images"]))
         _print_image_skipped(info)
         print("  Processing: local only · originals preserved")
+        print(f"Next: voidscape.py preview {args.input!r}")
+        return 0
+    if article_source:
+        label = "Feed" if info["kind"] == "feed" else "Article"
+        count_label = "entry" if info["item_count"] == 1 else "entries"
+        print("Voidscape inspection")
+        print(f"  {label}: {info['item_count']} {count_label}")
+        if info.get("feed_title"):
+            print(f"  Feed title: {info['feed_title']}")
+        print("  Order: " + ", ".join(item["title"] for item in info["entries"]))
+        _print_article_skipped(info)
+        if info.get("requires_fetch_approval"):
+            print("  Availability: remote URL · fetch requires explicit approval")
+        else:
+            print("  Processing: local only · originals preserved")
         print(f"Next: voidscape.py preview {args.input!r}")
         return 0
     source = "web link" if info.get("source") == "url" else "local file"
@@ -166,19 +202,36 @@ def preview(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
         image_source = _is_image_source(args.input)
+        article_source = False if image_source else _is_article_source(args.input)
         agent_model = args.agent_model or _defaults(workspace)["agent_model"]
-        estimate = (image_engine.estimate(args.input, args.out_words, agent_model)
-                    if image_source else _estimate_from_args(args, workspace))
+        if image_source:
+            estimate = image_engine.estimate(args.input, args.out_words, agent_model)
+        elif article_source:
+            estimate = article_engine.estimate(args.input, args.out_words, agent_model)
+        else:
+            estimate = _estimate_from_args(args, workspace)
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
         _emit(estimate, True)
         return 0
     print("Voidscape preview")
-    print(image_engine._fmt_estimate(estimate) if image_source else video._fmt_estimate(estimate))
+    if image_source:
+        print(image_engine._fmt_estimate(estimate))
+    elif article_source:
+        print(article_engine._fmt_estimate(estimate))
+    else:
+        print(video._fmt_estimate(estimate))
     if image_source:
         _print_image_skipped(estimate)
         print("Next: evidence can be prepared locally with voidscape.py read.")
+        return 0
+    if article_source:
+        _print_article_skipped(estimate)
+        if estimate.get("requires_fetch_approval"):
+            print("Next: obtain consent, then use read with --allow-cloud.")
+        else:
+            print("Next: evidence can be prepared locally with voidscape.py read.")
         return 0
     if estimate["requires_cloud_approval"]:
         print("Next: obtain consent, then use read with --allow-cloud.")
@@ -194,11 +247,26 @@ def preview(args: argparse.Namespace) -> int:
 def read(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
-        if _is_image_source(args.input):
+        image_source = _is_image_source(args.input)
+        article_source = False if image_source else _is_article_source(args.input)
+        if image_source:
             result = image_engine.run(args.input, args.workdir)
-            image_source = True
+        elif article_source:
+            estimate = article_engine.estimate(
+                args.input, args.out_words,
+                args.agent_model or _defaults(workspace)["agent_model"],
+            )
+            if estimate["requires_cloud_approval"] and not args.allow_cloud:
+                raise PermissionError(
+                    "remote article fetch needs explicit consent; review preview, "
+                    "then rerun with --allow-cloud"
+                )
+            result = article_engine.run(
+                args.input, args.workdir, allow_fetch=args.allow_cloud,
+            )
         else:
             image_source = False
+            article_source = False
             estimate = _estimate_from_args(args, workspace)
             if estimate["requires_cloud_approval"] and not args.allow_cloud:
                 raise PermissionError("cloud audio processing needs explicit consent; review preview, then rerun with --allow-cloud")
@@ -224,6 +292,10 @@ def read(args: argparse.Namespace) -> int:
     if image_source:
         print(f"  Images: {result['item_count']}")
         print("Next: ask your agent to read manifest.json and images/ with [image 1] citations.")
+        return 0
+    if article_source:
+        print(f"  Entries: {result['item_count']}")
+        print(f"Next: ask your agent to read manifest.json and entries/ with {result['citation_guide']}.")
         return 0
     print(f"  Frames: {len(result['frames'])} (deduplicated: {result['frames_deduped']})")
     print(f"  Transcript: {result['transcript'] or 'not created'}")

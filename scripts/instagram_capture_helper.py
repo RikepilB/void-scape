@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
+from capture_adapter import append_and_confirm, is_duplicate, queue_append_result
+
 _ALLOWED_HOSTS = {"instagram.com", "www.instagram.com"}
 _PATH_RE = re.compile(r"^/(?:reel|p|tv)/([A-Za-z0-9_-]+)")
 _SHORTCODE_RE = re.compile(r"^[A-Za-z0-9_-]{5,15}$")
@@ -31,27 +33,16 @@ def canonical_url(shortcode: str) -> str:
     return f"https://www.instagram.com/reel/{shortcode}/"
 
 
-def is_duplicate(url: str, urls_md_path: Path) -> bool:
-    if not urls_md_path.exists():
-        return False
-    lines = urls_md_path.read_text(encoding="utf-8").splitlines()
-    return url in (line.strip() for line in lines)
-
-
-def append_and_confirm(url: str, urls_md_path: Path) -> bool:
-    urls_md_path.parent.mkdir(parents=True, exist_ok=True)
-    with urls_md_path.open("a", encoding="utf-8") as f:
-        f.write(url + "\n")
-    lines = urls_md_path.read_text(encoding="utf-8").splitlines()
-    return url in (line.strip() for line in lines)
-
-
 def process(url_or_code: str, urls_md_path: Path) -> dict:
     url = canonical_url(extract_shortcode(url_or_code))
-    if is_duplicate(url, urls_md_path):
-        return {"url": url, "duplicate": True, "appended": False, "safe_to_unsave": True}
-    appended = append_and_confirm(url, urls_md_path)
-    return {"url": url, "duplicate": False, "appended": appended, "safe_to_unsave": appended}
+    write = queue_append_result(url, urls_md_path)
+    safe_to_unsave = write["appended"] or write["duplicate"]
+    return {
+        "url": url,
+        "duplicate": write["duplicate"],
+        "appended": write["appended"],
+        "safe_to_unsave": safe_to_unsave,
+    }
 
 
 def main(argv=None) -> int:
