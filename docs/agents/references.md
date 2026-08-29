@@ -13,6 +13,7 @@ These sources inform the agent documentation and autonomy boundary; they are not
 - [`docs/ROADMAP.md`](../ROADMAP.md) — planning and parked work.
 - [Agent-docs information architecture](../superpowers/specs/2026-08-29-agent-docs-information-architecture.md).
 - [Browser-bridge security contract](../superpowers/specs/2026-08-28-harness-neutral-browser-bridge-design.md).
+- [Browser-bridge implementation contract](../superpowers/specs/2026-08-29-browser-bridge-implementation-contract.md).
 
 ## Official harness documentation
 

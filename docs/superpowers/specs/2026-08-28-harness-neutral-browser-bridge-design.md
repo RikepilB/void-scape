@@ -5,6 +5,10 @@
 **Issue:** GitHub #14  
 **Branch:** `chore/post-merge-verification`
 
+Implementation-ready policy, tool, transport, and review detail is in the
+[issue #25 addendum](2026-08-29-browser-bridge-implementation-contract.md). Neither document
+authorizes production bridge code.
+
 ## Goal
 
 Design a portable browser bridge that lets different agent harnesses invoke Voidscape while media and

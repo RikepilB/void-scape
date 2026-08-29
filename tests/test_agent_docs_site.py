@@ -24,6 +24,10 @@ BROWSER_BRIDGE_SPEC = (
     REPO / "docs" / "superpowers" / "specs"
     / "2026-08-28-harness-neutral-browser-bridge-design.md"
 )
+BROWSER_BRIDGE_IMPLEMENTATION_SPEC = (
+    REPO / "docs" / "superpowers" / "specs"
+    / "2026-08-29-browser-bridge-implementation-contract.md"
+)
 OBSERVE_CLI_SPEC = (
     REPO / "docs" / "superpowers" / "specs"
     / "2026-08-29-observe-companion-cli-design.md"
@@ -262,6 +266,32 @@ def test_browser_bridge_and_mcp_remain_design_only():
         REPO / "browser-extension",
     ):
         assert not forbidden_production_path.exists()
+
+
+def test_expanded_browser_bridge_contract_is_reviewed_but_not_authorized():
+    spec = _text(BROWSER_BRIDGE_IMPLEMENTATION_SPEC)
+    normalized = _normalized(spec)
+    for required in (
+        "production implementation not authorized",
+        "Permission policy YAML v1",
+        "site/action/time/deny-app rules",
+        "browser.snapshot",
+        "browser.screenshot",
+        "browser.navigate",
+        "There is no raw `eval`",
+        "MCP manifest draft for Voidscape CLI tools",
+        "voidscape_probe",
+        "voidscape_estimate",
+        "voidscape_run",
+        "{ok,data,error,meta}",
+        "The bridge never reads browser credentials, cookies, storage, or secrets",
+        "Codex / ChatGPT",
+        "Claude Code / Claude in Chrome",
+        "Completed design security review checklist",
+        "dedicated `voidscape-bridge` repository",
+    ):
+        assert required in normalized
+    assert "- [ ]" not in spec
 
 
 def test_observe_cli_spec_locks_local_capture_and_error_contract():

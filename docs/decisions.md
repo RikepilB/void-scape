@@ -168,3 +168,27 @@ it creates a separate service, retention, permission, and dependency surface).
 **Consequences:** The installer gains the script automatically by copying `skill/`; #24 must add
 mocked platform/error tests and update discovery status. macOS, Wayland, audio, ambient capture,
 browser automation, and automatic evidence reads remain out of scope.
+
+---
+
+### 2026-08-29 — A future browser bridge belongs in a dedicated repository
+
+**Context:** Issue #25 expands the closed #14 browser-bridge design into an implementation-ready
+permission, tool, and threat contract. A browser extension or native host has a materially different
+attack surface, release cadence, dependency stack, and per-harness test matrix from Voidscape's
+standard-library media readers.
+
+**Decision:** If production work is later authorized, create a dedicated `voidscape-bridge`
+repository and publish any extension/native-host packages from there. Keep the CLI envelope,
+discovery references, design contracts, and verified harness evidence in `void-scape`. Issue #27 may
+run a disposable prototype outside the production tree and commit only its report here.
+
+**Alternatives considered:** Implement inside `void-scape` (rejected because it couples browser and
+localhost security advisories to the media CLI). Treat a package registry as the source of truth
+(rejected because policy, adapters, threat tests, and issue history need repository ownership). Do
+nothing beyond harness-owned integrations (retained as the default if the spike cannot prove a
+distinct safe benefit).
+
+**Consequences:** The implementation contract can align schemas without shipping bridge code. Any
+production issue needs explicit maintainer authorization, an independent security review, and
+separate Codex/ChatGPT and Claude verification; one harness never proves universal compatibility.
