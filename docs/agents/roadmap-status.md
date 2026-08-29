@@ -16,7 +16,7 @@ This page summarizes current `main`; it does not authorize roadmap implementatio
 | Instagram URL queue helper | `dev-only` | repository script; not installed with the skill |
 | YouTube private-playlist queue adapter | `dev-only` | repository script; official API; not installed with the skill |
 | Agent documentation tree | `shipped` | this page and sibling pages |
-| Machine-readable agent discovery manifest | `planned` | issue #20 |
+| Machine-readable agent discovery manifest | `shipped` | `docs/agents/manifest.json` |
 | Observe-and-capture playbook | `shipped` | `docs/agents/observe-and-capture.md` |
 | Thin observe CLI | `planned` | issues #23-#24 |
 | Expanded bridge and MCP/extension spikes | `planned` | issues #25-#27; design/spike only |
