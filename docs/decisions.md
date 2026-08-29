@@ -146,3 +146,25 @@ verification (rejected because it obscures the host, permission, and test bounda
 **Consequences:** Issue #19 implements the tree and minimal navigation; issue #21 enforces truth in
 tests. Voidscape does not gain browser automation, cookie access, or unattended execution from this
 documentation change.
+
+---
+
+### 2026-08-29 — Observe capture ships as a focused sibling CLI, not a guided subcommand
+
+**Context:** Issue #23 needed an on-demand screenshot/short-clip contract without rebuilding
+screenpipe or expanding the guided media-selection interface. The user chose an installed sibling
+script over `voidscape.py observe ...` or a repository-only developer helper.
+
+**Decision:** Implement `skill/scripts/observe.py` with `doctor`, `screenshot`, `clip`, and `status`.
+Capture delegates to ffmpeg, supports Windows and Linux X11, records no audio, refuses overwrites,
+and returns local files. `voidscape doctor` reports optional readiness only. Every captured file
+still enters the separate `inspect -> preview -> read` flow.
+
+**Alternatives considered:** Nested `voidscape observe` commands (rejected because capture is a
+companion concern, not a media-reader dispatch mode). `scripts/observe_helper.py` (rejected because
+the selected capability should install with the skill). Embed or manage screenpipe (rejected because
+it creates a separate service, retention, permission, and dependency surface).
+
+**Consequences:** The installer gains the script automatically by copying `skill/`; #24 must add
+mocked platform/error tests and update discovery status. macOS, Wayland, audio, ambient capture,
+browser automation, and automatic evidence reads remain out of scope.
