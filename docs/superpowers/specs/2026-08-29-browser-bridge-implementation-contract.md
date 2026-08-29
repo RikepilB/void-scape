@@ -1,8 +1,10 @@
 # Browser bridge implementation contract
 
-**Date:** 2026-08-29  
-**Status:** Design review complete for a disposable spike; production implementation not authorized  
-**Issue:** GitHub #25  
+**Date:** 2026-08-29
+
+**Status:** Design review complete for a disposable spike; production implementation not authorized
+
+**Issue:** GitHub #25
 **Builds on:** [Harness-neutral browser bridge and security contract](2026-08-28-harness-neutral-browser-bridge-design.md)
 
 ## Decision summary
