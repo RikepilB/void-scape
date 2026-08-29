@@ -11,6 +11,7 @@ from typing import Any
 
 import article as article_engine
 import image as image_engine
+import observe as observe_engine
 import video
 
 
@@ -373,12 +374,18 @@ def doctor(args: argparse.Namespace) -> int:
     workspace_path = _workspace_path(args.config)
     workspace = _load_workspace(workspace_path)
     tools = {name: shutil.which(name) is not None for name in ("python", "ffmpeg", "ffprobe", "yt-dlp")}
+    observe_report = observe_engine.doctor_report(check_screenpipe=False)
     report = {
         "skill_root": str(SKILL_ROOT),
         "workspace": str(workspace_path),
         "workspace_configured": bool(workspace),
         "tools": tools,
         "local_backend_available": video._have("faster_whisper"),
+        "observe": {
+            "capture_supported": observe_report["capture_supported"],
+            "backend": observe_report["capture_backend"],
+            "screenpipe_optional": True,
+        },
         "ready": tools["ffmpeg"] and tools["ffprobe"],
     }
     if args.json:
@@ -389,6 +396,12 @@ def doctor(args: argparse.Namespace) -> int:
         print(f"  {'OK' if available else 'MISSING'} {name}")
     print(f"  {'OK' if workspace else 'OPTIONAL'} workspace: {workspace_path}")
     print(f"  {'OK' if report['local_backend_available'] else 'OPTIONAL'} faster-whisper")
+    if not observe_report["capture_supported"]:
+        print(f"  UNSUPPORTED observe capture: {observe_report.get('reason', observe_report['platform'])}")
+    elif tools["ffmpeg"]:
+        print(f"  OK observe capture: {observe_report['capture_backend']}")
+    else:
+        print(f"  MISSING observe capture: ffmpeg ({observe_report['capture_backend']})")
     print("  Ready for local video analysis." if report["ready"] else "  Install ffmpeg and ffprobe before analysis.")
     return 0 if report["ready"] else 5
 

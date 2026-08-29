@@ -111,6 +111,8 @@ def test_doctor_json_is_non_interactive_and_structured(capsys, tmp_path):
     report = json.loads(capsys.readouterr().out)
     assert report["workspace_configured"] is False
     assert {"ffmpeg", "ffprobe", "yt-dlp"}.issubset(report["tools"])
+    assert set(report["observe"]) == {"capture_supported", "backend", "screenpipe_optional"}
+    assert report["observe"]["screenpipe_optional"] is True
 
 
 @requires_ffmpeg

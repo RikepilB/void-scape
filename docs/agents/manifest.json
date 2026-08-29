@@ -113,7 +113,7 @@
         "clip",
         "status"
       ],
-      "status": "planned"
+      "status": "shipped"
     }
   ],
   "capabilities": [
@@ -163,7 +163,7 @@
     },
     {
       "id": "capture.observe_on_demand",
-      "status": "planned",
+      "status": "shipped",
       "entry_point": "observe_companion"
     },
     {

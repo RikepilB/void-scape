@@ -3,7 +3,7 @@
 This playbook composes a browser-capable harness, optional capture tooling, and Voidscape without
 turning Voidscape into a browser controller or ambient recorder.
 
-**Status:** `shipped` documentation; observe CLI `planned`
+**Status:** `shipped` documentation and observe CLI
 
 [Back to agent docs](index.md) · Canonical sources: [harness support](../harness-support.md),
 [browser/CLI matrix](../chrome-use-case-matrix.md), and
@@ -58,11 +58,13 @@ separate decisions.
 ## Recipe 1 — browser task to screenshot or short clip
 
 1. In a permitted tab, ask the harness to complete the browsing task.
-2. Ask the harness or an independently installed capture tool to save a screenshot or short clip to
-   the known local capture folder. Confirm the final path.
+2. Ask the harness to expose the permitted state, then use the installed observe companion (or a
+   separately approved capture tool) to save an explicit screenshot or short silent clip. The
+   observe companion captures the selected desktop/display; it does not navigate or select a tab.
 3. For a screenshot:
 
    ```powershell
+   python skill/scripts/observe.py screenshot --out "C:\path\capture.png"
    python skill/scripts/voidscape.py inspect "C:\path\capture.png"
    python skill/scripts/voidscape.py preview "C:\path\capture.png"
    python skill/scripts/voidscape.py read "C:\path\capture.png" --workdir "C:\path\evidence-image"
@@ -71,6 +73,7 @@ separate decisions.
 4. For a clip:
 
    ```powershell
+   python skill/scripts/observe.py clip --seconds 15 --out "C:\path\capture.mp4"
    python skill/scripts/voidscape.py inspect "C:\path\capture.mp4"
    python skill/scripts/voidscape.py preview "C:\path\capture.mp4" --tier both
    python skill/scripts/voidscape.py read "C:\path\capture.mp4" --tier both --workdir "C:\path\evidence-clip"
@@ -79,7 +82,9 @@ separate decisions.
 5. Stop for any previewed approval. Read the resulting bundle with `[image N]` or `[MM:SS]`
    citations.
 
-Voidscape does not currently ship the capture command; issue #24 owns the optional thin wrapper.
+Run `python skill/scripts/observe.py doctor` for capture readiness and
+`python skill/scripts/observe.py status --json` for optional screenpipe health. Capture never calls
+`read`, forwards approval flags, records audio, overwrites an existing path, or starts a service.
 
 ## Recipe 2 — public video URL without browser cookies
 
@@ -113,7 +118,7 @@ tool. Never print the file or include it in evidence.
 screenpipe is a separately installed, source-available desktop-memory product. It is not a
 Voidscape dependency and is not started or configured by the Voidscape installer.
 
-Current upstream examples use:
+The upstream README quickstart currently uses:
 
 ```text
 npx screenpipe record
@@ -121,13 +126,16 @@ npx screenpipe setup
 claude mcp add screenpipe -- npx -y screenpipe-mcp@latest
 ```
 
-The issue brief's older `screenpipe service install` spelling is not present in the current upstream
-README. Follow the [current screenpipe documentation](https://docs.screenpi.pe) and pin a release
+The current upstream CLI skill also documents a `screenpipe service install` workflow through its
+CLI launcher. These are screenpipe-owned installation and service-management paths, not Voidscape
+commands. Follow the [current screenpipe documentation](https://docs.screenpi.pe) and pin a release
 when reproducibility matters; upstream warns that `main` moves quickly.
 
 screenpipe currently documents a localhost REST API (default port 3030), MCP access, local screen
 history, and a video-export pipe. A user or harness may query recent permitted frames and export a
-chosen clip, then pass that local file to Voidscape. Voidscape does not query screenpipe on its own.
+chosen clip, then pass that local file to Voidscape. The observe companion queries only normalized
+health from a loopback endpoint (or `screenpipe status --json`); it never queries capture history,
+MCP, raw SQL, or a screenpipe database.
 
 Keep the service bound locally, apply screenpipe's current authentication and permission guidance,
 and never treat localhost as a sufficient trust boundary. Ambient retention, excluded apps, audio
