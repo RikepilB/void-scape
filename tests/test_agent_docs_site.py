@@ -24,6 +24,10 @@ BROWSER_BRIDGE_SPEC = (
     REPO / "docs" / "superpowers" / "specs"
     / "2026-08-28-harness-neutral-browser-bridge-design.md"
 )
+OBSERVE_CLI_SPEC = (
+    REPO / "docs" / "superpowers" / "specs"
+    / "2026-08-29-observe-companion-cli-design.md"
+)
 
 REQUIRED_MARKDOWN = {
     "index.md",
@@ -257,3 +261,25 @@ def test_browser_bridge_and_mcp_remain_design_only():
         REPO / "browser-extension",
     ):
         assert not forbidden_production_path.exists()
+
+
+def test_observe_cli_spec_locks_local_capture_and_error_contract():
+    spec = _text(OBSERVE_CLI_SPEC)
+    assert "**Status:** Approved implementation contract" in spec
+    for required in (
+        "skill/scripts/observe.py",
+        "doctor",
+        "screenshot",
+        "clip",
+        "status",
+        "Windows",
+        "Linux X11",
+        "{ok,data,error,meta}",
+        "1 through 300 seconds",
+        "Refuse an existing destination",
+        "capture no audio",
+        "loopback host allowlist",
+        "inspect -> preview -> read",
+    ):
+        assert required in spec
+    assert not (REPO / "skill" / "scripts" / "observe.py").exists()
