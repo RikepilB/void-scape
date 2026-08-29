@@ -19,6 +19,19 @@ general capability.
 | Automatic cookie transfer to `yt-dlp` | Unverified and unsupported | Browser access does not silently authenticate the CLI. |
 | Automatic support for every model or harness | Unverified and unsupported | Each harness has its own transport, discovery, permission, approval, and host-routing requirements. |
 
+## Observe-and-capture scenarios
+
+These scenarios compose harness or companion behavior with the shipped Voidscape readers. The
+evidence label applies to the complete path, not merely one component.
+
+| Scenario | Evidence | Boundary |
+| --- | --- | --- |
+| Approved browser tab -> screenshot saved locally -> image `inspect -> preview -> read` | Unverified end to end; harness capture is vendor-documented and image reading is shipped | The harness or user must produce the local image. Voidscape does not take the screenshot. |
+| Short host screen recording -> video `inspect -> preview -> read` | Personally tested with a separately produced local recording; harness-native capture path unverified | OS recording permission and capture are outside Voidscape. A fresh local evidence workdir is still required. |
+| Public video URL selected in browser -> anonymous CLI read | Personally tested | Browser selection supplies only the URL; the CLI does not receive browser cookies. |
+| Signed-in video -> user-supplied site-scoped cookie file -> CLI read | Unverified success path | The harness never exports cookies; anonymous and configured CLI access remain separate tests. |
+| screenpipe recent history -> exported local clip -> Voidscape | Unverified composition; screenpipe API/MCP/export is vendor-documented | screenpipe is optional and separately configured. Voidscape reads only the selected local export. |
+
 ## Verified on 2026-07-19
 
 | Use case | Browser result | CLI result | Conclusion |
