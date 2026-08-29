@@ -1,7 +1,8 @@
 # Voidscape
 
 [Website](https://voidscape.club) ·
-[GitHub repository](https://github.com/RikepilB/void-scape)
+[GitHub repository](https://github.com/RikepilB/void-scape) ·
+[Agent documentation](docs/agents/index.md)
 
 **Turn media you keep into local, ordered evidence an agent can use.**
 
