@@ -17,7 +17,7 @@ This page summarizes current `main`; it does not authorize roadmap implementatio
 | YouTube private-playlist queue adapter | `dev-only` | repository script; official API; not installed with the skill |
 | Agent documentation tree | `shipped` | this page and sibling pages |
 | Machine-readable agent discovery manifest | `planned` | issue #20 |
-| Observe-and-capture playbook | `planned` | issue #22 |
+| Observe-and-capture playbook | `shipped` | `docs/agents/observe-and-capture.md` |
 | Thin observe CLI | `planned` | issues #23-#24 |
 | Expanded bridge and MCP/extension spikes | `planned` | issues #25-#27; design/spike only |
 | Production universal browser extension | `parked` | separate security/repository decision required |

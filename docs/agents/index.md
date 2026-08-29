@@ -36,8 +36,7 @@ storage, or secrets. See [constraints](constraints.md).
 - [Workflow and protocol](workflow.md) — guided commands, raw reader commands, envelope, and errors.
 - [Constraints and permissions](constraints.md) — gates, authentication, privacy, and citations.
 - [Agent automation](automation.md) — safely coordinate the non-interactive CLI.
-- Observe and capture — planned documentation in
-  [issue #22](https://github.com/RikepilB/void-scape/issues/22).
+- [Observe and capture](observe-and-capture.md) — harness, optional companion, and governed-read recipes.
 
 ### Readers
 
