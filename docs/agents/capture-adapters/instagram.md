@@ -4,6 +4,7 @@ The Instagram repository helper canonicalizes and deduplicates user-confirmed Re
 appending them to a queue.
 
 **Status:** `dev-only`
+
 [Back to agent docs](../index.md) · Canonical sources:
 [`instagram_capture_helper.py`](../../../scripts/instagram_capture_helper.py) and
 [capture adapters](../../capture-adapters.md)

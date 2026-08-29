@@ -4,6 +4,7 @@ The article reader prepares deterministic text evidence from local documents, fe
 approved public article fetches.
 
 **Status:** `shipped`
+
 [Back to agent docs](../index.md) · Entry points:
 [`voidscape.py`](../../../skill/scripts/voidscape.py), [`article.py`](../../../skill/scripts/article.py)
 

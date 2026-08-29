@@ -3,6 +3,7 @@
 The image reader prepares deterministic local evidence without OCR or cloud processing.
 
 **Status:** `shipped`
+
 [Back to agent docs](../index.md) · Entry points:
 [`voidscape.py`](../../../skill/scripts/voidscape.py), [`image.py`](../../../skill/scripts/image.py)
 

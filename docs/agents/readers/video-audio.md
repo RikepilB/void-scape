@@ -4,6 +4,7 @@ The video reader prepares scoped frames and/or timestamped transcript evidence f
 supported public media URLs.
 
 **Status:** `shipped`
+
 [Back to agent docs](../index.md) · Entry points:
 [`voidscape.py`](../../../skill/scripts/voidscape.py), [`video.py`](../../../skill/scripts/video.py)
 

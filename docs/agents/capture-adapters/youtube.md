@@ -4,6 +4,7 @@ The YouTube repository adapter reads a user-owned private playlist through the o
 API, appends canonical URLs durably, then removes captured playlist items.
 
 **Status:** `dev-only`
+
 [Back to agent docs](../index.md) · Canonical sources:
 [`youtube_capture_helper.py`](../../../scripts/youtube_capture_helper.py) and
 [YouTube queue capture](../../youtube-queue-capture.md)
