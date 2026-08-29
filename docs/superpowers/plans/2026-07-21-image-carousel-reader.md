@@ -1,6 +1,6 @@
 # Image and Carousel Reader Implementation Plan
 
-**Status:** Completed locally; awaiting a separate shipping decision
+**Status:** Shipped in PR #9 (merged 2026-08-28)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -432,4 +432,6 @@ Verified on 2026-08-28 on Windows:
 - The read-video focused checks passed: `1 passed` and `12 passed`; the complete read-video suite passed: `133 passed`.
 - Four read-video issues were closed, and both the read-video and Voidscape trackers reported zero open issues.
 
-This evidence is local. Source and documentation changes are uncommitted and unmerged; nothing was deployed, and website deployment is not verified.
+Post-merge verification on `main` at `a0fd4e8` (2026-08-28): the full Voidscape suite passed
+(`194 passed`), installer and demo-fixture checks passed, and the image/carousel and key-free video
+`inspect -> preview -> read` workflows completed. Vercel checks for PR #9 passed at merge time.

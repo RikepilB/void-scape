@@ -49,7 +49,7 @@ interfaces need to exist before anything else in this roadmap makes sense:
   `instagram_capture_helper.py` does this for one platform via Codex Chrome control browser
   automation, writing to `urls.md`.
 - **Read axis** - media to ordered evidence. `video.py` handles video and audio.
-  `image.py`, implemented on `feat/image-carousel-reader`, handles local images and carousels.
+  `image.py`, shipped in PR #9, handles local images and carousels.
   The guided CLI dispatches between these focused readers. A generic reader interface remains
   deferred until article intake supplies a third concrete shape.
 
@@ -65,8 +65,7 @@ readers.
 
 ## Phase 1 — Media-type expansion (the "read" side)
 
-- **1.1 Local images and carousels** - implemented on `feat/image-carousel-reader`; local
-  verification is complete, but commit, merge, and deployment remain a separate shipping decision.
+- **1.1 Local images and carousels** — shipped in PR #9 (merged 2026-08-28).
 - **1.2 Audio-only** — podcasts, voice memos, X Spaces, LinkedIn audio posts. Reuses the existing
   transcription-backend cascade almost as-is.
 - **1.3 Blog / post / text** — Substack articles, LinkedIn posts, X threads, long-form blogs. No

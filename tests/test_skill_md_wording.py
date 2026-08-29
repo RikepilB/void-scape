@@ -299,10 +299,10 @@ def test_roadmap_and_image_plan_match_local_release_state():
     plan = IMAGE_PLAN.read_text(encoding="utf-8")
 
     assert "Local images and carousels" in roadmap
-    assert "implemented on `feat/image-carousel-reader`" in roadmap
+    assert "shipped in PR #9" in roadmap
     assert "separate design and security review" in roadmap
-    assert "**Status:** Implemented and verified locally; not yet shipped" in design
-    assert "**Status:** Completed locally; awaiting a separate shipping decision" in plan
+    assert "**Status:** Shipped in PR #9 (merged 2026-08-28)" in design
+    assert "**Status:** Shipped in PR #9 (merged 2026-08-28)" in plan
 
 
 def test_image_design_probe_schema_matches_the_stable_implementation_names():
