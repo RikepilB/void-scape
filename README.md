@@ -17,17 +17,6 @@ reused as a free local sidecar instead of being generated again.
 
 `read-video` remains the stable engine and compatibility name for existing scripts and automations.
 
-## Codebase Map
-
-[![Codebase scan](docs/foglamp-scan.png)](https://foglamp.dev/scan/voidscape-8fd1nx)
-
-AI-generated map of the architecture (models, tools, integrations, flows) — **[view interactive on Foglamp →](https://foglamp.dev/scan/voidscape-8fd1nx)**
-
-> Status: the installed bundle reads local images, filename-ordered carousels, videos, recordings,
-> audio, and supported public video URLs. The repository contains an optional Instagram capture
-> helper, but it is not installed as a Voidscape command. Substack/RSS intake, scheduling,
-> universal capture, and hosting are not shipped.
-
 ## Start here
 
 Run either installed command without arguments for a short Voidscape welcome screen and the next
