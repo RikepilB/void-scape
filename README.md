@@ -3,12 +3,12 @@
 [Website](https://voidscape.club) ·
 [GitHub repository](https://github.com/RikepilB/void-scape)
 
-**Turn media you keep into local, timestamped evidence an agent can use.**
+**Turn media you keep into local, ordered evidence an agent can use.**
 
-Transcription is one channel, not the finished product. Give Voidscape a local recording or
-supported video URL and it prepares selected frames, timestamped text, and a manifest an agent can
-inspect together. Before anything paid, remote, or first-time-heavy happens, you see the cost and
-privacy gate.
+Transcription is one channel, not the finished product. Give Voidscape local images, a carousel
+folder, a recording, or a supported video URL and it prepares ordered visual evidence, timestamped
+text when relevant, and a manifest an agent can inspect. Before anything paid, remote, or
+first-time-heavy happens, you see the cost and privacy gate.
 
 Voidscape is the guided product layer for the open-source `read-video` engine. Its focus is the
 decision and evidence boundary around an agent read: inspect the source, preview cost and consent,
@@ -23,9 +23,10 @@ reused as a free local sidecar instead of being generated again.
 
 AI-generated map of the architecture (models, tools, integrations, flows) — **[view interactive on Foglamp →](https://foglamp.dev/scan/voidscape-8fd1nx)**
 
-> Status: the installed bundle reads local videos, recordings, audio, and supported public video
-> URLs. The repository contains an optional Instagram capture helper, but it is not installed as a
-> Voidscape command. Substack/RSS intake, scheduling, universal capture, and hosting are not shipped.
+> Status: the installed bundle reads local images, filename-ordered carousels, videos, recordings,
+> audio, and supported public video URLs. The repository contains an optional Instagram capture
+> helper, but it is not installed as a Voidscape command. Substack/RSS intake, scheduling,
+> universal capture, and hosting are not shipped.
 
 ## Start here
 
@@ -72,17 +73,42 @@ want it to create missing Inbox or Library folders.
 python skill/scripts/voidscape.py inspect "meeting.mp4"
 python skill/scripts/voidscape.py preview "meeting.mp4"
 python skill/scripts/voidscape.py read "meeting.mp4" --workdir out
+
+# One local folder is one naturally ordered carousel.
+python skill/scripts/voidscape.py inspect "slides"
+python skill/scripts/voidscape.py preview "slides"
+python skill/scripts/voidscape.py read "slides" --workdir slide-evidence
 ```
 
 `inspect` is free source discovery. `preview` shows cost, dependencies, model-download state, and
-whether audio would leave your machine. `read` prepares the approved `frames/`, `transcript.txt`,
-and `manifest.json` artifacts. Then ask your agent to use them and cite moments as `[MM:SS]`.
+whether audio would leave your machine. Video reads prepare `frames/`, `transcript.txt`, and
+`manifest.json`; image reads prepare byte-preserving `images/` plus `manifest.json`. A carousel is
+non-recursive, follows natural filename order, and is capped at 100 images. Cite video moments as
+`[MM:SS]` and carousel evidence as `[image 1]`, never as fabricated timestamps.
 
-Public URLs are the baseline. If a site requires your login, Voidscape can optionally pass a
-user-exported Netscape `cookies.txt` to `yt-dlp`; it never extracts browser credentials itself.
-Browser-guided saved collections additionally need the ChatGPT Chrome extension and a Chrome-control
-capability in the agent harness. These are separate from CLI authentication. Follow the
-[public/authenticated source guide](docs/authenticated-sources.md) before using account-only media.
+Browser and phone control belong to the agent harness, not the media engine. With the approved
+Chrome connection, Codex/ChatGPT or Claude can select permitted media in signed-in tabs, then run
+Voidscape on the host that can access the files. ChatGPT Remote and Claude Code Remote Control can
+continue that host task from a phone while the local tools remain on the host. Browser access does
+not authenticate `yt-dlp`.
+
+See [Multi-harness, browser, and remote support](docs/harness-support.md) and
+[Public and authenticated sources](docs/authenticated-sources.md).
+
+## Use it with an agent
+
+After install, use `/voidscape <file-or-url>` in an agent harness that exposes skills as slash
+commands, or simply ask the agent to inspect, preview, and read your media with Voidscape. The
+agent should:
+
+1. inspect the source;
+2. preview the selected scope;
+3. stop for explicit consent when cloud processing or a model download is required;
+4. read the resulting artifacts and answer with `[MM:SS]` or `[image 1]` citations.
+
+The installed skill teaches an agent the same `inspect → preview → read` flow. The concrete,
+judge-testable interface is `python skill/scripts/voidscape.py ...`; repository-only agent files
+under `.codex/agents/` are development helpers, not installed slash commands.
 
 For a reproducible, key-free first run:
 
@@ -98,26 +124,12 @@ Testing with other people? Use the short, privacy-aware
 `survey-cli` questionnaire to capture task completion, consent clarity, timestamp usefulness, and
 the exact points where testers need help.
 
-## Use it with an agent
-
-After install, use `/voidscape <file-or-url>` in an agent harness that exposes skills as slash
-commands, or simply ask the agent to inspect, preview, and read your media with Voidscape. The
-agent should:
-
-1. inspect the source;
-2. preview the selected scope;
-3. stop for explicit consent when cloud processing or a model download is required;
-4. read the resulting artifacts and answer with timestamp citations.
-
-The installed skill teaches an agent the same `inspect → preview → read` flow. The concrete,
-judge-testable interface is `python skill/scripts/voidscape.py ...`; repository-only agent files
-under `.codex/agents/` are development helpers, not installed slash commands.
-
 ## Choose the right path
 
 | Need | Use | What happens |
 | --- | --- | --- |
 | Understand a local recording, demo, meeting, or screen capture | `inspect → preview → read` | Frames, transcript, and manifest stay local by default. |
+| Read one image or a local carousel folder | `inspect → preview → read` | The non-recursive folder is naturally ordered, limited to 100 images, and copied locally without changing originals. |
 | Read a voice memo or call | `read ... --tier audio` | The CLI prepares a local transcript; an agent can then author a note from that evidence. |
 | Prepare an Instagram Reel URL | Repository helper (not installed) | `scripts/instagram_capture_helper.py` validates and deduplicates confirmed URLs; browser capture remains a user-observed development workflow. |
 | Work from a signed-in saved collection | Browser selection, then `inspect -> preview -> read` on one permitted media URL | The user signs in and approves browser access; private collection automation is not shipped. |
@@ -140,10 +152,10 @@ subscription may not bill per API token; the GPT-5.6 amount is an honest compari
 
 ### What files are created?
 
-`read` creates a temporary or chosen work folder with `frames/`, `transcript.txt`, and
-`manifest.json`. The agent uses those as evidence. When a workspace is configured, the agent
-workflow can save its final answer as a Markdown note in your Library; the engine itself does not
-pretend to author the note.
+For video/audio, `read` creates `frames/`, `transcript.txt`, and `manifest.json`. For images, it
+creates ordered `images/` and `manifest.json`; the agent cites `[image 1]`. When a workspace is
+configured, the agent workflow can save its final answer as a Markdown note in your Library; the
+engine itself does not pretend to author the note.
 
 ### What is the difference between `read` and `read-video`?
 
@@ -175,6 +187,11 @@ python skill/scripts/video.py manifest --compact
 python skill/scripts/video.py probe "clip.mp4" --envelope --compact
 python skill/scripts/video.py estimate "clip.mp4" --tier both --backend captions --envelope --compact
 python skill/scripts/video.py run "clip.mp4" --tier both --backend captions --workdir out --envelope --compact
+
+python skill/scripts/image.py manifest --compact
+python skill/scripts/image.py probe "slides" --envelope --compact
+python skill/scripts/image.py estimate "slides" --envelope --compact
+python skill/scripts/image.py run "slides" --workdir slide-evidence --envelope --compact
 ```
 
 The envelope is `{ok,data,error,meta}` with deterministic error codes and retryability metadata.

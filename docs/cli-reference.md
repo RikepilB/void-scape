@@ -25,6 +25,26 @@ resolves against `inbox_dir`.
 Only `ffmpeg`/`ffprobe` (and `yt-dlp` for URLs) are required for the free paths. Transcription engines are
 imported lazily, so a missing optional dependency never breaks `probe`/`estimate`.
 
+## Local image and carousel engine
+
+The sibling image engine uses the same protocol and exit-code contract:
+
+```bash
+python scripts/image.py manifest --compact
+python scripts/image.py probe "slides" --envelope --compact
+python scripts/image.py estimate "slides" --envelope --compact
+python scripts/image.py run "slides" --workdir slide-evidence --envelope --compact
+```
+
+It accepts JPG/JPEG, PNG, and WebP. One folder is one local, non-recursive carousel in natural
+filename order (`slide1`, `slide2`, `slide10`), capped at 100 images for `estimate` and `run`.
+Every supported image must contain exactly one frame. Animated APNG and WebP inputs are unsupported
+and fail validation before preview or evidence copying.
+`run` copies original bytes into `images/`, writes `manifest.json` only after all copies succeed,
+and rejects a non-empty workdir. Agents cite the ordered evidence as `[image 1]`, `[image 2]`, and
+so on; image evidence has no fabricated video timestamp. No OCR, cloud call, resize, or source-file
+modification occurs.
+
 ---
 
 ## `probe` — inspect the input

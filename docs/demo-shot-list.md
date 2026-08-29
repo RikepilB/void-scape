@@ -49,6 +49,22 @@ Prepare these tabs/windows:
 
 **Total: 85 seconds.**
 
+## 45–60 second image/carousel demo
+
+Use a separate local-only feature clip after creating a clean folder containing `slide10.png`,
+`slide2.png`, and `slide1.png`. Do not show personal images.
+
+| # | Screen / state | Exact sequence | Voiceover | Target |
+|---|---|---|---|---|
+| 1 | Folder payoff | Show the three source filenames, then the prepared `images/` folder ordered as `001-slide1.png`, `002-slide2.png`, `003-slide10.png`. | “Voidscape turns one local folder into ordered carousel evidence without changing the originals.” | 9s |
+| 2 | Inspect | Run `python skill/scripts/voidscape.py inspect "slides"`; hold on `Carousel: 3 images` and the natural order. | “Inspect catches the filename story before any evidence is copied.” | 9s |
+| 3 | Preview | Run `python skill/scripts/voidscape.py preview "slides"`; zoom on image tokens, agent model, and local next step. | “Preview estimates the vision cost. No cloud or model-download approval is involved.” | 10s |
+| 4 | Read | Run `python skill/scripts/voidscape.py read "slides" --workdir slide-evidence`; open `manifest.json` and `images/`. | “Read copies the original bytes into one inspectable bundle and writes the manifest last.” | 12s |
+| 5 | Grounded answer | Show a short answer citing `[image 1]` and `[image 2]`. | “The agent cites image positions, not invented video timestamps or OCR.” | 8s |
+
+**Target: 48 seconds.** Use a fresh empty workdir for every take. The folder read is
+non-recursive and capped at 100 images.
+
 ## OpenScreen edit instructions
 
 - Use one auto-zoom on beat 3 and one on beat 4; add a manual zoom for the rejection in beat 6.

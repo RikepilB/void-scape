@@ -6,8 +6,8 @@ Voidscape has three deliberate moves:
 
 1. **Inspect** — learn what the source contains without processing it.
 2. **Preview** — see cost, privacy, dependencies, and consent requirements.
-3. **Read** — prepare only the frames and transcript you approved, then let an agent answer from
-   evidence with `[MM:SS]` citations.
+3. **Read** — prepare only the evidence you approved, then let an agent answer with `[MM:SS]`
+   citations for video or `[image 1]` for local image/carousel evidence.
 
 This is not a video player or a black-box summary button. It produces inspectable artifacts so you
 can understand what an agent used.
@@ -36,7 +36,15 @@ python skill/scripts/voidscape.py preview "idea.m4a" --tier audio --backend fast
 
 # A focused question around five minutes.
 python skill/scripts/voidscape.py read "meeting.mp4" --start 270 --end 330 --workdir meeting-five-minutes
+
+# One local folder becomes one filename-ordered carousel evidence bundle.
+python skill/scripts/voidscape.py inspect "slides"
+python skill/scripts/voidscape.py preview "slides"
+python skill/scripts/voidscape.py read "slides" --workdir slide-evidence
 ```
+
+Image folders are local and non-recursive, accept JPG/JPEG, PNG, and WebP, and are capped at
+100 images. Voidscape copies original bytes without renaming or changing the source files.
 
 If a preview says cloud approval or a model download is required, stop and decide first. Add
 `--allow-cloud` or `--allow-model-download` only after the user explicitly approved that exact
@@ -77,6 +85,8 @@ the raw engine's stable JSON envelope:
 
 ```powershell
 python scripts/video.py estimate "clip.mp4" --tier both --backend captions --envelope --compact
+python scripts/image.py manifest --compact
+python scripts/image.py estimate "slides" --envelope --compact
 ```
 
 The installed Voidscape skill teaches an agent the guided commands above; the concrete interface is
@@ -91,6 +101,7 @@ agent harness owns the schedule and must carry the consent flags explicitly.
 | Capability | Status |
 | --- | --- |
 | Local recordings, videos, demos, and voice material | Available now |
+| Local images and filename-ordered carousel folders | Available now; non-recursive and capped at 100 images |
 | Supported public video URLs | Available now; platform access varies |
 | Agent-readable frames, transcripts, manifest, and timestamp citations | Available now |
 | Instagram saved-Reel capture | User-observed repository workflow; requires the user's signed-in Chrome session and is not an installed command |

@@ -1,4 +1,5 @@
-"""Guided Voidscape commands delegate safely to the stable read-video engine."""
+"""Guided Voidscape commands delegate safely to the matching media engine."""
+import base64
 import json
 from pathlib import Path
 
@@ -7,6 +8,31 @@ import pytest
 import video
 import voidscape
 from conftest import requires_ffmpeg
+
+
+PNG_1X1 = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUB"
+    "AScY42YAAAAASUVORK5CYII="
+)
+
+
+@pytest.fixture
+def image_carousel(tmp_path):
+    folder = tmp_path / "carousel"
+    folder.mkdir()
+    for name in ("slide10.png", "slide2.png", "slide1.png"):
+        (folder / name).write_bytes(PNG_1X1)
+    return folder
+
+
+@pytest.fixture
+def mixed_image_carousel(tmp_path):
+    folder = tmp_path / "mixed"
+    folder.mkdir()
+    (folder / "slide1.png").write_bytes(PNG_1X1)
+    (folder / "notes.txt").write_text("not an image", encoding="utf-8")
+    (folder / "nested").mkdir()
+    return folder
 
 
 def test_empty_guided_cli_shows_welcome_and_next_step(capsys):
@@ -85,3 +111,85 @@ def test_doctor_json_is_non_interactive_and_structured(capsys, tmp_path):
     report = json.loads(capsys.readouterr().out)
     assert report["workspace_configured"] is False
     assert {"ffmpeg", "ffprobe", "yt-dlp"}.issubset(report["tools"])
+
+
+@requires_ffmpeg
+def test_guided_image_inspect_and_preview_show_local_carousel(image_carousel, capsys):
+    assert voidscape.main(["inspect", str(image_carousel)]) == 0
+    inspected = capsys.readouterr().out
+    assert "Carousel: 3 images" in inspected
+    assert "slide1.png, slide2.png, slide10.png" in inspected
+
+    assert voidscape.main(["preview", str(image_carousel)]) == 0
+    previewed = capsys.readouterr().out
+    assert "Voidscape preview" in previewed
+    assert "image tokens:" in previewed
+    assert "prepared locally" in previewed
+
+
+@requires_ffmpeg
+def test_guided_image_inspect_and_preview_name_skipped_entries(
+        mixed_image_carousel, capsys):
+    assert voidscape.main(["inspect", str(mixed_image_carousel)]) == 0
+    inspected = capsys.readouterr().out
+    assert "notes.txt (unsupported)" in inspected
+    assert "nested (not a file)" in inspected
+
+    assert voidscape.main(["preview", str(mixed_image_carousel)]) == 0
+    previewed = capsys.readouterr().out
+    assert "notes.txt (unsupported)" in previewed
+    assert "nested (not a file)" in previewed
+
+    assert voidscape.main([
+        "preview", str(mixed_image_carousel), "--json",
+    ]) == 0
+    structured = json.loads(capsys.readouterr().out)
+    assert {
+        item["name"]: item["reason"] for item in structured["skipped"]
+    } == {
+        "notes.txt": "unsupported",
+        "nested": "not a file",
+    }
+
+
+@requires_ffmpeg
+def test_guided_image_preview_uses_workspace_agent_model(
+        image_carousel, tmp_path, capsys):
+    config = tmp_path / "workspace.json"
+    config.write_text(
+        json.dumps({"agent_model": "gpt-5.6-luna"}),
+        encoding="utf-8",
+    )
+
+    assert voidscape.main([
+        "preview", str(image_carousel), "--config", str(config), "--json",
+    ]) == 0
+
+    result = json.loads(capsys.readouterr().out)
+    assert result["agent_model"] == "gpt-5.6-luna"
+
+
+@requires_ffmpeg
+def test_guided_image_read_writes_evidence_and_image_citation_guidance(
+        image_carousel, tmp_path, capsys):
+    workdir = tmp_path / "evidence"
+
+    assert voidscape.main([
+        "read", str(image_carousel), "--workdir", str(workdir),
+    ]) == 0
+
+    output = capsys.readouterr().out
+    assert "Images: 3" in output
+    assert "[image 1]" in output
+    assert (workdir / "manifest.json").exists()
+
+
+@requires_ffmpeg
+def test_guided_video_input_never_calls_image_engine(static_clip, monkeypatch, capsys):
+    def unexpected_image_probe(_input):
+        raise AssertionError("video input dispatched to image engine")
+
+    monkeypatch.setattr(voidscape.image_engine, "probe", unexpected_image_probe)
+
+    assert voidscape.main(["inspect", str(static_clip)]) == 0
+    assert "Suggested scope" in capsys.readouterr().out

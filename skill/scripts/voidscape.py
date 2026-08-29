@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import image as image_engine
 import video
 
 
@@ -99,13 +100,39 @@ def _print_error(ex: Exception, as_json: bool) -> int:
     return exit_code
 
 
+def _is_image_source(value: str) -> bool:
+    if video.is_url(value):
+        return False
+    return image_engine.is_image_input(video.resolve_input(value))
+
+
+def _print_image_skipped(result: dict[str, Any]) -> None:
+    skipped = result.get("skipped") or []
+    if skipped:
+        details = ", ".join(
+            f"{entry['name']} ({entry['reason']})" for entry in skipped
+        )
+        print(f"  Skipped: {details}")
+
+
 def inspect_source(args: argparse.Namespace) -> int:
     try:
-        info = video.probe(args.input)
+        image_source = _is_image_source(args.input)
+        info = image_engine.probe(args.input) if image_source else video.probe(args.input)
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
         _emit(info, True)
+        return 0
+    if image_source:
+        label = "Carousel" if info["kind"] == "carousel" else "Image"
+        count_label = "image" if info["item_count"] == 1 else "images"
+        print("Voidscape inspection")
+        print(f"  {label}: {info['item_count']} {count_label}")
+        print("  Order: " + ", ".join(item["source_name"] for item in info["images"]))
+        _print_image_skipped(info)
+        print("  Processing: local only · originals preserved")
+        print(f"Next: voidscape.py preview {args.input!r}")
         return 0
     source = "web link" if info.get("source") == "url" else "local file"
     print("Voidscape inspection")
@@ -138,14 +165,21 @@ def _estimate_from_args(args: argparse.Namespace, workspace: dict[str, Any]) -> 
 def preview(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
-        estimate = _estimate_from_args(args, workspace)
+        image_source = _is_image_source(args.input)
+        agent_model = args.agent_model or _defaults(workspace)["agent_model"]
+        estimate = (image_engine.estimate(args.input, args.out_words, agent_model)
+                    if image_source else _estimate_from_args(args, workspace))
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
         _emit(estimate, True)
         return 0
     print("Voidscape preview")
-    print(video._fmt_estimate(estimate))
+    print(image_engine._fmt_estimate(estimate) if image_source else video._fmt_estimate(estimate))
+    if image_source:
+        _print_image_skipped(estimate)
+        print("Next: evidence can be prepared locally with voidscape.py read.")
+        return 0
     if estimate["requires_cloud_approval"]:
         print("Next: obtain consent, then use read with --allow-cloud.")
     elif estimate["needs_model_download"]:
@@ -160,21 +194,26 @@ def preview(args: argparse.Namespace) -> int:
 def read(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
-        estimate = _estimate_from_args(args, workspace)
-        if estimate["requires_cloud_approval"] and not args.allow_cloud:
-            raise PermissionError("cloud audio processing needs explicit consent; review preview, then rerun with --allow-cloud")
-        if estimate["needs_model_download"] and not args.allow_model_download:
-            raise PermissionError("a local model download needs explicit consent; review preview, then rerun with --allow-model-download")
-        if estimate["needs_install"]:
-            raise RuntimeError("the selected local backend is not installed; choose captions or install the backend before reading")
-        result = video.run(
-            args.input,
-            tier=estimate["tier"], frames=args.frames,
-            backend=estimate["backend"], start=args.start, end=args.end,
-            workdir=args.workdir, timestamps=args.timestamps, dedup=not args.no_dedup,
-            transcribe_mode=args.transcribe_mode, allow_cloud=args.allow_cloud,
-            allow_model_download=args.allow_model_download,
-        )
+        if _is_image_source(args.input):
+            result = image_engine.run(args.input, args.workdir)
+            image_source = True
+        else:
+            image_source = False
+            estimate = _estimate_from_args(args, workspace)
+            if estimate["requires_cloud_approval"] and not args.allow_cloud:
+                raise PermissionError("cloud audio processing needs explicit consent; review preview, then rerun with --allow-cloud")
+            if estimate["needs_model_download"] and not args.allow_model_download:
+                raise PermissionError("a local model download needs explicit consent; review preview, then rerun with --allow-model-download")
+            if estimate["needs_install"]:
+                raise RuntimeError("the selected local backend is not installed; choose captions or install the backend before reading")
+            result = video.run(
+                args.input,
+                tier=estimate["tier"], frames=args.frames,
+                backend=estimate["backend"], start=args.start, end=args.end,
+                workdir=args.workdir, timestamps=args.timestamps, dedup=not args.no_dedup,
+                transcribe_mode=args.transcribe_mode, allow_cloud=args.allow_cloud,
+                allow_model_download=args.allow_model_download,
+            )
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
@@ -182,6 +221,10 @@ def read(args: argparse.Namespace) -> int:
         return 0
     print("Voidscape prepared evidence")
     print(f"  Folder: {result['workdir']}")
+    if image_source:
+        print(f"  Images: {result['item_count']}")
+        print("Next: ask your agent to read manifest.json and images/ with [image 1] citations.")
+        return 0
     print(f"  Frames: {len(result['frames'])} (deduplicated: {result['frames_deduped']})")
     print(f"  Transcript: {result['transcript'] or 'not created'}")
     print("Next: ask your agent to read manifest.json, transcript.txt, and frames/ with [MM:SS] citations.")

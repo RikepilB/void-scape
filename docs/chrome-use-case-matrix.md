@@ -4,6 +4,21 @@ This matrix separates what was verified on Richard's signed-in machine from the 
 other users should be able to reproduce. A personal account is useful test coverage, not proof of a
 general capability.
 
+## Browser and remote-control support matrix
+
+- **Richard-tested:** observed on Richard's connected Windows setup.
+- **Vendor-documented:** supported by current OpenAI or Anthropic documentation but not reproduced
+  as a Voidscape product test.
+- **Unverified:** do not publish as a capability claim.
+
+| Capability | Evidence | Boundary |
+| --- | --- | --- |
+| Browser selection, then host CLI `inspect -> preview -> read` | Richard-tested | The user selects permitted media in a signed-in browser tab; Voidscape runs locally on the host and preserves its normal gates. |
+| Mobile continuation and host availability | Vendor-documented | Remote control steers the connected host; it requires that the host remain available, and it does not move local files, browser sessions, or CLI credentials to the phone. |
+| DOM, console, and network inspection | Vendor-documented | Availability depends on the documented browser integration and any enabled developer-data capability. |
+| Automatic cookie transfer to `yt-dlp` | Unverified and unsupported | Browser access does not silently authenticate the CLI. |
+| Automatic support for every model or harness | Unverified and unsupported | Each harness has its own transport, discovery, permission, approval, and host-routing requirements. |
+
 ## Verified on 2026-07-19
 
 | Use case | Browser result | CLI result | Conclusion |
