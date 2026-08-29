@@ -1,0 +1,152 @@
+# Voidscape agent documentation information architecture
+
+**Date:** 2026-08-29  
+**Status:** Approved implementation contract  
+**Issue:** GitHub #18
+
+## Goal
+
+Create one agent-facing documentation tree that answers four questions without requiring an agent
+to infer behavior from source code:
+
+1. What can Voidscape do on `main`?
+2. Which actions require approval, installation, or a connected harness?
+3. What is planned or parked rather than shipped?
+4. How do browser control, optional observation tools, and the local CLI compose safely?
+
+The tree borrows Herdr's separation of agent support, authority, workflow, and debugging concerns.
+It does not copy Herdr's product model or turn Voidscape into a browser-automation system.
+
+## Non-negotiable product boundary
+
+```text
+harness browser tools -> selected URL or local capture
+optional observe companion -> screenshot or short local clip
+Voidscape -> inspect -> preview -> read -> citable evidence
+```
+
+- The harness owns permitted browser interaction.
+- Optional screenpipe or ffmpeg tooling owns capture and desktop-memory concerns.
+- Voidscape owns governed evidence preparation.
+- Voidscape never reads browser credentials, cookies, storage, or secrets.
+- Browser access never counts as CLI authentication.
+- Cloud transfer and model downloads remain per-job approvals. A previous approval, API key, or
+  configured backend is not consent for a later job.
+
+## Page tree and source authority
+
+The canonical tree is `docs/agents/`. Markdown remains the source format; issue #28 separately
+decides whether a generator is warranted.
+
+| Page | Job | Canonical sources, in precedence order |
+| --- | --- | --- |
+| `index.md` | Mission, three-layer model, quick start, discovery links | `README.md`; `skill/SKILL.md`; this spec |
+| `harnesses.md` | Per-harness support and evidence matrix | `docs/harness-support.md`; `docs/chrome-use-case-matrix.md`; official vendor docs |
+| `workflow.md` | Guided and raw command flows, envelope, exit codes | `skill/SKILL.md`; `docs/workflow.md`; `docs/architecture.md`; reader manifests |
+| `constraints.md` | Gates, privacy, auth boundary, citations, forbidden actions | `AGENTS.md`; `skill/SKILL.md`; `docs/authenticated-sources.md`; `SECURITY.md` |
+| `readers/images.md` | Image/carousel inputs, limits, evidence, citations | `skill/scripts/image.py`; image design spec; `tests/test_image_reader.py` |
+| `readers/video-audio.md` | Local/URL media, tiers, transcription, citations | `skill/scripts/video.py`; `docs/architecture.md`; `docs/cli-reference.md` |
+| `readers/articles-rss.md` | Article/RSS inputs, evidence, citations | `skill/scripts/article.py`; `docs/article-rss-reader.md` |
+| `capture-adapters/instagram.md` | Dev-only Instagram queue capture | `scripts/instagram_capture_helper.py`; `docs/capture-adapters.md`; roadmap |
+| `capture-adapters/youtube.md` | Shipped private-playlist queue capture | `scripts/youtube_capture_helper.py`; `docs/youtube-queue-capture.md` |
+| `automation.md` | How another agent coordinates existing commands | `skill/SKILL.md`; `docs/workflow.md`; media-reader reassessment spec |
+| `observe-and-capture.md` | Harness + optional companion + Voidscape recipes | Issue #22; harness docs; browser-bridge spec; authenticated-source docs |
+| `roadmap-status.md` | Shipped, dev-only, planned, and parked rollup | `docs/ROADMAP.md`; merged code and tests on `main` |
+| `references.md` | Official docs and learn-from-only sources | Herdr agent docs; screenpipe; automated_browser; vendor docs |
+| `manifest.json` | Machine-readable discovery contract | Issue #20; reader manifests; installed skill contract |
+
+If prose conflicts with executable behavior, the implementation and tests on `main` win. The prose
+must then be corrected; it must not redefine shipped behavior.
+
+## Navigation plan
+
+`docs/agents/index.md` is the hub. Every page links back to it and to its canonical source rather
+than duplicating long reference material.
+
+```text
+README.md -----------------------> docs/agents/index.md
+docs/index.html -----------------> docs/agents/index.md
+                                      |
+              +-----------------------+-----------------------+
+              |                       |                       |
+          Harnesses               Use Voidscape          Status/safety
+        harnesses.md             workflow.md              constraints.md
+                                  automation.md            roadmap-status.md
+                                  readers/*                references.md
+                                  capture-adapters/*
+                                  observe-and-capture.md
+```
+
+The hand-written HTML landing page gets one stable "Agent docs" link. It does not mirror the
+markdown sidebar and does not gain a generated-site dependency. Reader and adapter index lists live
+on `docs/agents/index.md`; individual pages cross-link only to directly related pages.
+
+## Evidence labels
+
+Harness claims use exactly one evidence label:
+
+| Label | Meaning | Publication rule |
+| --- | --- | --- |
+| `personally-tested` | Reproduced on Richard's named setup and date | May be stated with the tested scope |
+| `vendor-documented` | Supported by current official vendor documentation but not reproduced as a Voidscape test | Attribute to the vendor; do not call it Voidscape-verified |
+| `unverified` | Design intent, plausible integration, or incomplete test | Do not publish as a working capability |
+
+The existing phrase `Richard-tested` maps to `personally-tested` when agent pages summarize older
+evidence. Existing source documents do not need a mechanical rename.
+
+Official links are checked when the corresponding page changes. Link existence alone does not
+upgrade a capability from `unverified`.
+
+## Capability status badges
+
+Agent pages use these exact lowercase tokens so truth tests can inspect them:
+
+| Status | Source-of-truth condition |
+| --- | --- |
+| `shipped` | Code and tests are merged on `main`, and the installed/public entry point exists |
+| `dev-only` | Repository tooling exists but is not installed as a supported skill capability |
+| `planned` | An approved issue or roadmap milestone exists without shipped implementation |
+| `parked` | The roadmap explicitly defers the work or requires a separate design/security/legal gate |
+
+An open issue, local edit, design spec, prototype, or vendor capability is never sufficient for
+`shipped`. Each status row links to a canonical implementation, test, roadmap section, or issue.
+
+## Page contracts
+
+Every page must:
+
+- begin with a one-sentence purpose and a visible status where relevant;
+- distinguish guided `inspect -> preview -> read` from raw `manifest/probe/estimate/run`;
+- use repository-relative links for canonical sources and absolute links for vendor references;
+- label unverified harness claims instead of generalizing them;
+- keep examples free of private paths, credentials, cookies, and storage instructions;
+- state the citation contract when it describes produced evidence;
+- avoid promises such as "zero prompts", "works with every agent", or "browser login transfers".
+
+Reader pages describe facts and dispatch boundaries, not duplicate the entire CLI reference.
+Capture-adapter pages distinguish installed skill capabilities from repository-only developer tools.
+
+## Delivery boundaries
+
+- Issue #19 creates the core pages and navigation.
+- Issue #20 adds `manifest.json` after the page vocabulary exists.
+- Issue #21 adds automated truth checks.
+- Issue #22 owns the observe-and-capture playbook.
+- Issues #23-#24 own the optional capture CLI contract and implementation.
+- Issues #25-#27 remain design/spike work until their security gates are satisfied.
+- Issue #28 evaluates publishing infrastructure without blocking Markdown delivery.
+
+This issue does not authorize a site generator, browser extension, MCP server, unattended loop, or
+capture implementation.
+
+## Acceptance mapping
+
+| Issue #18 criterion | Contract section |
+| --- | --- |
+| Approved page tree and navigation | Page tree and source authority; Navigation plan |
+| Every page maps to canonical sources | Page tree and source authority |
+| Harness evidence labels | Evidence labels |
+| Shipped/planned/parked tied to `main` | Capability status badges |
+| No browser credential, cookie, storage, or secret access | Non-negotiable product boundary; Page contracts |
+| Preserve workflow and per-job gates | Non-negotiable product boundary; Page contracts |
+

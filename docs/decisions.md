@@ -122,3 +122,27 @@ or leak video knobs into text readers).
 protocol checklist in `docs/superpowers/specs/2026-08-28-media-reader-interface-reassessment.md`.
 Revisit extraction only after a fourth reader duplicates substantial CLI boilerplate without
 masking behavioral differences. Regression tests in `tests/test_media_reader_protocol.py`.
+
+---
+
+### 2026-08-29 — Agent documentation uses a canonical Markdown tree with evidence and status labels
+
+**Context:** Issues #18-#28 expand Voidscape's agent documentation and autonomy guidance. Existing
+facts were spread across the skill contract, architecture, harness notes, roadmap, reader docs, and
+design specs. Browser-vendor capabilities and local Voidscape behavior also used different evidence
+standards, which made overclaiming easy.
+
+**Decision:** Add `docs/agents/` as the canonical agent-facing documentation tree. Keep Markdown as
+the source format and link it from the existing README and hand-written HTML site. Harness claims use
+`personally-tested`, `vendor-documented`, or `unverified`; product capabilities use `shipped`,
+`dev-only`, `planned`, or `parked`, tied to code and tests on `main`. The harness owns permitted
+browser interaction, while Voidscape keeps `inspect -> preview -> read` and its per-job gates.
+
+**Alternatives considered:** Expand only the existing flat documents (rejected because agents still
+lack one discoverable entry point). Build a generator before the content (rejected because issue #28
+owns that decision and Markdown delivery must not wait). Treat vendor documentation as Voidscape
+verification (rejected because it obscures the host, permission, and test boundary).
+
+**Consequences:** Issue #19 implements the tree and minimal navigation; issue #21 enforces truth in
+tests. Voidscape does not gain browser automation, cookie access, or unattended execution from this
+documentation change.
