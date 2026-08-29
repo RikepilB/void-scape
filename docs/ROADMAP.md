@@ -48,20 +48,24 @@ interfaces need to exist before anything else in this roadmap makes sense:
 - **Capture axis** — bookmark / saved-collection / folder → queue file. Today:
   `instagram_capture_helper.py` does this for one platform via Codex Chrome control browser
   automation, writing to `urls.md`.
-- **Read axis** - media to ordered evidence. `video.py` handles video and audio.
-  `image.py`, shipped in PR #9, handles local images and carousels.
-  The guided CLI dispatches between these focused readers. A generic reader interface remains
-  deferred until article intake supplies a third concrete shape.
+- **Read axis** — media to ordered evidence. `video.py` handles video and audio URLs/files.
+  `image.py` handles local images and carousels. `article.py` handles local HTML/Markdown and
+  RSS/Atom plus non-video article URLs. The guided CLI dispatches between these focused readers.
 
 **Milestone 0.1 — Capture-adapter interface.** Separate what `instagram_capture_helper.py` does
 that's IG-specific (selectors, auth, saved-collection shape) from what's generic (append-to-queue,
 dedup via unsave-or-mark, dry-run-first, abort-cleanly-on-selector-break). Define that interface
 once, so a new platform is "implement this interface," not "copy and rewrite the whole thing."
 
-**Milestone 0.2 — Media-reader interface (deferred).** `video.py` and `image.py` remain focused
-concrete readers. Revisit a generic interface only after local/article URL and RSS intake provides
-a third concrete reader shape; until then, do not extract an abstraction from the two current
-readers.
+**Milestone 0.2 — Media-reader interface (closed 2026-08-28, issue #15).** Compared
+`video.py`, `image.py`, and `article.py` after article/RSS intake shipped. **Decision: document a
+small shared protocol (`manifest` / `probe` / `estimate` / `run`, standard exit codes, optional
+`{ok,data,error,meta}` envelope, `inspect → preview → read` via `voidscape.py`); do not extract a
+generic implementation layer.** Readers stay sibling modules; shared envelope/pricing/error helpers
+remain imported from `video.py`. See
+`docs/superpowers/specs/2026-08-28-media-reader-interface-reassessment.md`. Revisit a shared
+implementation only if a fourth reader duplicates substantial CLI boilerplate without hiding real
+behavioral differences.
 
 ## Phase 1 — Media-type expansion (the "read" side)
 
@@ -152,8 +156,8 @@ not a feature bolted onto this one.
 
 1. **Phase 0 first, except Milestone 0.1** — refined 2026-07-09: the capture-adapter interface
    (0.1) is extracted *after* a second real adapter (YouTube, Phase 2.5) exists to compare against
-   Instagram's, not designed upfront from one example. Milestone 0.2 (media-reader interface) is
-   unaffected by this and can still go first.
+   Instagram's, not designed upfront from one example. Milestone 0.2 (media-reader protocol) closed
+   2026-08-28 — see the milestone entry above.
 2. **Phase 1 + Phase 2 in parallel**, one milestone at a time — whichever platform or media type
    you personally want next, proving the Phase 0 interfaces actually generalize.
 3. **Phase 3** once ≥2 platforms and ≥2 media types exist, so the docs reflect a real pattern.
