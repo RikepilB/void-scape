@@ -18,7 +18,7 @@ This page summarizes current `main`; it does not authorize roadmap implementatio
 | Agent documentation tree | `shipped` | this page and sibling pages |
 | Machine-readable agent discovery manifest | `shipped` | `docs/agents/manifest.json` |
 | Observe-and-capture playbook | `shipped` | `docs/agents/observe-and-capture.md` |
-| Thin observe CLI | `planned` | issues #23-#24 |
+| Thin observe CLI | `shipped` | `skill/scripts/observe.py`; issue #24 |
 | Expanded bridge and MCP/extension spikes | `planned` | issues #25-#27; design/spike only |
 | Production universal browser extension | `parked` | separate security/repository decision required |
 | Unattended orchestration | `parked` | explicit product/privacy design required |

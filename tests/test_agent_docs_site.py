@@ -210,12 +210,12 @@ def test_shipped_dev_only_and_planned_statuses_match_main():
     assert statuses["evidence.article"] == "shipped"
     assert statuses["capture.instagram_queue"] == "dev-only"
     assert statuses["capture.youtube_private_playlist"] == "dev-only"
-    assert statuses["capture.observe_on_demand"] == "planned"
+    assert statuses["capture.observe_on_demand"] == "shipped"
     assert statuses["integration.mcp_host"] == "planned"
     assert statuses["integration.browser_bridge"] == "planned"
 
     roadmap = _text(ROADMAP_STATUS)
-    assert "| Thin observe CLI | `planned` |" in roadmap
+    assert "| Thin observe CLI | `shipped` |" in roadmap
     assert "| Production universal browser extension | `parked` |" in roadmap
     assert "| Unattended orchestration | `parked` |" in roadmap
 
@@ -231,12 +231,13 @@ def test_capture_adapter_pages_do_not_call_dev_tools_installed_commands():
     assert "not included by the skill installer" in _normalized(youtube).casefold()
 
 
-def test_observe_playbook_keeps_capture_external_and_gates_per_job():
+def test_observe_playbook_keeps_capture_separate_and_gates_per_job():
     playbook = _text(AGENT_DOCS / "observe-and-capture.md")
     normalized = _normalized(playbook)
     matrix = _text(REPO / "docs" / "chrome-use-case-matrix.md")
     for required in (
-        "Voidscape does not currently ship the capture command",
+        "python skill/scripts/observe.py screenshot",
+        "Capture never calls",
         "It is not a Voidscape dependency",
         "The harness never exports the file",
         "Cloud transcription",
@@ -282,4 +283,9 @@ def test_observe_cli_spec_locks_local_capture_and_error_contract():
         "inspect -> preview -> read",
     ):
         assert required in spec
-    assert not (REPO / "skill" / "scripts" / "observe.py").exists()
+    assert (REPO / "skill" / "scripts" / "observe.py").is_file()
+    manifest = json.loads(_text(AGENT_MANIFEST))
+    entry_points = {item["id"]: item["status"] for item in manifest["entry_points"]}
+    capabilities = {item["id"]: item["status"] for item in manifest["capabilities"]}
+    assert entry_points["observe_companion"] == "shipped"
+    assert capabilities["capture.observe_on_demand"] == "shipped"
