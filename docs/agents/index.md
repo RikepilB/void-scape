@@ -53,8 +53,12 @@ storage, or secrets. See [constraints](constraints.md).
 
 - [Roadmap status](roadmap-status.md) — shipped, dev-only, planned, and parked.
 - [References](references.md) — canonical local sources, vendor docs, and pattern sources.
-- Machine-readable discovery manifest — planned in
-  [issue #20](https://github.com/RikepilB/void-scape/issues/20).
+- [Machine-readable discovery manifest](manifest.json) — commands, protocol, capabilities, gates,
+  and citation contracts for agents that should not infer behavior from prose.
+
+Agents should read `schema_version` and `protocol.version`, select only capabilities with the
+required status, then inspect the named entry point's own `manifest` command before execution.
+`planned` entries are discovery hints, not callable tools. The manifest never grants approvals.
 
 ## Status vocabulary
 

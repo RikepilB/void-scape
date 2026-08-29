@@ -1,0 +1,197 @@
+{
+  "schema_version": "1.0",
+  "project": {
+    "name": "Voidscape",
+    "repository": "https://github.com/RikepilB/void-scape",
+    "docs": "docs/agents/index.md"
+  },
+  "installed_skills": [
+    {
+      "name": "voidscape",
+      "role": "primary",
+      "status": "shipped"
+    },
+    {
+      "name": "read-video",
+      "role": "backward_compatibility",
+      "status": "shipped"
+    }
+  ],
+  "install_roots": [
+    "~/.codex/skills/",
+    "~/.agents/skills/"
+  ],
+  "protocol": {
+    "version": "1.0",
+    "interactive": false,
+    "envelope_keys": [
+      "ok",
+      "data",
+      "error",
+      "meta"
+    ],
+    "exit_codes": {
+      "0": "success",
+      "1": "unexpected_error",
+      "2": "usage_error",
+      "3": "input_error",
+      "4": "approval_required",
+      "5": "dependency_error",
+      "6": "operation_failed"
+    }
+  },
+  "entry_points": [
+    {
+      "id": "guided",
+      "path": "skill/scripts/voidscape.py",
+      "commands": [
+        "inspect",
+        "preview",
+        "read",
+        "customize",
+        "doctor"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "video_audio_reader",
+      "path": "skill/scripts/video.py",
+      "commands": [
+        "manifest",
+        "probe",
+        "estimate",
+        "run"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "image_reader",
+      "path": "skill/scripts/image.py",
+      "commands": [
+        "manifest",
+        "probe",
+        "estimate",
+        "run"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "article_reader",
+      "path": "skill/scripts/article.py",
+      "commands": [
+        "manifest",
+        "probe",
+        "estimate",
+        "run"
+      ],
+      "status": "shipped"
+    },
+    {
+      "id": "instagram_capture_adapter",
+      "path": "scripts/instagram_capture_helper.py",
+      "commands": [
+        "process"
+      ],
+      "status": "dev-only"
+    },
+    {
+      "id": "youtube_capture_adapter",
+      "path": "scripts/youtube_capture_helper.py",
+      "commands": [
+        "inspect",
+        "preview",
+        "process"
+      ],
+      "status": "dev-only"
+    },
+    {
+      "id": "observe_companion",
+      "path": "skill/scripts/observe.py",
+      "commands": [
+        "doctor",
+        "screenshot",
+        "clip",
+        "status"
+      ],
+      "status": "planned"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "workflow.guided_read",
+      "status": "shipped",
+      "entry_point": "guided",
+      "sequence": [
+        "inspect",
+        "preview",
+        "read"
+      ]
+    },
+    {
+      "id": "evidence.video_audio",
+      "status": "shipped",
+      "entry_point": "video_audio_reader",
+      "citation_contract": "[MM:SS]"
+    },
+    {
+      "id": "evidence.image_carousel",
+      "status": "shipped",
+      "entry_point": "image_reader",
+      "citation_contract": "[image N]"
+    },
+    {
+      "id": "evidence.article",
+      "status": "shipped",
+      "entry_point": "article_reader",
+      "citation_contract": "[article N]"
+    },
+    {
+      "id": "evidence.rss_atom",
+      "status": "shipped",
+      "entry_point": "article_reader",
+      "citation_contract": "[entry N]"
+    },
+    {
+      "id": "capture.instagram_queue",
+      "status": "dev-only",
+      "entry_point": "instagram_capture_adapter"
+    },
+    {
+      "id": "capture.youtube_private_playlist",
+      "status": "dev-only",
+      "entry_point": "youtube_capture_adapter"
+    },
+    {
+      "id": "capture.observe_on_demand",
+      "status": "planned",
+      "entry_point": "observe_companion"
+    },
+    {
+      "id": "integration.mcp_host",
+      "status": "planned"
+    },
+    {
+      "id": "integration.browser_bridge",
+      "status": "planned"
+    }
+  ],
+  "gate_fields": [
+    "requires_cloud_approval",
+    "needs_model_download",
+    "needs_install",
+    "free"
+  ],
+  "citation_contracts": {
+    "image": "[image N]",
+    "video_audio": "[MM:SS]",
+    "article": "[article N]",
+    "rss_atom": "[entry N]"
+  },
+  "security": {
+    "browser_state_access": false,
+    "browser_auth_transfers_to_cli": false,
+    "approval_flags_must_be_explicit": true,
+    "per_job_cloud_approval": true,
+    "separate_model_download_approval": true
+  }
+}
