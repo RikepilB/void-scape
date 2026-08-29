@@ -18,13 +18,27 @@ author can't. Issues and PRs are both welcome.
 
 | path | what |
 |---|---|
-| `skill/scripts/video.py` | the engine — `probe` / `estimate` / `run` (stdlib + ffmpeg/yt-dlp) |
-| `skill/SKILL.md` | the prompt that tells Codex how to drive the engine |
+| `skill/scripts/voidscape.py` | guided CLI — `inspect` / `preview` / `read` dispatch to the reader below |
+| `skill/scripts/video.py` | video/audio engine + shared envelope/pricing/error helpers |
+| `skill/scripts/image.py` | local image and carousel evidence engine |
+| `skill/scripts/article.py` | local HTML/Markdown/RSS/Atom and non-video URL evidence engine |
+| `skill/SKILL.md` | the prompt that tells Codex how to drive the engines |
 | `skill/pricing.json` | editable rate table (transcription $/min, model $/Mtok, frame width) |
 | `skill/references/backends.md` | per-backend setup |
 | `docs/` | architecture / CLI reference / workflow / evals |
+| `scripts/capture_adapter.py` | shared capture-adapter contract and urls.md queue helpers |
+| `scripts/*_capture_helper.py` | platform-specific capture CLIs (Instagram, YouTube, …) |
 
 Read [`docs/architecture.md`](docs/architecture.md) before changing the cost model or frame/token math.
+
+### Adding or changing a media reader
+
+Phase 0.2 (issue #15) decided on a **documented protocol, not a shared implementation layer**.
+Each reader should expose `manifest`, `probe`, `estimate`, and `run` with the exit codes in
+`video.py`'s manifest, reuse `video._envelope` / `video._classify_error` for agent output, and
+register input discovery in `voidscape.py`. Keep probe/estimate/run payloads focused — do not force
+video-only fields (`tier`, `backend`, frames) onto text or image readers. See
+[`docs/superpowers/specs/2026-08-28-media-reader-interface-reassessment.md`](docs/superpowers/specs/2026-08-28-media-reader-interface-reassessment.md).
 
 ## Dev setup
 
@@ -51,6 +65,17 @@ See [`docs/evals.md`](docs/evals.md). For a code change, at minimum:
 4. If you touched the frame/token math, sanity-check `estimate --human` numbers against `docs/architecture.md`.
 
 Note what you ran (and the output) in the PR — "tests pass" without evidence isn't enough.
+
+## Capture adapters
+
+Platform capture helpers share the **inspect → preview → process** contract and
+urls.md dedup/append logic in [`scripts/capture_adapter.py`](scripts/capture_adapter.py).
+Read [`docs/capture-adapters.md`](docs/capture-adapters.md) before adding a new platform.
+
+**Extension sketch:** implement `canonical_url`, wire `preview_action_for_url` /
+`append_and_confirm` for queue writes, keep OAuth or browser selectors inside your
+helper, and add `tests/test_<platform>_capture_helper.py` plus contract coverage in
+`tests/test_capture_adapter.py`. See the ExampleSocial walkthrough in the doc.
 
 ## Good first issues
 
