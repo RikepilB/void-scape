@@ -26,6 +26,10 @@ CHROME_MATRIX = REPO / "docs" / "chrome-use-case-matrix.md"
 ROADMAP = REPO / "docs" / "ROADMAP.md"
 IMAGE_DESIGN = REPO / "docs" / "superpowers" / "specs" / "2026-07-21-image-carousel-reader-design.md"
 IMAGE_PLAN = REPO / "docs" / "superpowers" / "plans" / "2026-07-21-image-carousel-reader.md"
+BROWSER_BRIDGE_DESIGN = (
+    REPO / "docs" / "superpowers" / "specs"
+    / "2026-08-28-harness-neutral-browser-bridge-design.md"
+)
 
 
 def test_skill_md_is_codex_first():
@@ -334,3 +338,33 @@ def test_completed_image_plan_snippets_teach_current_contracts():
         'args.agent_model or _defaults(workspace)["agent_model"]',
     ):
         assert required in plan
+
+
+def test_browser_bridge_design_exists_and_states_security_boundaries():
+    assert BROWSER_BRIDGE_DESIGN.is_file()
+    content = BROWSER_BRIDGE_DESIGN.read_text(encoding="utf-8")
+    assert "**Status:** Design approved for review" in content
+    for required in (
+        "dedicated repository",
+        "native messaging",
+        "loopback",
+        "MCP-style tool calls",
+        "{ok,data,error,meta}",
+        "capability negotiation",
+        "host routing",
+        "--allow-cloud",
+        "--allow-model-download",
+        "inspect → preview → read",
+        "never reads browser credentials, cookies, storage, or secrets",
+        "Richard-tested",
+        "Vendor-documented",
+        "Unverified",
+        "ChatGPT / Codex adapter",
+        "Claude adapter",
+        "origin validation",
+        "local port exposure",
+        "command injection",
+        "cross-profile access",
+        "credential leakage",
+    ):
+        assert required in content
