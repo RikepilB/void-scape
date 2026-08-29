@@ -54,4 +54,3 @@ Never auto-retry exit 4 with approval flags.
 
 Voidscape ships no scheduler, background worker, or production MCP host. A calling system remains
 responsible for queue durability, concurrency, cancellation, and human approval presentation.
-

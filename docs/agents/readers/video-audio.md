@@ -3,7 +3,7 @@
 The video reader prepares scoped frames and/or timestamped transcript evidence from local media and
 supported public media URLs.
 
-**Status:** `shipped`  
+**Status:** `shipped`
 [Back to agent docs](../index.md) · Entry points:
 [`voidscape.py`](../../../skill/scripts/voidscape.py), [`video.py`](../../../skill/scripts/video.py)
 
@@ -46,4 +46,3 @@ near-identical frames.
 
 Canonical details: [architecture](../../architecture.md), [CLI reference](../../cli-reference.md),
 and [authenticated sources](../../authenticated-sources.md).
-

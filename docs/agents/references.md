@@ -37,4 +37,3 @@ own scoped test evidence.
 Voidscape does not copy upstream code or adopt screenpipe's always-on recording as its core. It does
 not adopt an autonomous browser loop, full-page cloud uploads, raw `eval`, or cookie scraping from
 automated_browser. Review each upstream license and current design before any future code reuse.
-

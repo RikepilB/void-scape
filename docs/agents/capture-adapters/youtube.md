@@ -3,7 +3,7 @@
 The YouTube repository adapter reads a user-owned private playlist through the official YouTube Data
 API, appends canonical URLs durably, then removes captured playlist items.
 
-**Status:** `dev-only`  
+**Status:** `dev-only`
 [Back to agent docs](../index.md) · Canonical sources:
 [`youtube_capture_helper.py`](../../../scripts/youtube_capture_helper.py) and
 [YouTube queue capture](../../youtube-queue-capture.md)
@@ -33,4 +33,3 @@ not automate the website or read browser cookies.
 
 `process` preserves append-before-delete ordering. If the queue write fails, the playlist item must
 remain. Each captured URL later enters Voidscape's separate `inspect -> preview -> read` flow.
-

@@ -72,4 +72,3 @@ not automatically a Voidscape capability.
 The installed agent contract is [`skill/SKILL.md`](../../skill/SKILL.md). Architecture and backend
 behavior live in [`docs/architecture.md`](../architecture.md). If documentation conflicts with
 executable behavior, code and tests on `main` win and the documentation must be corrected.
-

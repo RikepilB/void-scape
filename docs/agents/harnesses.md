@@ -46,4 +46,3 @@ exports, or reads cookies from a browser profile.
 
 See [authenticated sources](../authenticated-sources.md) and the
 [browser/CLI evidence matrix](../chrome-use-case-matrix.md).
-

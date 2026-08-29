@@ -3,7 +3,7 @@
 The Instagram repository helper canonicalizes and deduplicates user-confirmed Reel/post URLs before
 appending them to a queue.
 
-**Status:** `dev-only`  
+**Status:** `dev-only`
 [Back to agent docs](../index.md) · Canonical sources:
 [`instagram_capture_helper.py`](../../../scripts/instagram_capture_helper.py) and
 [capture adapters](../../capture-adapters.md)
@@ -31,4 +31,3 @@ The helper validates only the queue operation; it does not prove media access.
 Reading the captured URL remains a separate Voidscape `inspect -> preview -> read` job. A URL visible
 in an authenticated tab may still fail in an anonymous CLI. Voidscape never extracts cookies from
 the browser; see [authenticated sources](../../authenticated-sources.md).
-

@@ -70,4 +70,3 @@ non-zero result as retryable.
 
 The agent cites only evidence actually prepared. A focused rerun is preferable to inventing details
 outside the selected range.
-

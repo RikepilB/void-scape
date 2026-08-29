@@ -48,4 +48,3 @@ authorizes the bridge or harness to inspect browser storage.
 - Universal compatibility claims across all models or harnesses
 
 Those items remain absent unless a later implementation and security review explicitly ships them.
-

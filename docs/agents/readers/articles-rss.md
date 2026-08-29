@@ -3,7 +3,7 @@
 The article reader prepares deterministic text evidence from local documents, feeds, and explicitly
 approved public article fetches.
 
-**Status:** `shipped`  
+**Status:** `shipped`
 [Back to agent docs](../index.md) · Entry points:
 [`voidscape.py`](../../../skill/scripts/voidscape.py), [`article.py`](../../../skill/scripts/article.py)
 
@@ -40,4 +40,3 @@ text files under `entries/`.
 
 Do not invent page numbers, timestamps, publication metadata, or text the extraction did not
 produce. Canonical details: [article and RSS reader](../../article-rss-reader.md).
-
