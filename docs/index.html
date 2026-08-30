@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Voidscape turns personal media into timestamped evidence: local-first frames, transcripts, manifests, and visible cost and privacy gates.">
   <title>Voidscape — personal media, made legible</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <style>
     :root {
       --ink: #030405;
@@ -92,6 +95,45 @@
     @keyframes card-drift-one { 0%, 100% { translate: 0 0; } 50% { translate: 15px -13px; } }
     @keyframes card-drift-two { 0%, 100% { translate: 0 0; } 50% { translate: -14px 14px; } }
     @keyframes card-drift-three { 0%, 100% { translate: 0 0; } 50% { translate: 5px -17px; } }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 34px 0 46px; }
+    .stat { border-left: 1px dashed var(--line-strong); padding: 0 30px; }
+    .stat:first-child { border-left: 0; padding-left: 0; }
+    .stat b { background: linear-gradient(120deg, var(--blue), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; display: block; font: 600 clamp(34px, 3.4vw, 50px)/1 var(--display); letter-spacing: -.055em; }
+    .stat span { color: var(--muted); display: block; font: 700 10px var(--mono); letter-spacing: .12em; margin-top: 9px; text-transform: uppercase; }
+
+    .eyebrow { color: var(--blue); display: block; font: 700 11px var(--mono); letter-spacing: .14em; margin-bottom: 14px; text-transform: uppercase; }
+
+    .console-grid { display: grid; gap: 22px; grid-template-columns: repeat(2, 1fr); }
+    .console-card { background: rgba(11, 15, 26, .55); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: border-color .2s ease, transform .2s ease; }
+    .console-card:hover { border-color: var(--line-strong); transform: translateY(-3px); }
+    .console-card:nth-child(5) { grid-column: 1 / -1; max-width: calc(50% - 11px); }
+    .console-body { padding: 22px 22px 20px; }
+    .console-body h3 { font: 600 19px/1.1 var(--mono); letter-spacing: -.02em; margin: 0 0 8px; }
+    .console-body h3 .cmd-name { color: var(--blue); }
+    .console-body p { color: var(--mist); font-size: 14px; margin: 0; }
+    .console-term { background: #05070c; border-top: 1px solid var(--line); color: #9fb4d8; font: 11.5px/1.75 var(--mono); overflow-x: auto; padding: 15px 18px; white-space: pre; }
+    .console-term .p { color: #8bb7ff; }
+    .console-term .ok { color: #79d9a7; }
+    .console-term .dim { color: #5b6b8c; }
+
+    .flags-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
+    .flag-chip { border: 1px dashed var(--line-strong); border-radius: 14px; padding: 20px; transition: background .2s ease, border-color .2s ease; }
+    .flag-chip:hover { background: rgba(177, 203, 255, .05); border-color: rgba(142, 179, 255, .45); }
+    .flag-chip code { color: var(--blue); display: block; font: 600 13px var(--mono); margin-bottom: 8px; }
+    .flag-chip p { color: var(--mist); font-size: 13px; line-height: 1.5; margin: 0; }
+
+    .reads { background: linear-gradient(180deg, #05070c, #0a0f1d 55%, #05070c); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); }
+    .reads-grid { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); }
+    .read-card { background: rgba(13, 18, 32, .6); border: 1px solid var(--line); border-radius: 16px; padding: 22px; transition: border-color .2s ease, transform .2s ease; }
+    .read-card:hover { border-color: rgba(142, 179, 255, .4); transform: translateY(-3px); }
+    .read-icon { align-items: center; background: rgba(117, 173, 255, .1); border: 1px solid rgba(142, 179, 255, .28); border-radius: 10px; color: var(--blue); display: inline-flex; height: 34px; justify-content: center; margin-bottom: 14px; width: 34px; }
+    .read-icon svg { height: 17px; width: 17px; }
+    .read-card h3 { font: 600 17px/1.2 var(--display); letter-spacing: -.03em; margin: 0 0 6px; }
+    .read-card > p { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 16px; }
+    .read-cmd { background: rgba(4, 6, 11, .8); border: 1px solid rgba(142, 179, 255, .16); border-radius: 9px; color: #a9caff; display: block; font: 11px/1.6 var(--mono); overflow-x: auto; padding: 10px 12px; white-space: nowrap; }
+    .read-cmd .p { color: #8bb7ff; }
+    .read-cmd .flag { color: #b5bcff; }
 
     section { padding: 112px 0; position: relative; }
     .section-head { align-items: end; display: flex; gap: 30px; justify-content: space-between; margin-bottom: 48px; }
@@ -200,6 +242,10 @@
       .command p { grid-column: 2; }
       .command code { grid-column: 2; margin-top: 7px; white-space: normal; }
       .gate-grid, .capability-board, .install-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); row-gap: 28px; }
+      .stat:nth-child(3) { border-left: 0; padding-left: 0; }
+      .console-grid, .flags-grid, .reads-grid { grid-template-columns: 1fr; }
+      .console-card:nth-child(5) { grid-column: auto; max-width: none; }
       .capability-column { min-height: 0; }
       .case-files { grid-template-columns: 1fr; }
       .install-step:nth-child(n) { transform: none; }
@@ -259,6 +305,17 @@
 
     <div class="soft-divider" aria-hidden="true"></div>
 
+    <div class="shell">
+      <div class="stats" aria-label="Voidscape at a glance">
+        <div class="stat"><b>2</b><span>readers — video · image</span></div>
+        <div class="stat"><b>5</b><span>guided commands</span></div>
+        <div class="stat"><b>1</b><span>consent-first sequence</span></div>
+        <div class="stat"><b>0</b><span>uploads by default</span></div>
+      </div>
+    </div>
+
+    <div class="soft-divider" aria-hidden="true"></div>
+
     <section class="shell" id="sequence">
       <div class="section-head">
         <div>
@@ -285,6 +342,89 @@
           <p>Extract only the frames and transcript you approved, then hand agents artifacts they can cite and inspect.</p>
           <code>python skill/scripts/voidscape.py read "clip.mp4" --tier both --backend captions</code>
         </article>
+      </div>
+    </section>
+
+    <section class="shell" id="commands" aria-labelledby="commands-title">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">// Commands</span>
+          <h2 id="commands-title">Five commands. The sequence stays the same.</h2>
+        </div>
+        <p>Every command works on a local file, a public URL, or a folder of images — and none of them bypasses the gates.</p>
+      </div>
+      <div class="console-grid">
+        <article class="console-card">
+          <div class="console-body">
+            <h3><span class="cmd-name">inspect</span> input</h3>
+            <p>Free source discovery. Duration, resolution, audio, captions, and sidecars — before anything is priced or touched.</p>
+          </div>
+          <div class="console-term"><span class="p">$</span> voidscape.py inspect "clip.mp4"
+<span class="ok">✓</span> duration 73.6s · 1920×1080 · audio
+<span class="ok">✓</span> sidecar transcript found
+<span class="dim">recommended scope: tier both · backend captions</span></div>
+        </article>
+        <article class="console-card">
+          <div class="console-body">
+            <h3><span class="cmd-name">preview</span> input</h3>
+            <p>The decision point. Separates transcription spend from vision-token cost and shows exactly which gates apply.</p>
+          </div>
+          <div class="console-term"><span class="p">$</span> voidscape.py preview "clip.mp4" --tier both
+<span class="dim">transcription    $0.0000  (captions)</span>
+<span class="dim">agent tokens     $0.0392  (60 frames)</span>
+<span class="ok">✓</span> free path · no approval required</div>
+        </article>
+        <article class="console-card">
+          <div class="console-body">
+            <h3><span class="cmd-name">read</span> input</h3>
+            <p>Extracts only the approved frames and transcript into a work folder, with a manifest an agent can cite.</p>
+          </div>
+          <div class="console-term"><span class="p">$</span> voidscape.py read "clip.mp4" --tier both
+<span class="ok">✓</span> frames/ · 12 selected (4 deduped)
+<span class="ok">✓</span> transcript.txt · manifest.json
+<span class="dim">cite as [MM:SS] · protocol 1.0</span></div>
+        </article>
+        <article class="console-card">
+          <div class="console-body">
+            <h3><span class="cmd-name">doctor</span></h3>
+            <p>Local readiness check — Python, ffmpeg, yt-dlp, and transcription backends. Changes nothing.</p>
+          </div>
+          <div class="console-term"><span class="p">$</span> voidscape.py doctor
+<span class="ok">✓</span> python · ffmpeg · ffprobe
+<span class="ok">✓</span> yt-dlp · faster-whisper
+<span class="dim">ready for local analysis</span></div>
+        </article>
+        <article class="console-card">
+          <div class="console-body">
+            <h3><span class="cmd-name">customize</span></h3>
+            <p>Preview or save local preferences — Inbox, Library, transcription defaults. Saves only with explicit confirmation.</p>
+          </div>
+          <div class="console-term"><span class="p">$</span> voidscape.py customize
+<span class="dim">inbox_dir    C:\Media\Inbox</span>
+<span class="dim">whisper      small (local)</span>
+<span class="ok">✓</span> preferences saved after confirmation</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell" id="flags" aria-labelledby="flags-title">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">// Agent-first design</span>
+          <h2 id="flags-title">Built for agents. Legible for humans.</h2>
+        </div>
+        <p>One stable contract: JSON envelopes, deterministic exit codes, and gates an agent must check before it acts.</p>
+      </div>
+      <div class="flags-grid">
+        <div class="flag-chip"><code>--json / --envelope</code><p>Guided commands emit JSON; the engine emits <code>{ok,data,error,meta}</code>. Machines parse; humans read.</p></div>
+        <div class="flag-chip"><code>exit codes 0–6</code><p>Success, usage, input, approval required, dependency, and operation failure are distinct, deterministic values.</p></div>
+        <div class="flag-chip"><code>--tier visual|audio|both</code><p>Price and extract only the channels the task needs — frames, transcript, or both.</p></div>
+        <div class="flag-chip"><code>--start / --end</code><p>Scope work to a time window. Output timestamps stay pinned to the source timeline.</p></div>
+        <div class="flag-chip"><code>--allow-cloud</code><p>A capability for one invocation, not a setting. Cloud transcription is rejected before upload without it.</p></div>
+        <div class="flag-chip"><code>--allow-model-download</code><p>A first local Whisper model download needs its own explicit, per-run consent.</p></div>
+        <div class="flag-chip"><code>manifest --compact</code><p>Agents introspect commands, flags, and protocol version at runtime. No docs scraping needed.</p></div>
+        <div class="flag-chip"><code>[MM:SS] · [image N]</code><p>Citation contracts are part of the output. Agents quote moments and frames, not vibes.</p></div>
+        <div class="flag-chip"><code>--backend captions</code><p>Free transcription paths first: existing captions, sidecars, or local Whisper. Paid backends are opt-in.</p></div>
       </div>
     </section>
 
@@ -381,6 +521,56 @@
           <p>Transcribe a recorded brainstorm locally, preserve the evidence, and let an agent compare ideas against the words that were actually said.</p>
           <footer>Audio evidence / available now</footer>
         </article>
+      </div>
+    </section>
+
+    <section class="reads" id="reads" aria-labelledby="reads-title">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">// Use cases</span>
+            <h2 id="reads-title">What people read with Voidscape</h2>
+          </div>
+          <p>One sequence for every kind of kept media — files, URLs, and folders. Each read ends in citable evidence.</p>
+        </div>
+        <div class="reads-grid">
+          <article class="read-card">
+            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="3.5"/><path d="m10 9.5 5 2.5-5 2.5z" fill="currentColor" stroke="none"/></svg></span>
+            <h3>YouTube tutorials</h3>
+            <p>Turn a public video into timestamped notes you can grep and cite.</p>
+            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"https://youtu.be/…"</span> --tier both</code>
+          </article>
+          <article class="read-card">
+            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></span>
+            <h3>Confirmed public Reels</h3>
+            <p>Validate and dedupe saved Reel URLs, then read them through the normal gate.</p>
+            <code class="read-cmd"><span class="p">$</span> voidscape.py inspect <span class="flag">"https://instagram.com/reel/…"</span></code>
+          </article>
+          <article class="read-card">
+            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15z"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5"/></svg></span>
+            <h3>Voice memos &amp; meetings</h3>
+            <p>Transcribe recorded brainstorms locally; keep the words as evidence.</p>
+            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"memo.m4a"</span> --tier audio</code>
+          </article>
+          <article class="read-card">
+            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3.5"/><circle cx="8.8" cy="8.8" r="1.6"/><path d="m21 15-4.6-4.6a1.5 1.5 0 0 0-2.1 0L6 18.7"/></svg></span>
+            <h3>Slides &amp; carousels</h3>
+            <p>Read a folder of JPG/PNG/WebP in natural order — originals stay untouched.</p>
+            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"slides/"</span> --tier visual</code>
+          </article>
+          <article class="read-card">
+            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M8 21h8"/><path d="m9.5 12.5 2 2 3.5-4"/></svg></span>
+            <h3>Screen recordings</h3>
+            <p>Demos and bug captures become frame-plus-transcript evidence bundles.</p>
+            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"demo.mp4"</span> --frames 24</code>
+          </article>
+          <article class="read-card">
+            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 19.5a2.5 2.5 0 0 1 2.5-2.5h12.5v-13H7a2.5 2.5 0 0 0-2.5 2.5z"/><path d="M4.5 19.5A2.5 2.5 0 0 0 7 22h12.5v-5"/><path d="M9 8.5h7M9 12h5"/></svg></span>
+            <h3>Research archives</h3>
+            <p>Scoped windows and pinned timestamps keep long footage citable.</p>
+            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"talk.mp4"</span> --start 600 --end 900</code>
+          </article>
+        </div>
       </div>
     </section>
 
