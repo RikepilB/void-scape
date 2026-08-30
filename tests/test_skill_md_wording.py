@@ -30,6 +30,10 @@ BROWSER_BRIDGE_DESIGN = (
     REPO / "docs" / "superpowers" / "specs"
     / "2026-08-28-harness-neutral-browser-bridge-design.md"
 )
+PUBLIC_HTML_PAGES = tuple(
+    REPO / "docs" / name
+    for name in ("index.html", "guide.html", "faq.html", "privacy.html", "terms.html")
+)
 
 
 def test_skill_md_is_codex_first():
@@ -117,6 +121,25 @@ def test_landing_page_uses_voidscape_identity_only():
     assert "open voidscape on github" in content
 
 
+def test_public_pages_use_the_voidscape_favicon_assets():
+    for page in PUBLIC_HTML_PAGES:
+        content = page.read_text(encoding="utf-8")
+        assert 'rel="icon" type="image/svg+xml" href="favicon.svg"' in content
+        assert 'rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"' in content
+        assert 'rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"' in content
+    for name in ("favicon.svg", "favicon-32.png", "apple-touch-icon.png"):
+        assert (REPO / "docs" / name).is_file()
+
+
+def test_landing_tracks_shipped_readers_and_contains_mobile_grid():
+    content = LANDING_PAGE.read_text(encoding="utf-8")
+    assert '<div class="stat"><b>3</b><span>reader engines' in content
+    assert "Articles &amp; RSS feeds" in content
+    assert "[article N] · [entry N]" in content
+    assert "repeat(3, minmax(0, 1fr))" in content
+    assert ".read-card" in content and "min-width: 0" in content
+
+
 def test_landing_navigation_stays_focused_and_links_legal_pages():
     content = LANDING_PAGE.read_text(encoding="utf-8")
     nav = content.split('<nav aria-label="Primary navigation">', 1)[1].split("</nav>", 1)[0]
@@ -181,7 +204,14 @@ def test_full_faq_page_is_categorized_and_has_at_least_twenty_answers():
         assert category in content
 
 
-def test_website_guide_tells_the_current_workflow_and_labels_planned_work():
+def test_guide_command_examples_scroll_inside_the_mobile_shell():
+    content = (REPO / "docs" / "faq.css").read_text(encoding="utf-8")
+    assert ".faq-category pre" in content
+    assert "max-width: 100%" in content
+    assert "overflow-x: auto" in content
+
+
+def test_website_guide_tells_the_current_workflow_and_labels_capability_boundaries():
     landing = LANDING_PAGE.read_text(encoding="utf-8")
     guide = GUIDE_PAGE.read_text(encoding="utf-8")
     assert 'href="guide.html"' in landing
@@ -191,7 +221,8 @@ def test_website_guide_tells_the_current_workflow_and_labels_planned_work():
         "Preview",
         "Read",
         "Available today",
-        "Coming soon",
+        "Repository-only tools",
+        "Articles, RSS, and saved posts",
         "not a promise",
         "Transcription is one channel",
         "Already have a transcript?",
@@ -250,11 +281,11 @@ def test_local_image_and_carousel_reader_is_documented_in_release_candidate_sour
     demo = DEMO_SHOT_LIST.read_text(encoding="utf-8")
 
     available = landing.split("01 / Available now", 1)[1].split(
-        "02 / Coming soon", 1,
+        "02 / Repository helpers", 1,
     )[0]
-    planned = landing.split("02 / Coming soon", 1)[1]
+    not_installed = landing.split("02 / Repository helpers", 1)[1]
     assert "Image and carousel reading" in available
-    assert "Image and carousel reading" not in planned
+    assert "Image and carousel reading" not in not_installed
     for content in (skill, readme, reference, guide):
         assert "image.py manifest --compact" in content
         assert "[image 1]" in content

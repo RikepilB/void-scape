@@ -7,7 +7,7 @@
   <title>Voidscape Guide — from source to evidence</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="stylesheet" href="faq.css">
 </head>
 <body>
@@ -31,15 +31,15 @@
       <h1>From “what is in this?” to evidence you can inspect.</h1>
       <p class="lede">Transcription is one channel, not the final result. Voidscape prepares the visual and audio evidence an agent needs, while making three small decisions visible so you stay in control of what happens to your media.</p>
       <nav class="category-nav" aria-label="Guide sections">
-        <a href="#start">Start</a><a href="#inspect">Inspect</a><a href="#preview">Preview</a><a href="#read">Read</a><a href="#ask">Ask</a><a href="#next">Coming soon</a>
+        <a href="#start">Start</a><a href="#inspect">Inspect</a><a href="#preview">Preview</a><a href="#read">Read</a><a href="#ask">Ask</a><a href="#next">Boundaries</a>
       </nav>
     </section>
 
     <section class="faq-category" id="start">
       <span class="category-label">Before you begin</span>
       <h2>Choose one file or public URL you are allowed to use.</h2>
-      <p class="category-intro">One local image, a filename-ordered carousel folder, a meeting recording, screen capture, voice memo, demo, or supported public video URL is enough. Start with the key-free demo fixture if you want to see the flow without an account, API key, or personal media.</p>
-      <aside class="faq-callout"><strong>Available today.</strong> Local images and carousels, local video and audio, supported public URLs, captions, local transcription, ordered visual evidence, timestamped transcripts, and a source manifest.</aside>
+      <p class="category-intro">One local image, carousel folder, article, feed, recording, voice memo, demo, or supported public URL is enough. Start with the key-free demo fixture if you want to see the flow without an account, API key, or personal media.</p>
+      <aside class="faq-callout"><strong>Available today.</strong> Local images and carousels, video and audio, articles and RSS/Atom, supported public URLs, captions, local transcription, ordered evidence, and a source manifest.</aside>
     </section>
 
     <section class="faq-category" id="inspect">
@@ -61,25 +61,25 @@
     <section class="faq-category" id="read">
       <span class="category-label">03 / Read</span>
       <h2>Create only the evidence you chose.</h2>
-      <p class="category-intro">After the preview is acceptable, read creates an inspectable work folder. Video can produce frames, transcript, and manifest; an image or non-recursive carousel produces ordered byte-preserving images and a manifest. Source files are never changed.</p>
+      <p class="category-intro">After the preview is acceptable, read creates an inspectable work folder. Video can produce frames and transcripts; images remain byte-preserving and ordered; articles and feeds become ordered text entries. Every reader writes a manifest. Source files are never changed.</p>
       <pre><code>python skill/scripts/voidscape.py read "clip.mp4" --tier both --backend captions --workdir out</code></pre>
     </section>
 
     <section class="faq-category" id="ask">
       <span class="category-label">Then / Ask</span>
       <h2>Give the artifacts to an agent, not just a title.</h2>
-      <p class="category-intro">Open <code>manifest.json</code> plus <code>frames/</code>, <code>transcript.txt</code>, or <code>images/</code>. Ask for a summary or a concrete answer. The agent cites video moments as <code>[MM:SS]</code> and carousel positions as <code>[image 1]</code>. The CLI prepares evidence; an agent authors the interpretation.</p>
+      <p class="category-intro">Open <code>manifest.json</code> plus <code>frames/</code>, <code>transcript.txt</code>, <code>images/</code>, or <code>entries/</code>. Ask for a summary or a concrete answer. The agent cites video moments as <code>[MM:SS]</code>, carousel positions as <code>[image 1]</code>, articles as <code>[article 1]</code>, and feed items as <code>[entry 1]</code>. The CLI prepares evidence; an agent authors the interpretation.</p>
       <aside class="faq-callout"><strong>Good prompt:</strong> “What decision was made around 05:12? Quote the transcript and cite the timestamp.”</aside>
     </section>
 
     <section class="faq-category" id="next">
-      <span class="category-label">Coming soon / planning lock</span>
-      <h2>Useful directions, clearly not shipped.</h2>
-      <p class="category-intro">These are planning-lock items, not commands or product promises. Each needs its own privacy, platform, and implementation review before it becomes available.</p>
+      <span class="category-label">Boundaries / status lock</span>
+      <h2>Working helpers and parked directions, clearly labeled.</h2>
+      <p class="category-intro">Repository-only tools are not installed commands. Parked directions still need privacy, platform, and implementation review.</p>
       <div class="faq-list">
-        <details><summary>Private YouTube queue capture</summary><p>Designed around a user-owned private playlist and the official YouTube Data API. The current CLI can read an individual permitted URL; queue capture is coming soon.</p></details>
-        <details><summary>Articles, RSS, and saved posts</summary><p>Planned source adapters beyond the current image and media engines. They are not current installed inputs.</p></details>
-        <details><summary>More source adapters and agent/MCP packaging</summary><p>Possible ways to make approved evidence easier to collect and use across environments. Not a current public API surface.</p></details>
+        <details><summary>Private YouTube queue capture</summary><p>A repository-only helper uses a user-owned private playlist and the official YouTube Data API. It is implemented for development but is not installed with the supported skill.</p></details>
+        <details><summary>Articles, RSS, and saved posts</summary><p>Local Markdown, HTML, text, RSS/Atom, and approved public article fetches are shipped. Subscriber-only pages and broader saved-post adapters remain separate browser or adapter work.</p></details>
+        <details><summary>More source adapters and agent/MCP packaging</summary><p>The Instagram and YouTube helpers are development-only. A production MCP host is parked; the shell remains the canonical interface.</p></details>
         <details><summary>Hosted service, browser extension, and unattended workflows</summary><p>Exploration only—not a promise. These would require separate product design, legal review, account controls, and consent rules.</p></details>
       </div>
     </section>

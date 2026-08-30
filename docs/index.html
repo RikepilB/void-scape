@@ -7,7 +7,7 @@
   <title>Voidscape — personal media, made legible</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <style>
     :root {
       --ink: #030405;
@@ -124,14 +124,14 @@
     .flag-chip p { color: var(--mist); font-size: 13px; line-height: 1.5; margin: 0; }
 
     .reads { background: linear-gradient(180deg, #05070c, #0a0f1d 55%, #05070c); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); }
-    .reads-grid { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); }
-    .read-card { background: rgba(13, 18, 32, .6); border: 1px solid var(--line); border-radius: 16px; padding: 22px; transition: border-color .2s ease, transform .2s ease; }
+    .reads-grid { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); min-width: 0; }
+    .read-card { background: rgba(13, 18, 32, .6); border: 1px solid var(--line); border-radius: 16px; min-width: 0; padding: 22px; transition: border-color .2s ease, transform .2s ease; }
     .read-card:hover { border-color: rgba(142, 179, 255, .4); transform: translateY(-3px); }
     .read-icon { align-items: center; background: rgba(117, 173, 255, .1); border: 1px solid rgba(142, 179, 255, .28); border-radius: 10px; color: var(--blue); display: inline-flex; height: 34px; justify-content: center; margin-bottom: 14px; width: 34px; }
     .read-icon svg { height: 17px; width: 17px; }
     .read-card h3 { font: 600 17px/1.2 var(--display); letter-spacing: -.03em; margin: 0 0 6px; }
     .read-card > p { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 16px; }
-    .read-cmd { background: rgba(4, 6, 11, .8); border: 1px solid rgba(142, 179, 255, .16); border-radius: 9px; color: #a9caff; display: block; font: 11px/1.6 var(--mono); overflow-x: auto; padding: 10px 12px; white-space: nowrap; }
+    .read-cmd { background: rgba(4, 6, 11, .8); border: 1px solid rgba(142, 179, 255, .16); border-radius: 9px; box-sizing: border-box; color: #a9caff; display: block; font: 11px/1.6 var(--mono); max-width: 100%; min-width: 0; overflow-x: auto; padding: 10px 12px; white-space: nowrap; }
     .read-cmd .p { color: #8bb7ff; }
     .read-cmd .flag { color: #b5bcff; }
 
@@ -307,7 +307,7 @@
 
     <div class="shell">
       <div class="stats" aria-label="Voidscape at a glance">
-        <div class="stat"><b>2</b><span>readers — video · image</span></div>
+        <div class="stat"><b>3</b><span>reader engines — video/audio · image · article/RSS</span></div>
         <div class="stat"><b>5</b><span>guided commands</span></div>
         <div class="stat"><b>1</b><span>consent-first sequence</span></div>
         <div class="stat"><b>0</b><span>uploads by default</span></div>
@@ -351,7 +351,7 @@
           <span class="eyebrow">// Commands</span>
           <h2 id="commands-title">Five commands. The sequence stays the same.</h2>
         </div>
-        <p>Every command works on a local file, a public URL, or a folder of images — and none of them bypasses the gates.</p>
+        <p>The guided flow covers local files, public URLs, image folders, articles, and feeds—without bypassing the gates.</p>
       </div>
       <div class="console-grid">
         <article class="console-card">
@@ -423,7 +423,7 @@
         <div class="flag-chip"><code>--allow-cloud</code><p>A capability for one invocation, not a setting. Cloud transcription is rejected before upload without it.</p></div>
         <div class="flag-chip"><code>--allow-model-download</code><p>A first local Whisper model download needs its own explicit, per-run consent.</p></div>
         <div class="flag-chip"><code>manifest --compact</code><p>Agents introspect commands, flags, and protocol version at runtime. No docs scraping needed.</p></div>
-        <div class="flag-chip"><code>[MM:SS] · [image N]</code><p>Citation contracts are part of the output. Agents quote moments and frames, not vibes.</p></div>
+        <div class="flag-chip"><code>[MM:SS] · [image N] · [article N] · [entry N]</code><p>Citation contracts are part of the output. Agents quote moments, frames, articles, and feed entries—not vibes.</p></div>
         <div class="flag-chip"><code>--backend captions</code><p>Free transcription paths first: existing captions, sidecars, or local Whisper. Paid backends are opt-in.</p></div>
       </div>
     </section>
@@ -455,15 +455,15 @@
       <div class="shell">
         <div class="section-head">
           <div>
-            <h2>What can read now—and where the system can grow.</h2>
+            <h2>What Voidscape can read now—and where the system can grow.</h2>
           </div>
           <p>Every direction is explicitly labeled: working today, designed next, or longer-term exploration.</p>
         </div>
         <div class="capability-board">
           <section class="capability-column">
             <span class="capability-index">01 / Available now</span>
-            <h3 class="capability-heading">Read the media you already have.</h3>
-            <p class="capability-intro">A local-first pipeline for evidence, pricing, and agent-ready outputs.</p>
+            <h3 class="capability-heading">Read the sources you already have.</h3>
+            <p class="capability-intro">A local-first pipeline for media, article, and feed evidence with visible approval gates.</p>
             <ul class="capability-list">
               <li class="capability-item"><h4>Local video and recordings</h4><p>Analyze demos, meetings, tutorials, screen captures, and personal archives from a local file.</p></li>
               <li class="capability-item"><h4>Image and carousel reading</h4><p>Read one JPG, PNG, or WebP—or one local folder in natural filename order—through the same inspect → preview → read path. Originals stay untouched.</p></li>
@@ -471,30 +471,31 @@
               <li class="capability-item"><h4>Audio, captions, and transcript sidecars</h4><p>Use available captions, transcribe locally, or reuse a matching SRT, VTT, or text sidecar without generating it again.</p></li>
               <li class="capability-item"><h4>Scoped visual reads</h4><p>Choose visual, audio, or both; limit work to a time window; and keep output timestamps pinned to the source timeline.</p></li>
               <li class="capability-item"><h4>Agent-native protocol</h4><p>Machine-readable envelopes, stable exit codes, and a discovery manifest let an agent plan and handle failures explicitly.</p></li>
-              <li class="capability-item"><h4>Instagram URL helper</h4><p>A repository-only helper validates and deduplicates confirmed public Reel URLs; it is not an installed Voidscape command.</p></li>
+              <li class="capability-item"><h4>Articles and RSS/Atom</h4><p>Read local Markdown, HTML, text, and feeds. Public article fetches require a separate, explicit approval.</p></li>
+              <li class="capability-item"><h4>On-demand observe capture</h4><p>Create a chosen screenshot or short silent clip on supported hosts, then pass the local file through inspect → preview → read.</p></li>
               <li class="capability-item"><h4>One inspectable evidence bundle</h4><p>Give an agent selected frames, timestamped text, and a source manifest together instead of asking it to infer a video from its title.</p></li>
             </ul>
           </section>
 
           <section class="capability-column next">
-            <span class="capability-status">02 / Coming soon — planned</span>
-            <h3 class="capability-heading">Add trusted ways in.</h3>
-            <p class="capability-intro">The next steps extend source capture without changing the consent-first reading core.</p>
+            <span class="capability-status">02 / Repository helpers — dev-only</span>
+            <h3 class="capability-heading">Capture with explicit boundaries.</h3>
+            <p class="capability-intro">Working repository tools that are not installed as supported Voidscape commands.</p>
             <ul class="capability-list">
-              <li class="capability-item"><h4>Private YouTube queue capture</h4><p>Queue videos from a user-owned private playlist through the official Data API, then keep the normal analysis flow.</p></li>
-              <li class="capability-item"><h4>More audio source adapters</h4><p>Bring saved talks, podcasts, and voice material into a consistent local transcription workflow.</p></li>
-              <li class="capability-item"><h4>Reusable capture adapters</h4><p>Extract a shared interface only after the Instagram and YouTube paths prove the common behavior.</p></li>
+              <li class="capability-item"><h4>Instagram URL queue helper</h4><p>Validate and deduplicate confirmed public Reel URLs without reading browser credentials, cookies, or storage.</p></li>
+              <li class="capability-item"><h4>Private YouTube queue capture</h4><p>Queue videos from a user-owned private playlist through the official YouTube Data API.</p></li>
+              <li class="capability-item"><h4>Reusable capture-adapter contract</h4><p>The two helpers share an explicit repository contract while remaining outside the installed skill surface.</p></li>
             </ul>
           </section>
 
           <section class="capability-column horizon">
-            <span class="capability-status">03 / Exploring — not promised</span>
+            <span class="capability-status">03 / Parked or exploring</span>
             <h3 class="capability-heading">A broader personal media system.</h3>
             <p class="capability-intro">Directions worth testing after product, privacy, platform, and legal review.</p>
             <ul class="capability-list">
-              <li class="capability-item"><h4>More saved-content sources</h4><p>Potential adapters for X bookmarks, TikTok favorites, LinkedIn saves, newsletters, and RSS collections.</p></li>
-              <li class="capability-item"><h4>Posts, articles, and threads</h4><p>Extend the evidence model beyond media to web reading, written research, and saved knowledge.</p></li>
-              <li class="capability-item"><h4>Agent tools and MCP packaging</h4><p>Make approved analysis artifacts easier for agent environments to discover and use.</p></li>
+              <li class="capability-item"><h4>More saved-content sources</h4><p>Potential adapters for X bookmarks, TikTok favorites, LinkedIn saves, and authenticated newsletters.</p></li>
+              <li class="capability-item"><h4>Production MCP host</h4><p>Parked after a no-go spike: the shell stays canonical until the host proves clear workflow value.</p></li>
+              <li class="capability-item"><h4>Universal browser bridge</h4><p>Design-only until a separate security and repository decision authorizes a production extension.</p></li>
               <li class="capability-item"><h4>Guided installation and hosted product</h4><p>Lower the setup barrier only after the local product, user controls, and operating model are ready.</p></li>
               <li class="capability-item"><h4>Universal extension and multi-model reading</h4><p>Research directions—not current commitments—until their safety, cost, and platform constraints are validated.</p></li>
             </ul>
@@ -531,7 +532,7 @@
             <span class="eyebrow">// Use cases</span>
             <h2 id="reads-title">What people read with Voidscape</h2>
           </div>
-          <p>One sequence for every kind of kept media — files, URLs, and folders. Each read ends in citable evidence.</p>
+          <p>One sequence for kept media, articles, and feeds—files, URLs, and folders. Each read ends in citable evidence.</p>
         </div>
         <div class="reads-grid">
           <article class="read-card">
@@ -566,9 +567,9 @@
           </article>
           <article class="read-card">
             <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 19.5a2.5 2.5 0 0 1 2.5-2.5h12.5v-13H7a2.5 2.5 0 0 0-2.5 2.5z"/><path d="M4.5 19.5A2.5 2.5 0 0 0 7 22h12.5v-5"/><path d="M9 8.5h7M9 12h5"/></svg></span>
-            <h3>Research archives</h3>
-            <p>Scoped windows and pinned timestamps keep long footage citable.</p>
-            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"talk.mp4"</span> --start 600 --end 900</code>
+            <h3>Articles &amp; RSS feeds</h3>
+            <p>Read local Markdown, HTML, text, and feeds into ordered, citable evidence.</p>
+            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"feed.xml"</span> --workdir "evidence-feed"</code>
           </article>
         </div>
       </div>
