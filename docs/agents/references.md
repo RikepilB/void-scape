@@ -14,6 +14,7 @@ These sources inform the agent documentation and autonomy boundary; they are not
 - [Agent-docs information architecture](../superpowers/specs/2026-08-29-agent-docs-information-architecture.md).
 - [Browser-bridge security contract](../superpowers/specs/2026-08-28-harness-neutral-browser-bridge-design.md).
 - [Browser-bridge implementation contract](../superpowers/specs/2026-08-29-browser-bridge-implementation-contract.md).
+- [MCP host spike and no-go recommendation](../superpowers/specs/2026-08-29-voidscape-mcp-host-spike.md).
 
 ## Official harness documentation
 

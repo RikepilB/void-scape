@@ -28,6 +28,10 @@ BROWSER_BRIDGE_IMPLEMENTATION_SPEC = (
     REPO / "docs" / "superpowers" / "specs"
     / "2026-08-29-browser-bridge-implementation-contract.md"
 )
+MCP_HOST_SPIKE = (
+    REPO / "docs" / "superpowers" / "specs"
+    / "2026-08-29-voidscape-mcp-host-spike.md"
+)
 OBSERVE_CLI_SPEC = (
     REPO / "docs" / "superpowers" / "specs"
     / "2026-08-29-observe-companion-cli-design.md"
@@ -48,7 +52,7 @@ REQUIRED_MARKDOWN = {
     "capture-adapters/instagram.md",
     "capture-adapters/youtube.md",
 }
-STATUS_VALUES = {"shipped", "dev-only", "planned"}
+STATUS_VALUES = {"shipped", "dev-only", "planned", "parked"}
 GATE_FIELDS = {
     "requires_cloud_approval",
     "needs_model_download",
@@ -215,7 +219,7 @@ def test_shipped_dev_only_and_planned_statuses_match_main():
     assert statuses["capture.instagram_queue"] == "dev-only"
     assert statuses["capture.youtube_private_playlist"] == "dev-only"
     assert statuses["capture.observe_on_demand"] == "shipped"
-    assert statuses["integration.mcp_host"] == "planned"
+    assert statuses["integration.mcp_host"] == "parked"
     assert statuses["integration.browser_bridge"] == "planned"
 
     roadmap = _text(ROADMAP_STATUS)
@@ -259,7 +263,7 @@ def test_browser_bridge_and_mcp_remain_design_only():
 
     assert "implementation not authorized" in spec.casefold()
     assert statuses["integration.browser_bridge"] == "planned"
-    assert statuses["integration.mcp_host"] == "planned"
+    assert statuses["integration.mcp_host"] == "parked"
     for forbidden_production_path in (
         REPO / "skill" / "scripts" / "browser_bridge.py",
         REPO / "skill" / "scripts" / "mcp_server.py",
@@ -292,6 +296,32 @@ def test_expanded_browser_bridge_contract_is_reviewed_but_not_authorized():
     ):
         assert required in normalized
     assert "- [ ]" not in spec
+
+
+def test_mcp_host_spike_parks_production_and_keeps_shell_canonical():
+    report = _normalized(_text(MCP_HOST_SPIKE))
+    for required in (
+        "no-go for a production MCP host",
+        "The shell CLI remains canonical",
+        "official Python MCP SDK",
+        "local stdio",
+        "optional sibling `voidscape-mcp`",
+        "voidscape_probe",
+        "voidscape_estimate",
+        "voidscape_run",
+        "{ok,data,error,meta}",
+        "isError: true",
+        "requires_cloud_approval",
+        "needs_model_download",
+        "No production server merged",
+    ):
+        assert required in report
+    for forbidden_production_path in (
+        REPO / "skill" / "scripts" / "mcp_server.py",
+        REPO / "pyproject.toml",
+        REPO / "requirements.txt",
+    ):
+        assert not forbidden_production_path.exists()
 
 
 def test_observe_cli_spec_locks_local_capture_and_error_contract():

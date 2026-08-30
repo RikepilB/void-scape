@@ -168,7 +168,7 @@
     },
     {
       "id": "integration.mcp_host",
-      "status": "planned"
+      "status": "parked"
     },
     {
       "id": "integration.browser_bridge",

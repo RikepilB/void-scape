@@ -19,7 +19,7 @@ This page separates harness capabilities from behavior verified in Voidscape.
 | Codex or ChatGPT with Chrome | Work in user-approved tabs and continue a paired host session remotely | Select a permitted URL, then run the local CLI on the host | `vendor-documented`; browser-to-host CLI flow `personally-tested` on Richard's Windows setup |
 | Claude Code with Claude in Chrome | Work in approved signed-in sites and continue the running local session remotely | Run Voidscape beside the local Claude Code session | Harness behavior `vendor-documented`; complete Voidscape composition `unverified` |
 | Generic shell-capable agent | Execute commands and read local files | Drive guided or raw JSON commands while preserving gates | CLI contract `shipped`; harness discovery and approvals are harness-specific |
-| Generic MCP-capable agent | Consume tool schemas when an MCP host exists | No production Voidscape MCP host exists | `planned`, `unverified` |
+| Generic MCP-capable agent | Consume tool schemas when an MCP host exists | No production Voidscape MCP host exists; the #26 spike recommends no-go for now | `parked`, `unverified` |
 
 ## OpenAI documentation
 
