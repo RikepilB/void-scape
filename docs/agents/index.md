@@ -1,77 +1,68 @@
-# Voidscape for agents
+# Agent documentation
 
-Voidscape turns selected media and documents into local, ordered evidence an agent can cite.
+Turn a source you are allowed to use into local, ordered evidence an agent can cite. These guides
+cover the complete path from installing Voidscape to handling a failed or approval-gated read.
 
-**Current boundary:** the harness may browse or interact with user-permitted pages; Voidscape runs
-on the host and governs evidence preparation through `inspect -> preview -> read`.
+## Start with a source
 
-## Start here
+If Voidscape is not installed, follow [Install](install.md). Then complete the
+[Quick start](quick-start.md) with the key-free fixture:
 
 ```powershell
-python skill/scripts/voidscape.py inspect "meeting.mp4"
-python skill/scripts/voidscape.py preview "meeting.mp4"
-python skill/scripts/voidscape.py read "meeting.mp4" --workdir evidence
+python scripts/create-demo-fixture.py
+python skill/scripts/voidscape.py inspect samples/build-week-demo.mp4
+python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions
+python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output
 ```
 
-`inspect` discovers source facts. `preview` surfaces cost, dependencies, cloud transfer, and model
-downloads. `read` prepares artifacts only after the applicable approvals exist. The agent then reads
-the manifest and evidence, answering with citations rather than guesses.
+The sequence is the product contract: inspect facts, preview cost and permission boundaries, then
+read only the approved evidence. An agent answers from the resulting manifest and artifacts rather
+than guessing from a filename, URL, title, or thumbnail.
 
-## Three-layer model
+## Pick your path
 
-| Layer | Owner | Responsibility |
+| I need to… | Start here | Result |
 | --- | --- | --- |
-| Harness | Codex/ChatGPT, Claude, or another tool-capable agent | Permitted browser interaction, shell execution, approval UI, host routing |
-| Observe companion | Optional ffmpeg or screenpipe tooling | Screenshots, short clips, or separately managed desktop memory |
-| Voidscape | This repository and installed skill | Local-first evidence preparation, cost/privacy gates, manifests, citations |
+| Complete a first local read | [Quick start](quick-start.md) | Frames, transcript, manifest, and one grounded answer |
+| Understand the safety model | [Concepts](concepts.md) | Sources, evidence bundles, gates, citations, and status labels |
+| Drive Voidscape from an agent | [Workflow and protocol](workflow.md) | Guided commands, raw envelopes, and deterministic errors |
+| Choose the right source reader | [Video and audio](readers/video-audio.md), [Images](readers/images.md), or [Articles and RSS](readers/articles-rss.md) | Source-specific inputs, outputs, limits, and citations |
+| Capture a visible browser state | [Observe and capture](observe-and-capture.md) | One explicit local screenshot or short clip, followed by a normal read |
+| Diagnose a failure | [Troubleshooting](troubleshooting.md) | Safe checks that never add approval flags automatically |
 
-Browser access is not CLI authentication. Voidscape never reads browser credentials, cookies,
-storage, or secrets. See [constraints](constraints.md).
+## What an agent may do
 
-## Documentation map
+An agent may inspect a selected source, show a preview, explain a gate, run an approved read, open
+the evidence bundle, and answer with its exact citation labels. Non-interactive callers may use the
+stable JSON envelope documented in [Agent automation](automation.md).
 
-### Operate Voidscape
+An agent may not infer consent from a key, previous run, browser session, or configured backend. It
+may not read browser credentials, cookies, storage, or secrets. Browser interaction belongs to the
+user-approved harness; Voidscape runs on the host and owns evidence preparation.
 
-- [Harness support](harnesses.md) — verified scope for Codex, Claude, and generic agents.
-- [Workflow and protocol](workflow.md) — guided commands, raw reader commands, envelope, and errors.
-- [Constraints and permissions](constraints.md) — gates, authentication, privacy, and citations.
-- [Agent automation](automation.md) — safely coordinate the non-interactive CLI.
-- [Observe and capture](observe-and-capture.md) — harness, optional companion, and governed-read recipes.
+A vendor feature is not automatically a Voidscape capability. Confirm its status in the roadmap
+and support matrix before promising that an agent can use it.
 
-### Readers
+## Reader engines
 
-- [Images and carousels](readers/images.md)
-- [Video and audio](readers/video-audio.md)
-- [Articles and RSS/Atom](readers/articles-rss.md)
+| Reader | Typical sources | Evidence contract |
+| --- | --- | --- |
+| Video/audio | recordings, voice memos, supported public media URLs | `frames/`, `transcript.txt`, `manifest.json`, cited as `[MM:SS]` |
+| Images | one image or a local non-recursive carousel | ordered byte-preserving `images/`, cited as `[image N]` |
+| Articles/RSS | local text, Markdown, HTML, feeds, or an approved public article fetch | ordered `entries/`, cited as `[article N]` or `[entry N]` |
 
-### Capture adapters
+## Know what is actually available
 
-- [Instagram](capture-adapters/instagram.md)
-- [YouTube](capture-adapters/youtube.md)
+Read [Roadmap status](roadmap-status.md) before composing integrations. `shipped` means merged,
+tested, and available through a supported entry point. `dev-only` helpers exist in the repository
+but are not installed commands. `planned` and `parked` items are not callable capabilities.
 
-### Truth and direction
-
-- [Roadmap status](roadmap-status.md) — shipped, dev-only, planned, and parked.
-- [References](references.md) — canonical local sources, vendor docs, and pattern sources.
-- [Machine-readable discovery manifest](manifest.json) — commands, protocol, capabilities, gates,
-  and citation contracts for agents that should not infer behavior from prose.
-
-Agents should read `schema_version` and `protocol.version`, select only capabilities with the
-required status, then inspect the named entry point's own `manifest` command before execution.
-`planned` entries are discovery hints, not callable tools. The manifest never grants approvals.
-
-## Status vocabulary
-
-- `shipped`: merged, tested, and available through the supported installed/public entry point.
-- `dev-only`: repository tooling that is not installed as a supported skill capability.
-- `planned`: approved issue or roadmap work without merged implementation.
-- `parked`: explicitly deferred behind a design, security, legal, or product gate.
-
-Harness claims use `personally-tested`, `vendor-documented`, or `unverified`. A vendor feature is
-not automatically a Voidscape capability.
+For machine discovery, open [manifest.json](manifest.json), then inspect the selected reader's own
+`manifest` command. The discovery document describes capabilities and gates; it never grants an
+approval. The manifest never grants approvals.
 
 ## Canonical contracts
 
 The installed agent contract is [`skill/SKILL.md`](../../skill/SKILL.md). Architecture and backend
-behavior live in [`docs/architecture.md`](../architecture.md). If documentation conflicts with
-executable behavior, code and tests on `main` win and the documentation must be corrected.
+behavior live in [`docs/architecture.md`](../architecture.md). If prose conflicts with executable
+behavior, code and tests on `main` win and the documentation must be corrected.

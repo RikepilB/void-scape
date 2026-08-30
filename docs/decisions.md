@@ -216,3 +216,40 @@ make protocol drift and error handling a material risk).
 **Consequences:** Issue #26 closes with a no-go report and no server code. Future evidence must show
 two host workflows that shell invocation cannot satisfy, preserve separate estimate/run approvals,
 and pass a new security/distribution review before an implementation issue is opened.
+
+---
+
+### 2026-08-29 — Agent docs use a checked-in static shell generated from canonical Markdown
+
+**Context:** The 13-page `docs/agents/` tree is accurate but reaches website visitors as raw
+Markdown. Issue #28 requires a decision among the status quo, mdBook, and VitePress before any
+generator ships. The desired reading model is a documentation product: persistent section
+navigation, a focused article column, an on-page outline, local search, runnable examples, and
+mobile navigation similar in structure to Herdr's docs. Voidscape currently deploys the checked-in
+`docs/` directory on Vercel with no Node, Rust, or framework build.
+
+**Decision:** Choose **status quo-plus**: keep every Markdown file in `docs/agents/` canonical and
+add a repository-owned Python standard-library renderer that writes checked-in HTML beside those
+sources. The renderer owns the shared shell, internal link rewriting, page outline, previous/next
+navigation, and compact search index. Hand-written CSS and JavaScript provide responsive navigation,
+theme switching without persistence, copy buttons, and local in-browser search. A `--check` mode
+and pytest guard generated-file drift. Vercel continues serving `docs/` without a new build step.
+
+**Alternatives considered:** Keep raw Markdown only (rejected because it has no website search,
+active sidebar, page outline, or mobile docs navigation). mdBook (rejected for now because it adds
+an external Rust binary, `SUMMARY.md`/book conventions, and custom theme ownership even though its
+HTML output includes sidebar navigation and search). VitePress (rejected for now because its local
+search and sidebar fit well, but it adds Node, a package lock, framework/client runtime, and a new
+deployment build for a small standard-library repository). Astro Starlight is the Herdr reference
+implementation, not a candidate dependency; its interaction and content hierarchy inform the shell.
+
+**Migration cost:** Seventeen Markdown pages remain in place: the existing 13 plus Install, Quick
+start, Concepts, and Troubleshooting. One Python renderer, two authored assets, generated HTML, and
+one search index are added. Existing Markdown links remain valid on GitHub; website links move to
+`/agents/`. There is no Vercel configuration or CI workflow change; pytest runs the renderer's
+`--check` gate.
+
+**Revisit:** Re-evaluate VitePress or Starlight when agent docs exceed 30 pages, require multiple
+published versions or languages, need framework plugins/MDX, or outgrow the small search index and
+supported Markdown subset. Revisit mdBook if a Rust documentation toolchain becomes an existing
+project dependency. Until then, generated HTML is a derived artifact and Markdown remains truth.
