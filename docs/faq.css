@@ -27,6 +27,8 @@ main { padding-top: 70px; }
 .category-label { color: var(--blue); font: 700 10px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 .faq-category h2 { font: 600 clamp(31px, 4.5vw, 55px)/1 var(--display); letter-spacing: -.065em; margin: 13px 0 16px; }
 .category-intro { color: var(--muted); font-size: 15px; margin: 0 0 28px; max-width: 680px; }
+.faq-category pre { background: var(--ink-raised); border: 1px solid var(--line); border-radius: 10px; max-width: 100%; overflow-x: auto; padding: 14px 16px; }
+.faq-category pre code { font: 12px/1.7 var(--mono); }
 .faq-list { border-top: 1px solid var(--line-strong); max-width: 920px; }
 .faq-list details { border-bottom: 1px solid var(--line); }
 .faq-list summary { color: var(--paper); cursor: pointer; font: 580 clamp(19px, 2.3vw, 27px)/1.15 var(--display); letter-spacing: -.04em; list-style: none; padding: 22px 40px 22px 0; position: relative; }

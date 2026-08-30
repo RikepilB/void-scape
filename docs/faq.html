@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Answers about installing, using, and trusting Voidscape's local-first media workflow.">
   <title>Voidscape FAQ — local-first media answers</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="stylesheet" href="faq.css">
 </head>
 <body>
@@ -100,7 +103,7 @@
       <div class="faq-list">
         <details><summary>What if there are no captions?</summary><p>Choose a local transcription backend such as <code>faster-whisper</code>, or preview a cloud backend and explicitly approve it. Captions-only mode correctly stops when a source has none.</p></details>
         <details><summary>What if local transcription is not ready?</summary><p>Run <code>doctor</code>. It reports Python, FFmpeg, FFprobe, yt-dlp, workspace status, and optional local speech support. Install only the missing tool you have chosen to use.</p></details>
-        <details><summary>Can it read Substack, RSS, threads, articles, or carousels?</summary><p>Not through the installed media engine today. Text/RSS ingestion, visual posts, image collections, and broader saved-content adapters are planned work and should not be described as current commands.</p></details>
+        <details><summary>Can it read Substack, RSS, threads, articles, or carousels?</summary><p>Yes for local HTML, Markdown, text, RSS/Atom, and local image carousels. Public article URLs require explicit fetch approval. Subscriber-only Substack pages, X or LinkedIn threads, and broader saved-content adapters remain separate browser or adapter work.</p></details>
         <details><summary>Can it process X, LinkedIn, TikTok, or more Instagram workflows?</summary><p>Direct public media URLs may work when their platform allows yt-dlp access. Dedicated platform adapters, collection workflows, and browser-extension automation need separate product, platform, and safety work before shipping.</p></details>
         <details><summary>Can I delete the work folder after I finish?</summary><p>Yes, once you no longer need the frames, transcript, or manifest for follow-up questions. Keep any Markdown note you want to preserve. Delete only folders you recognize and control.</p></details>
       </div>
