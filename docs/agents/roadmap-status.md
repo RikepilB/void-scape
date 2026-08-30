@@ -19,7 +19,10 @@ This page summarizes current `main`; it does not authorize roadmap implementatio
 | Machine-readable agent discovery manifest | `shipped` | `docs/agents/manifest.json` |
 | Observe-and-capture playbook | `shipped` | `docs/agents/observe-and-capture.md` |
 | Thin observe CLI | `shipped` | `skill/scripts/observe.py`; issue #24 |
-| Expanded bridge and MCP/extension spikes | `planned` | issues #25-#27; design/spike only |
+| Browser bridge implementation contract | `shipped` | design only; issues #14 and #25 |
+| MCP host spike / decision | `shipped` | no-go report; issue #26 |
+| Production MCP host | `parked` | revisit gates in the #26 spike report |
+| Browser extension spike | `planned` | issue #27; disposable prototype/report only |
 | Production universal browser extension | `parked` | separate security/repository decision required |
 | Unattended orchestration | `parked` | explicit product/privacy design required |
 | Hosted SaaS | `parked` | product, billing, connector, and legal gates required |

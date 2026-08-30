@@ -192,3 +192,27 @@ distinct safe benefit).
 **Consequences:** The implementation contract can align schemas without shipping bridge code. Any
 production issue needs explicit maintainer authorization, an independent security review, and
 separate Codex/ChatGPT and Claude verification; one harness never proves universal compatibility.
+
+---
+
+### 2026-08-29 — Keep the shell CLI canonical; park a production MCP host
+
+**Context:** Issue #26 evaluated a thin MCP wrapper for the existing reader envelope. The official
+Python MCP SDK is the closest language/runtime fit, but its required dependency and package surface
+conflicts with Voidscape's copied, standard-library-first skill. The current shell commands already
+provide stable manifest/probe/estimate/run discovery and structured results, while consent display
+and MCP behavior still require per-harness verification.
+
+**Decision:** Do not ship an MCP server in `void-scape`. Keep the shell CLI canonical and mark the
+production MCP host `parked`. If explicit revisit gates are later met, use the official Python SDK
+over local stdio in an optional sibling `voidscape-mcp` repository/package; do not hand-roll the MCP
+wire protocol or expose HTTP/browser tools.
+
+**Alternatives considered:** Add the Python SDK here (rejected due dependency, packaging, upgrade,
+and vulnerability ownership). Use the TypeScript SDK (rejected because it adds Node/npm and a second
+implementation language). Hand-write a stdlib MCP subset (rejected because recent lifecycle changes
+make protocol drift and error handling a material risk).
+
+**Consequences:** Issue #26 closes with a no-go report and no server code. Future evidence must show
+two host workflows that shell invocation cannot satisfy, preserve separate estimate/run approvals,
+and pass a new security/distribution review before an implementation issue is opened.
