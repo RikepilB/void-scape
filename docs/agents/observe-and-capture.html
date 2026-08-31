@@ -95,21 +95,21 @@ Voidscape -&gt; inspect -&gt; preview -&gt; read -&gt; manifest + citable eviden
 <h2 id="recipe-1-browser-task-to-screenshot-or-short-clip">Recipe 1 — browser task to screenshot or short clip<a class="heading-anchor" href="#recipe-1-browser-task-to-screenshot-or-short-clip" aria-label="Link to Recipe 1 — browser task to screenshot or short clip">#</a></h2>
 <ol><li>In a permitted tab, ask the harness to complete the browsing task.</li><li>Ask the harness to expose the permitted state, then use the installed observe companion (or a separately approved capture tool) to save an explicit screenshot or short silent clip. The observe companion captures the selected desktop/display; it does not navigate or select a tab.</li><li>For a screenshot:</li></ol>
 <div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">   python skill/scripts/observe.py screenshot --out &quot;C:\path\capture.png&quot;
-   python skill/scripts/voidscape.py inspect &quot;C:\path\capture.png&quot;
-   python skill/scripts/voidscape.py preview &quot;C:\path\capture.png&quot;
-   python skill/scripts/voidscape.py read &quot;C:\path\capture.png&quot; --workdir &quot;C:\path\evidence-image&quot;</code></pre></div>
+   voidscape inspect &quot;C:\path\capture.png&quot;
+   voidscape preview &quot;C:\path\capture.png&quot;
+   voidscape read &quot;C:\path\capture.png&quot; --workdir &quot;C:\path\evidence-image&quot;</code></pre></div>
 <ol><li>For a clip:</li></ol>
 <div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">   python skill/scripts/observe.py clip --seconds 15 --out &quot;C:\path\capture.mp4&quot;
-   python skill/scripts/voidscape.py inspect &quot;C:\path\capture.mp4&quot;
-   python skill/scripts/voidscape.py preview &quot;C:\path\capture.mp4&quot; --tier both
-   python skill/scripts/voidscape.py read &quot;C:\path\capture.mp4&quot; --tier both --workdir &quot;C:\path\evidence-clip&quot;</code></pre></div>
+   voidscape inspect &quot;C:\path\capture.mp4&quot;
+   voidscape preview &quot;C:\path\capture.mp4&quot; --tier both
+   voidscape read &quot;C:\path\capture.mp4&quot; --tier both --workdir &quot;C:\path\evidence-clip&quot;</code></pre></div>
 <ol><li>Stop for any previewed approval. Read the resulting bundle with <code>[image N]</code> or <code>[MM:SS]</code> citations.</li></ol>
 <p>Run <code>python skill/scripts/observe.py doctor</code> for capture readiness and <code>python skill/scripts/observe.py status --json</code> for optional screenpipe health. Capture never calls <code>read</code>, forwards approval flags, records audio, overwrites an existing path, or starts a service.</p>
 <h2 id="recipe-2-public-video-url-without-browser-cookies">Recipe 2 — public video URL without browser cookies<a class="heading-anchor" href="#recipe-2-public-video-url-without-browser-cookies" aria-label="Link to Recipe 2 — public video URL without browser cookies">#</a></h2>
 <p>Copy the public URL from a permitted page and pass it directly to the guided CLI:</p>
-<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">python skill/scripts/voidscape.py inspect &quot;https://example.com/public-video&quot;
-python skill/scripts/voidscape.py preview &quot;https://example.com/public-video&quot; --tier both
-python skill/scripts/voidscape.py read &quot;https://example.com/public-video&quot; --tier both --workdir evidence-public</code></pre></div>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">voidscape inspect &quot;https://example.com/public-video&quot;
+voidscape preview &quot;https://example.com/public-video&quot; --tier both
+voidscape read &quot;https://example.com/public-video&quot; --tier both --workdir evidence-public</code></pre></div>
 <p>Start anonymously. A page being visible in Chrome does not prove the media endpoint is public. If the CLI returns an authentication/platform error, surface it rather than trying to extract browser state.</p>
 <h2 id="recipe-3-account-scoped-media-with-an-explicit-cookie-file">Recipe 3 — account-scoped media with an explicit cookie file<a class="heading-anchor" href="#recipe-3-account-scoped-media-with-an-explicit-cookie-file" aria-label="Link to Recipe 3 — account-scoped media with an explicit cookie file">#</a></h2>
 <p>Use this only for media the user is permitted to access.</p>

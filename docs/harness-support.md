@@ -1,7 +1,8 @@
 # Multi-Harness Support
 
-Voidscape is the primary installed skill. `read-video` is installed alongside it as a compatibility
-facade for existing automations and direct `video.py` calls.
+Voidscape is the primary installed skill. The repository retains `read-video` as an opt-in
+compatibility facade for existing automations and direct `video.py` calls; new CLI installs do not
+need a second skill.
 
 Browser and phone control belong to the agent harness, not the media engine. An approved browser
 connection may let a harness select permitted media in signed-in tabs; Voidscape then runs on the
@@ -35,11 +36,11 @@ Official documentation:
 
 | Harness | Install root | Notes |
 |---|---|---|
-| Codex | `~/.codex/skills/voidscape/` | Primary skill; `read-video/` compatibility is installed beside it. |
+| Codex | `~/.codex/skills/voidscape/` | Primary bundled skill installed by `voidscape init`. |
 | Shared agent root | `~/.agents/skills/voidscape/` | Second installed copy for compatible runtimes. |
 | Other compatible agents | `~/.agents/skills/voidscape/` | Shared copy; discovery depends on that agent's current skill support. |
 
-The installer writes both roots. Codex uses its own copy at `~/.codex/skills/`; the shared
+`voidscape init` writes both roots. Codex uses its own copy at `~/.codex/skills/`; the shared
 `~/.agents/skills/` copy is available to compatible agent runtimes without claiming that every
 runtime has been independently certified.
 
@@ -52,40 +53,32 @@ checked against their own current discovery rules.
 
 ## Installing
 
-From the repo root:
+Install the global CLI without cloning the repository, then initialize its bundled skill:
 
 ```powershell
-# Windows / PowerShell (primary)
-.\scripts\install-skill.ps1
+uv tool install https://github.com/RikepilB/void-scape/archive/refs/heads/main.zip
+uv tool update-shell
+voidscape init
 ```
 
-```bash
-# macOS / Linux / Git Bash (parity)
-bash scripts/install-skill.sh
-```
-
-Both scripts install canonical `voidscape` and legacy `read-video` compatibility skills at both
-roots. They print a per-target `RESULT` line for each copy and two verification checks
-(frontmatter parses, `video.py probe --help` runs), ending with a `SUMMARY` line. Any copy or
-verification failure returns a non-zero exit code.
+The command verifies the primary skill after each copy and reports FFmpeg, FFprobe, and yt-dlp
+readiness. It preserves local workspace preferences and never reads API keys.
 
 Override the install roots if you keep skills somewhere non-default:
 
 ```powershell
-.\scripts\install-skill.ps1 -CodexSkillsRoot "D:\custom\codex\skills" -AgentsSkillsRoot "D:\custom\agents\skills"
+voidscape init --codex-skills-root "D:\custom\codex\skills" --agents-skills-root "D:\custom\agents\skills"
 ```
 
-```bash
-CODEX_SKILLS_ROOT=/custom/codex/skills AGENTS_SKILLS_ROOT=/custom/agents/skills bash scripts/install-skill.sh
-```
+Repository maintainers who still need the `read-video` compatibility copy can clone the source and
+run `scripts/install-skill.ps1` or `scripts/install-skill.sh`. That is a migration/development path,
+not the normal user installation.
 
 ## Re-syncing after edits
 
-There is no live-sync watcher. After editing anything under `skill/` or `compat/`, re-run the
-install script to push the change to both installed copies. Local config files (`workspace.json`, `.env`,
-`load-env.ps1`) at either destination are never touched by the install — the repo's `skill/`
-directory never contains those filenames (they're gitignored, generated at the destination only),
-so a plain overlay copy leaves them alone automatically.
+There is no live-sync watcher. After upgrading the CLI, run `voidscape init` again to refresh both
+installed copies. Local config files (`workspace.json`, `.env`, `load-env.ps1`) at either
+destination are never touched.
 
 ## Out of scope
 

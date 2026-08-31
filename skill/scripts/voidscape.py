@@ -4,15 +4,22 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import shutil
 import sys
 from pathlib import Path
 from typing import Any
 
-import article as article_engine
-import image as image_engine
-import observe as observe_engine
-import video
+if __package__:
+    from . import article as article_engine
+    from . import image as image_engine
+    from . import observe as observe_engine
+    from . import video
+else:
+    import article as article_engine
+    import image as image_engine
+    import observe as observe_engine
+    import video
 
 
 WELCOME = r"""
@@ -30,11 +37,13 @@ Your private media, made legible.
   preview <file-or-url>   See cost, privacy, and dependencies.
   read <file-or-url>      Create approved frames, transcript, and manifest.
 
-  customize               Choose local folders and defaults.
+  init                    Install the agent skill and check readiness.
+  customize               Choose local folders and defaults (optional).
   doctor                  Check local readiness without changing anything.
 
 Start here:
-  voidscape.py inspect "meeting.mp4"
+  voidscape init
+  voidscape inspect "meeting.mp4"
 
 Agent workflow:
   /voidscape <file-or-url>
@@ -42,7 +51,9 @@ Agent workflow:
 
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
-WORKSPACE_PATH = SKILL_ROOT / "workspace.json"
+LOCAL_WORKSPACE_PATH = SKILL_ROOT / "workspace.json"
+USER_WORKSPACE_PATH = Path.home() / ".voidscape" / "workspace.json"
+WORKSPACE_PATH = LOCAL_WORKSPACE_PATH if LOCAL_WORKSPACE_PATH.exists() else USER_WORKSPACE_PATH
 
 
 def _workspace_path(config: str | None = None) -> Path:
@@ -154,7 +165,7 @@ def inspect_source(args: argparse.Namespace) -> int:
         print("  Order: " + ", ".join(item["source_name"] for item in info["images"]))
         _print_image_skipped(info)
         print("  Processing: local only · originals preserved")
-        print(f"Next: voidscape.py preview {args.input!r}")
+        print(f"Next: voidscape preview {args.input!r}")
         return 0
     if article_source:
         label = "Feed" if info["kind"] == "feed" else "Article"
@@ -169,7 +180,7 @@ def inspect_source(args: argparse.Namespace) -> int:
             print("  Availability: remote URL · fetch requires explicit approval")
         else:
             print("  Processing: local only · originals preserved")
-        print(f"Next: voidscape.py preview {args.input!r}")
+        print(f"Next: voidscape preview {args.input!r}")
         return 0
     source = "web link" if info.get("source") == "url" else "local file"
     print("Voidscape inspection")
@@ -180,7 +191,7 @@ def inspect_source(args: argparse.Namespace) -> int:
         "captions may be available" if info.get("captions_available") else "no transcript found")
     print(f"  Text: {transcript}")
     print(f"  Suggested scope: {_recommend_tier(info)}")
-    print(f"Next: voidscape.py preview {args.input!r}")
+    print(f"Next: voidscape preview {args.input!r}")
     return 0
 
 
@@ -225,14 +236,14 @@ def preview(args: argparse.Namespace) -> int:
         print(video._fmt_estimate(estimate))
     if image_source:
         _print_image_skipped(estimate)
-        print("Next: evidence can be prepared locally with voidscape.py read.")
+        print("Next: evidence can be prepared locally with voidscape read.")
         return 0
     if article_source:
         _print_article_skipped(estimate)
         if estimate.get("requires_fetch_approval"):
             print("Next: obtain consent, then use read with --allow-cloud.")
         else:
-            print("Next: evidence can be prepared locally with voidscape.py read.")
+            print("Next: evidence can be prepared locally with voidscape read.")
         return 0
     if estimate["requires_cloud_approval"]:
         print("Next: obtain consent, then use read with --allow-cloud.")
@@ -241,7 +252,7 @@ def preview(args: argparse.Namespace) -> int:
     elif estimate["needs_install"]:
         print("Next: install the selected local backend or choose a backend already available.")
     else:
-        print("Next: evidence can be prepared locally with voidscape.py read.")
+        print("Next: evidence can be prepared locally with voidscape read.")
     return 0
 
 
@@ -316,6 +327,95 @@ def _default_inbox() -> Path:
     return Path.home() / "Documents" / "Voidscape" / "Inbox"
 
 
+def _copy_skill_tree(source: Path, destination: Path) -> None:
+    destination.mkdir(parents=True, exist_ok=True)
+    for item in source.iterdir():
+        if item.name in {"workspace.json", ".env", "load-env.ps1", "__pycache__"}:
+            continue
+        target = destination / item.name
+        if item.is_dir():
+            shutil.copytree(
+                item, target, dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+        else:
+            shutil.copy2(item, target)
+
+
+def _verify_skill(destination: Path) -> None:
+    skill_md = destination / "SKILL.md"
+    cli = destination / "scripts" / "voidscape.py"
+    if not skill_md.is_file() or not cli.is_file():
+        raise RuntimeError(f"agent skill verification failed at {destination}")
+    frontmatter = skill_md.read_text(encoding="utf-8")
+    if not frontmatter.startswith("---\n") or "name:" not in frontmatter:
+        raise RuntimeError(f"agent skill frontmatter is invalid at {destination}")
+
+
+def _ffmpeg_install_hint() -> str:
+    system = platform.system()
+    if system == "Windows":
+        return "winget install --id=Gyan.FFmpeg -e"
+    if system == "Darwin":
+        return "brew install ffmpeg"
+    return "sudo apt update && sudo apt install ffmpeg"
+
+
+def init(args: argparse.Namespace) -> int:
+    roots = [] if args.no_skill else [
+        ("Codex", Path(args.codex_skills_root).expanduser()),
+        ("shared agents", Path(args.agents_skills_root).expanduser()),
+    ]
+    installed: list[dict[str, str]] = []
+    try:
+        for harness, root in roots:
+            destination = root / "voidscape"
+            _copy_skill_tree(SKILL_ROOT, destination)
+            _verify_skill(destination)
+            installed.append({"harness": harness, "path": str(destination)})
+    except Exception as ex:
+        return _print_error(ex, args.json)
+
+    tools = {
+        name: shutil.which(name) is not None
+        for name in ("ffmpeg", "ffprobe", "yt-dlp")
+    }
+    result = {
+        "cli": "voidscape",
+        "agent_skills": installed,
+        "workspace": str(_workspace_path()),
+        "tools": tools,
+        "ready_for_video": tools["ffmpeg"] and tools["ffprobe"],
+        "ffmpeg_install": None,
+        "cloud_approved": False,
+        "model_download_approved": False,
+    }
+    if not result["ready_for_video"]:
+        result["ffmpeg_install"] = _ffmpeg_install_hint()
+    if args.json:
+        _emit(result, True)
+        return 0
+
+    print("Voidscape init")
+    print("  OK CLI command: voidscape")
+    if installed:
+        for item in installed:
+            print(f"  OK {item['harness']} skill: {item['path']}")
+    else:
+        print("  SKIPPED agent skill (--no-skill)")
+    for name, available in tools.items():
+        print(f"  {'OK' if available else 'MISSING'} {name}")
+    print("  No cloud job or model download was approved.")
+    print("Next:")
+    print("  voidscape customize   # optional Inbox, Library, and local defaults")
+    print("  voidscape doctor      # detailed readiness check")
+    print('  voidscape inspect "meeting.mp4"')
+    if not result["ready_for_video"]:
+        print("Install FFmpeg and FFprobe before reading video or audio.")
+        print(f"  {_ffmpeg_install_hint()}")
+    return 0
+
+
 def _ask(prompt: str, default: str) -> str:
     answer = input(f"{prompt} [{default}]: ").strip()
     return answer or default
@@ -332,7 +432,7 @@ def customize(args: argparse.Namespace) -> int:
     interactive = not any((args.inbox, args.library, args.backend, args.whisper_model,
                            args.thorough_threshold, args.import_read_video))
     if interactive and not sys.stdin.isatty():
-        print("customize needs flags in a non-interactive session; see voidscape.py customize --help", file=sys.stderr)
+        print("customize needs flags in a non-interactive session; see voidscape customize --help", file=sys.stderr)
         return 2
     if interactive:
         print("Voidscape customize — local folders and defaults only. API keys are never stored here.")
@@ -402,7 +502,11 @@ def doctor(args: argparse.Namespace) -> int:
         print(f"  OK observe capture: {observe_report['capture_backend']}")
     else:
         print(f"  MISSING observe capture: ffmpeg ({observe_report['capture_backend']})")
-    print("  Ready for local video analysis." if report["ready"] else "  Install ffmpeg and ffprobe before analysis.")
+    if report["ready"]:
+        print("  Ready for local video analysis.")
+    else:
+        print("  Install ffmpeg and ffprobe before analysis:")
+        print(f"  {_ffmpeg_install_hint()}")
     return 0 if report["ready"] else 5
 
 
@@ -432,8 +536,18 @@ def main(argv: list[str] | None = None) -> int:
         print(WELCOME)
         return 0
 
-    parser = argparse.ArgumentParser(prog="voidscape.py", description="guided local-first media analysis")
+    parser = argparse.ArgumentParser(prog="voidscape", description="guided local-first media analysis")
     commands = parser.add_subparsers(dest="command", required=True)
+    init_parser = commands.add_parser("init", help="install the agent skill and check readiness")
+    init_parser.add_argument(
+        "--codex-skills-root", default=str(Path.home() / ".codex" / "skills"),
+    )
+    init_parser.add_argument(
+        "--agents-skills-root", default=str(Path.home() / ".agents" / "skills"),
+    )
+    init_parser.add_argument("--no-skill", action="store_true")
+    init_parser.add_argument("--json", action="store_true")
+    init_parser.set_defaults(handler=init)
     inspect_parser = commands.add_parser("inspect", help="inspect source facts and recommended scope")
     inspect_parser.add_argument("input")
     inspect_parser.add_argument("--json", action="store_true")

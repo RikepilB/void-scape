@@ -8,20 +8,27 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <script src="site-theme.js"></script>
   <link rel="stylesheet" href="faq.css">
+  <link rel="stylesheet" href="site-theme.css">
 </head>
 <body>
-  <div class="shell">
+  <div class="shell site-header-shell">
     <header class="site-header">
-      <a class="wordmark" href="index.html" aria-label="Voidscape home"><span></span>Voidscape</a>
-      <nav aria-label="Primary navigation">
-        <a href="index.html#install">Install</a>
-        <a href="guide.html" aria-current="page">Guide</a>
-        <a href="faq.html">FAQ</a>
-        <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-      </nav>
+      <a class="wordmark" href="index.html" aria-label="Voidscape home"><img src="favicon.svg" alt="" width="28" height="28">Voidscape</a>
+      <div class="site-header-tools">
+        <nav aria-label="Primary navigation">
+          <a class="download-link" href="index.html#install">Download</a>
+          <a href="guide.html" aria-current="page">Guide</a>
+          <a href="faq.html">FAQ</a>
+          <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+        </nav>
+        <button class="theme-toggle" type="button" data-site-theme-toggle aria-label="Switch color mode">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><g class="theme-sun"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g><path class="theme-moon" d="M20 15.2A8 8 0 0 1 8.8 4 8.1 8.1 0 1 0 20 15.2Z"/></svg>
+        </button>
+      </div>
     </header>
   </div>
 
@@ -31,8 +38,38 @@
       <h1>From “what is in this?” to evidence you can inspect.</h1>
       <p class="lede">Transcription is one channel, not the final result. Voidscape prepares the visual and audio evidence an agent needs, while making three small decisions visible so you stay in control of what happens to your media.</p>
       <nav class="category-nav" aria-label="Guide sections">
-        <a href="#start">Start</a><a href="#inspect">Inspect</a><a href="#preview">Preview</a><a href="#read">Read</a><a href="#ask">Ask</a><a href="#next">Boundaries</a>
+        <a href="#install">Install</a><a href="#start">First read</a><a href="#inspect">Inspect</a><a href="#preview">Preview</a><a href="#read">Read</a><a href="#ask">Ask</a><a href="#next">Boundaries</a><a href="#commands">Commands</a>
       </nav>
+    </section>
+
+    <section class="faq-category" id="install">
+      <span class="category-label">Setup / terminal to first read</span>
+      <h2>From a terminal to your first grounded answer.</h2>
+      <p class="category-intro">You do not need to clone the repository. Install the CLI once, let <code>voidscape init</code> add the bundled agent skill, then use it from any folder. No account, API key, or paid backend is required.</p>
+      <h3>1. Install <code>uv</code> once</h3>
+      <pre><code>winget install --id=astral-sh.uv -e</code></pre>
+      <div class="faq-list command-guide">
+        <details><summary>macOS or Linux</summary><p>Run <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code>. Skip this step on any platform where <code>uv --version</code> already works.</p></details>
+        <details><summary>Why <code>uv</code>?</summary><p>It installs the Python CLI in an isolated environment and exposes one global <code>voidscape</code> command without a repository clone.</p></details>
+        <details><summary>FFmpeg or FFprobe missing?</summary><p>Run <code>winget install --id=Gyan.FFmpeg -e</code> on Windows, <code>brew install ffmpeg</code> on macOS, or <code>sudo apt update &amp;&amp; sudo apt install ffmpeg</code> on Debian/Ubuntu.</p></details>
+      </div>
+      <h3>2. Install Voidscape and initialize the skill</h3>
+      <pre><code>uv tool install https://github.com/RikepilB/void-scape/archive/refs/heads/main.zip
+uv tool update-shell
+voidscape init</code></pre>
+      <p><code>init</code> copies the bundled skill to Codex and shared-agent skill roots and checks FFmpeg, FFprobe, and yt-dlp. It never approves cloud processing or a model download. If <code>voidscape</code> is not recognized immediately, open one new terminal.</p>
+      <h3>3. Choose local folders <small>(optional)</small></h3>
+      <p>Review an Inbox, Library, and local transcription defaults. Preferences save only after explicit confirmation.</p>
+      <pre><code>voidscape customize</code></pre>
+      <h3>4. Read one file</h3>
+      <p>Replace <code>meeting.mp4</code> with a local image, audio file, video, folder, or supported public URL:</p>
+      <pre><code>voidscape doctor
+voidscape inspect "meeting.mp4"
+voidscape preview "meeting.mp4"
+voidscape read "meeting.mp4" --workdir voidscape-output</code></pre>
+      <h3>5. Ask your agent</h3>
+      <aside class="faq-callout"><strong>Copy this prompt:</strong> “Open <code>voidscape-output/manifest.json</code> and <code>transcript.txt</code>, then inspect <code>frames/</code>. Summarize the recording in three bullets. Support every factual claim with an exact <code>[MM:SS]</code> citation. If the evidence is insufficient, say so.”</aside>
+      <p>If your currently open agent does not show Voidscape after installation, start a new agent session.</p>
     </section>
 
     <section class="faq-category" id="start">
@@ -46,7 +83,7 @@
       <span class="category-label">01 / Inspect</span>
       <h2>Look before you process.</h2>
       <p class="category-intro">Inspect reads source facts: duration, resolution, audio, captions, and local sidecars. Nothing is uploaded or transformed. You learn what is actually available before choosing a path.</p>
-      <pre><code>python skill/scripts/voidscape.py inspect "clip.mp4"</code></pre>
+      <pre><code>voidscape inspect "clip.mp4"</code></pre>
       <aside class="faq-callout"><strong>Already have a transcript?</strong> Put a matching <code>.srt</code>, <code>.vtt</code>, or <code>.txt</code> file beside local media. Voidscape can reuse that sidecar locally; timestamped SRT/VTT is required when reading only a time window.</aside>
     </section>
 
@@ -54,7 +91,7 @@
       <span class="category-label">02 / Preview</span>
       <h2>See the tradeoff before you approve it.</h2>
       <p class="category-intro">Preview explains the frame plan, transcription route, expected dependencies, and API-equivalent vision estimate. If audio would leave your computer or a local model must download for the first time, Voidscape stops for a separate explicit approval.</p>
-      <pre><code>python skill/scripts/voidscape.py preview "clip.mp4" --tier both --backend captions</code></pre>
+      <pre><code>voidscape preview "clip.mp4" --tier both --backend captions</code></pre>
       <aside class="faq-callout"><strong>Your decision point.</strong> <code>--allow-cloud</code> and <code>--allow-model-download</code> are never implied by having a key, a browser session, or an earlier run.</aside>
     </section>
 
@@ -62,7 +99,7 @@
       <span class="category-label">03 / Read</span>
       <h2>Create only the evidence you chose.</h2>
       <p class="category-intro">After the preview is acceptable, read creates an inspectable work folder. Video can produce frames and transcripts; images remain byte-preserving and ordered; articles and feeds become ordered text entries. Every reader writes a manifest. Source files are never changed.</p>
-      <pre><code>python skill/scripts/voidscape.py read "clip.mp4" --tier both --backend captions --workdir out</code></pre>
+      <pre><code>voidscape read "clip.mp4" --tier both --backend captions --workdir out</code></pre>
     </section>
 
     <section class="faq-category" id="ask">
@@ -82,6 +119,20 @@
         <details><summary>More source adapters and agent/MCP packaging</summary><p>The Instagram and YouTube helpers are development-only. A production MCP host is parked; the shell remains the canonical interface.</p></details>
         <details><summary>Hosted service, browser extension, and unattended workflows</summary><p>Exploration only—not a promise. These would require separate product design, legal review, account controls, and consent rules.</p></details>
       </div>
+    </section>
+
+    <section class="faq-category" id="commands">
+      <span class="category-label">Reference / five commands</span>
+      <h2>Five commands. The sequence stays the same.</h2>
+      <p class="category-intro">The landing keeps the mechanism short. Use this reference when you need the complete guided surface.</p>
+      <div class="faq-list command-guide">
+        <details open><summary><code>inspect</code> — understand the source</summary><p>Free discovery for duration, dimensions, audio, captions, sidecars, and the reader Voidscape will use.</p></details>
+        <details><summary><code>preview</code> — expose the decision</summary><p>Shows evidence scope, cost, dependencies, and independent cloud or model-download approval fields before work begins.</p></details>
+        <details><summary><code>read</code> — prepare approved evidence</summary><p>Creates the selected frames, transcript or ordered text, and manifest without writing the agent's interpretation.</p></details>
+        <details><summary><code>doctor</code> — check local readiness</summary><p>Reports Python, FFmpeg, URL support, optional transcription backends, and workspace readiness without changing the machine.</p></details>
+        <details><summary><code>customize</code> — review local preferences</summary><p>Previews Inbox, Library, model, and backend defaults; saves only after explicit confirmation.</p></details>
+      </div>
+      <aside class="faq-callout"><strong>Agent integration:</strong> JSON envelopes, stable exit codes, flags, and capability status live in <a href="agents/">Agent Docs</a>.</aside>
     </section>
   </main>
 

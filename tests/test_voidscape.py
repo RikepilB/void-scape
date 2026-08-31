@@ -41,7 +41,80 @@ def test_empty_guided_cli_shows_welcome_and_next_step(capsys):
     welcome = capsys.readouterr().out
     assert "VOIDSCAPE" in welcome
     assert "inspect <file-or-url>" in welcome
-    assert 'voidscape.py inspect "meeting.mp4"' in welcome
+    assert "voidscape init" in welcome
+    assert 'voidscape inspect "meeting.mp4"' in welcome
+
+
+def test_init_installs_primary_agent_skill_without_approving_remote_work(
+        tmp_path, capsys):
+    codex_root = tmp_path / "codex"
+    agents_root = tmp_path / "agents"
+
+    assert voidscape.main([
+        "init",
+        "--codex-skills-root", str(codex_root),
+        "--agents-skills-root", str(agents_root),
+        "--json",
+    ]) == 0
+
+    result = json.loads(capsys.readouterr().out)
+    assert result["cli"] == "voidscape"
+    assert result["cloud_approved"] is False
+    assert result["model_download_approved"] is False
+    for root in (codex_root, agents_root):
+        assert (root / "voidscape" / "SKILL.md").is_file()
+        assert (root / "voidscape" / "scripts" / "voidscape.py").is_file()
+
+
+def test_init_preserves_existing_agent_workspace(tmp_path):
+    codex_root = tmp_path / "codex"
+    agents_root = tmp_path / "agents"
+    destination = codex_root / "voidscape"
+    destination.mkdir(parents=True)
+    workspace = destination / "workspace.json"
+    workspace.write_text('{"inbox_dir": "keep-me"}', encoding="utf-8")
+
+    assert voidscape.main([
+        "init",
+        "--codex-skills-root", str(codex_root),
+        "--agents-skills-root", str(agents_root),
+        "--json",
+    ]) == 0
+
+    assert workspace.read_text(encoding="utf-8") == '{"inbox_dir": "keep-me"}'
+
+
+def test_init_can_skip_agent_skill_install(tmp_path, capsys):
+    codex_root = tmp_path / "codex"
+    agents_root = tmp_path / "agents"
+
+    assert voidscape.main([
+        "init", "--no-skill",
+        "--codex-skills-root", str(codex_root),
+        "--agents-skills-root", str(agents_root),
+        "--json",
+    ]) == 0
+
+    result = json.loads(capsys.readouterr().out)
+    assert result["agent_skills"] == []
+    assert not codex_root.exists()
+    assert not agents_root.exists()
+
+
+def test_init_explains_how_to_install_missing_windows_media_tools(
+        tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr(voidscape.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(voidscape.platform, "system", lambda: "Windows")
+
+    assert voidscape.main([
+        "init", "--no-skill", "--json",
+        "--codex-skills-root", str(tmp_path / "codex"),
+        "--agents-skills-root", str(tmp_path / "agents"),
+    ]) == 0
+
+    result = json.loads(capsys.readouterr().out)
+    assert result["ready_for_video"] is False
+    assert result["ffmpeg_install"] == "winget install --id=Gyan.FFmpeg -e"
 
 
 def test_customize_previews_without_writing(tmp_path, capsys):

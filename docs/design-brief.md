@@ -6,18 +6,19 @@ Voidscape is a local-first CLI and agent skill for turning user-approved video, 
 articles, and feeds into inspectable evidence. The landing page serves technical users and agent
 builders who need to understand the trust boundary before they install anything.
 
-The primary job is to make the `inspect -> preview -> read` sequence legible. The conversion is an
-informed visit to the guide, install instructions, or source—not an ungrounded signup claim.
-Proof comes from shipped commands, manifests, tests, and explicit capability status. Do not invent
-usage numbers, testimonials, or customer logos.
+The primary job is to make the result and the `inspect -> preview -> read` mechanism legible fast.
+The conversion is a jump to the honest source-install section, followed by a guide or Agent Docs
+visit when the reader needs detail—not an ungrounded signup claim. Proof comes from shipped
+commands, manifests, tests, and concrete use cases. Do not invent usage numbers, testimonials, or
+customer logos.
 
 ## Story and hierarchy
 
-1. A source is opaque until it is inspected.
-2. Preview exposes cost, network, and model-download boundaries before work begins.
-3. Read produces local, citable evidence through one stable sequence.
-4. Command, protocol, capability, and use-case sections show how the product earns that promise.
-5. Installation ends with a key-free fixture so the first proof is reproducible.
+1. Show the outcome: media becomes local evidence an agent can cite.
+2. Explain the mechanism once: inspect, preview, then read.
+3. Demonstrate breadth through one focused use-case carousel, not an inventory wall.
+4. Make the no-clone CLI install the obvious action and explain its present-day shape honestly.
+5. Route command detail, capability status, and long reference material to Guide and Agent Docs.
 
 ## Art direction
 
@@ -26,13 +27,34 @@ orb-in-orbit mark represents a source crossing a visible consent boundary; termi
 protocol labels come directly from the CLI. Blue-to-lilac gradients belong to the orb, signal, and
 primary action—not every surface.
 
-Preserve the existing ink background, light capability board, display/mono typography pairing,
-and compact evidence labels. Avoid stock space art, fake dashboards, decorative glass layers,
-gratuitous glow, or claims that are not present in the repository.
+Preserve the existing nocturnal evidence-instrument identity, display/mono typography pairing, and
+compact evidence labels in both dark and light modes. Use the shipped orb-in-orbit asset as the
+header logo. The memorable product-derived visual is one evidence reel: a single large use case at
+a time, moving automatically until the reader chooses a slide. Avoid inventory walls, stock space
+art, fake dashboards, decorative glass layers, gratuitous glow, or repository-unsupported claims.
+
+## Page architecture
+
+1. Sticky identity/navigation bar with the real logo, Download action, and theme control.
+2. Direct hero: outcome, one-line mechanism, Download primary action, Guide secondary action.
+3. Three-step workflow: inspect, preview, read—no duplicate five-command reference.
+4. One-frame use-case reel: six shipped scenarios, manual controls, and restrained autoplay.
+5. Compact consent/cost proof.
+6. Honest CLI installation: install from the GitHub source archive, initialize the bundled skill,
+   and run one readiness check.
+7. Three essential FAQs and the full FAQ link.
+
+The Guide owns the five-command explanation and fuller workflow context. Agent Docs owns capability
+status, reader contracts, adapters, automation, and troubleshooting.
 
 ## Interaction and accessibility
 
 - Keep one visually dominant workflow action while leaving the guide and source available.
+- Keep the header sticky after scroll and provide a quiet back-to-top control on long pages.
+- Start from the operating-system color preference; theme changes do not use cookies or browser
+  storage, preserving the public privacy contract.
+- Advance the use-case reel automatically, pause while hovered or focused, and stop permanently
+  after manual navigation so the selected use case stays put.
 - Use product-derived line icons; they remain decorative and hidden from assistive technology.
 - Keep terminal examples horizontally scrollable inside their cards instead of widening the page.
 - Preserve visible focus states, semantic headings, reduced-motion handling, and sufficient contrast.
@@ -45,3 +67,5 @@ gratuitous glow, or claims that are not present in the repository.
 - Verify all five HTML pages reference SVG, 32 px PNG, and Apple touch favicons.
 - Inspect desktop and mobile rendering locally, then repeat against `https://voidscape.club/` after
   the production deployment is ready.
+- Verify both themes, sticky navigation, logo rendering, use-case autoplay/manual-stop behavior,
+  Download anchors, and the back-to-top threshold/action.

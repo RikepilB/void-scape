@@ -65,18 +65,18 @@ separate decisions.
 
    ```powershell
    python skill/scripts/observe.py screenshot --out "C:\path\capture.png"
-   python skill/scripts/voidscape.py inspect "C:\path\capture.png"
-   python skill/scripts/voidscape.py preview "C:\path\capture.png"
-   python skill/scripts/voidscape.py read "C:\path\capture.png" --workdir "C:\path\evidence-image"
+   voidscape inspect "C:\path\capture.png"
+   voidscape preview "C:\path\capture.png"
+   voidscape read "C:\path\capture.png" --workdir "C:\path\evidence-image"
    ```
 
 4. For a clip:
 
    ```powershell
    python skill/scripts/observe.py clip --seconds 15 --out "C:\path\capture.mp4"
-   python skill/scripts/voidscape.py inspect "C:\path\capture.mp4"
-   python skill/scripts/voidscape.py preview "C:\path\capture.mp4" --tier both
-   python skill/scripts/voidscape.py read "C:\path\capture.mp4" --tier both --workdir "C:\path\evidence-clip"
+   voidscape inspect "C:\path\capture.mp4"
+   voidscape preview "C:\path\capture.mp4" --tier both
+   voidscape read "C:\path\capture.mp4" --tier both --workdir "C:\path\evidence-clip"
    ```
 
 5. Stop for any previewed approval. Read the resulting bundle with `[image N]` or `[MM:SS]`
@@ -91,9 +91,9 @@ Run `python skill/scripts/observe.py doctor` for capture readiness and
 Copy the public URL from a permitted page and pass it directly to the guided CLI:
 
 ```powershell
-python skill/scripts/voidscape.py inspect "https://example.com/public-video"
-python skill/scripts/voidscape.py preview "https://example.com/public-video" --tier both
-python skill/scripts/voidscape.py read "https://example.com/public-video" --tier both --workdir evidence-public
+voidscape inspect "https://example.com/public-video"
+voidscape preview "https://example.com/public-video" --tier both
+voidscape read "https://example.com/public-video" --tier both --workdir evidence-public
 ```
 
 Start anonymously. A page being visible in Chrome does not prove the media endpoint is public. If

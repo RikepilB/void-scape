@@ -6,13 +6,12 @@ cover the complete path from installing Voidscape to handling a failed or approv
 ## Start with a source
 
 If Voidscape is not installed, follow [Install](install.md). Then complete the
-[Quick start](quick-start.md) with the key-free fixture:
+[Quick start](quick-start.md) with one source you are allowed to use:
 
 ```powershell
-python scripts/create-demo-fixture.py
-python skill/scripts/voidscape.py inspect samples/build-week-demo.mp4
-python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions
-python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output
+voidscape inspect "meeting.mp4"
+voidscape preview "meeting.mp4"
+voidscape read "meeting.mp4" --workdir voidscape-output
 ```
 
 The sequence is the product contract: inspect facts, preview cost and permission boundaries, then

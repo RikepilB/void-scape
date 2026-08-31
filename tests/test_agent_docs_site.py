@@ -72,6 +72,7 @@ OFFICIAL_HARNESS_URLS = {
     "https://docs.anthropic.com/en/docs/claude-code/chrome",
     "https://docs.anthropic.com/en/docs/claude-code/remote-control",
 }
+VIDEO_AUDIO_DOCS = AGENT_DOCS / "readers" / "video-audio.md"
 
 
 def _text(path: Path) -> str:
@@ -155,6 +156,39 @@ def test_generated_agent_docs_are_current_and_use_the_shared_shell():
         assert required in generated
 
 
+def test_agent_install_guide_covers_no_clone_cli_install_and_first_proof():
+    content = _text(AGENT_DOCS / "install.md")
+    for required in (
+        "Start -> PowerShell",
+        "winget install --id=astral-sh.uv -e",
+        "curl -LsSf https://astral.sh/uv/install.sh | sh",
+        "uv tool install https://github.com/RikepilB/void-scape/archive/refs/heads/main.zip",
+        "uv tool update-shell",
+        "voidscape init",
+        "~/.codex/skills/voidscape",
+        "~/.agents/skills/voidscape",
+        "voidscape customize",
+        'voidscape inspect "meeting.mp4"',
+        'voidscape preview "meeting.mp4"',
+        'voidscape read "meeting.mp4" --workdir voidscape-output',
+        "voidscape-output/manifest.json",
+        "transcript.txt",
+        "frames/",
+        "[MM:SS]",
+        "If the evidence is insufficient, say so.",
+    ):
+        assert required in content
+    for forbidden in (
+        "git clone https://github.com/RikepilB/void-scape.git",
+        ".\\scripts\\install-skill.ps1",
+        "bash scripts/install-skill.sh",
+        "reads API keys",
+        "automatic cloud approval",
+        "browser cookie discovery",
+    ):
+        assert forbidden not in content
+
+
 def test_generated_agent_docs_search_index_covers_every_page():
     search_index = json.loads(_text(AGENT_DOCS / "_assets" / "search-index.json"))
     assert len(search_index) == len(REQUIRED_MARKDOWN)
@@ -173,6 +207,27 @@ def test_generated_agent_docs_search_index_covers_every_page():
         "Reference",
         "Help",
     }
+
+
+def test_video_docs_explain_fast_cloud_transcription_without_promising_batch_latency():
+    content = _text(VIDEO_AUDIO_DOCS)
+    for required in (
+        "`groq`",
+        "`openai-mini`",
+        "`openai`",
+        "`openrouter`",
+        "`gemini`",
+        "189x real-time speed factor",
+        "about 114 seconds",
+        "not a Voidscape end-to-end SLA",
+        "one source per invocation",
+        "does not ship a multi-video batch command",
+        "Voidscape does not invoke that API today",
+        "24-hour to 7-day processing window",
+    ):
+        assert required in content
+    assert "Those chunks are submitted sequentially" in content
+    assert "API key is configuration, not consent" in content
 
 
 def test_generated_agent_docs_are_local_first_and_nested_paths_resolve():
@@ -394,10 +449,11 @@ def test_mcp_host_spike_parks_production_and_keeps_shell_canonical():
         assert required in report
     for forbidden_production_path in (
         REPO / "skill" / "scripts" / "mcp_server.py",
-        REPO / "pyproject.toml",
         REPO / "requirements.txt",
     ):
         assert not forbidden_production_path.exists()
+    pyproject = _text(REPO / "pyproject.toml")
+    assert "mcp" not in pyproject.lower()
 
 
 def test_observe_cli_spec_locks_local_capture_and_error_contract():

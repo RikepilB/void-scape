@@ -20,54 +20,70 @@ reused as a free local sidecar instead of being generated again.
 
 ## Start here
 
-Run either installed command without arguments for a short Voidscape welcome screen and the next
-command to try. The old `read-video` entry keeps its existing command behavior; its no-command
-screen now points into the guided Voidscape flow.
+You do not need to clone this repository. Install the CLI once, let it add the bundled agent skill,
+then use `voidscape` from any terminal.
 
-### 1. Install both Voidscape and the read-video compatibility skill
+### 1. Install `uv` once
 
 **Windows PowerShell**
 
 ```powershell
-.\scripts\install-skill.ps1
+winget install --id=astral-sh.uv -e
 ```
 
-**macOS / Linux / Git Bash**
+**macOS / Linux**
 
 ```bash
-bash scripts/install-skill.sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-The installer creates the new `voidscape` skill and keeps `read-video` available for existing
-automations. It never overwrites a local `workspace.json` or reads API keys.
+Skip this step if `uv --version` already works. Voidscape also needs FFmpeg and FFprobe to inspect
+images, video, or audio; `voidscape init` and `voidscape doctor` report whether they are ready. If
+they are missing, use `winget install --id=Gyan.FFmpeg -e` on Windows, `brew install ffmpeg` on
+macOS, or `sudo apt update && sudo apt install ffmpeg` on Debian/Ubuntu.
 
-### 2. Optional: choose where your media and notes live
-
-Run this from the installed Voidscape skill, or use the repository path shown below:
+### 2. Install Voidscape and its agent skill
 
 ```powershell
-# Interactive: preview your settings, then confirm before saving.
-python skill/scripts/voidscape.py customize
-
-# Reuse an existing read-video workspace after reviewing the import.
-python skill/scripts/voidscape.py customize --import-read-video --yes
+uv tool install https://github.com/RikepilB/void-scape/archive/refs/heads/main.zip
+uv tool update-shell
+voidscape init
 ```
 
-`customize` stores only local folders and local defaults: Inbox, Library, transcription backend,
-Whisper model, and the long-audio threshold. It never stores API keys. Use `--create-dirs` when you
-want it to create missing Inbox or Library folders.
+`uv tool install` creates the global `voidscape` command and installs `yt-dlp` in its isolated
+environment. `voidscape init` copies the bundled skill to `~/.codex/skills/voidscape` and
+`~/.agents/skills/voidscape`, checks local media tools, and does not approve a cloud job or model
+download. If the command is not visible immediately after `uv tool update-shell`, open one new
+terminal and run `voidscape init` there.
 
-### 3. Inspect, preview, then read
+To use only the CLI, run `voidscape init --no-skill`. To update later, add `--upgrade` to the
+`uv tool install` command, then run `voidscape init` again.
+
+### 3. Optional: choose where your media and notes live
 
 ```powershell
-python skill/scripts/voidscape.py inspect "meeting.mp4"
-python skill/scripts/voidscape.py preview "meeting.mp4"
-python skill/scripts/voidscape.py read "meeting.mp4" --workdir out
+# Preview Inbox, Library, and local transcription defaults.
+voidscape customize
+
+# Save only after reviewing the preview.
+voidscape customize --yes --create-dirs
+```
+
+`customize` stores local paths and local defaults in `~/.voidscape/workspace.json`; it never stores
+API keys. A model download and every cloud transcription job remain separate approvals.
+
+### 4. Inspect, preview, then read
+
+```powershell
+voidscape doctor
+voidscape inspect "meeting.mp4"
+voidscape preview "meeting.mp4"
+voidscape read "meeting.mp4" --workdir voidscape-output
 
 # One local folder is one naturally ordered carousel.
-python skill/scripts/voidscape.py inspect "slides"
-python skill/scripts/voidscape.py preview "slides"
-python skill/scripts/voidscape.py read "slides" --workdir slide-evidence
+voidscape inspect "slides"
+voidscape preview "slides"
+voidscape read "slides" --workdir slide-evidence
 ```
 
 `inspect` is free source discovery. `preview` shows cost, dependencies, model-download state, and
@@ -97,17 +113,21 @@ agent should:
 4. read the resulting artifacts and answer with `[MM:SS]` or `[image 1]` citations.
 
 The installed skill teaches an agent the same `inspect → preview → read` flow. The concrete,
-judge-testable interface is `python skill/scripts/voidscape.py ...`; repository-only agent files
-under `.codex/agents/` are development helpers, not installed slash commands.
+directly testable interface is `voidscape ...`; repository-only agent files under `.codex/agents/`
+are development helpers, not installed slash commands.
 
-For a reproducible, key-free first run:
+Then give the evidence to your agent:
 
-```powershell
-python scripts/create-demo-fixture.py
-python skill/scripts/voidscape.py inspect samples/build-week-demo.mp4
-python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions
-python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output
-```
+> Open `voidscape-output/manifest.json` and `transcript.txt`, then inspect `frames/`.
+> Summarize the recording in three bullets. Support every factual claim with an exact `[MM:SS]`
+> citation. If the evidence is insufficient, say so.
+
+If an already-open agent session does not discover Voidscape after installation, start a new
+session.
+
+Repository contributors can still generate the copyright-free fixture with
+`python scripts/create-demo-fixture.py` and exercise the source checkout directly; that development
+path is not required for normal CLI use.
 
 Testing with other people? Use the short, privacy-aware
 [community prototype protocol](docs/community-testing.md) and its local
@@ -195,7 +215,7 @@ See the [guided workflow and automation guide](docs/voidscape-guide.md),
 - `yt-dlp` only for URLs
 - `faster-whisper` only for local speech transcription
 
-Run `python skill/scripts/voidscape.py doctor` to see what is ready without changing anything.
+Run `voidscape doctor` to see what is ready without changing anything.
 
 ## Built with Codex
 
