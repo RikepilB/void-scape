@@ -60,37 +60,67 @@
       <details class="mobile-toc">
         <summary>On this page <span>Overview</span></summary>
         <nav aria-label="On this page"><a href="#top" class="toc-level-2">Overview</a>
-<a href="#install-the-skill" class="toc-level-2">Install the skill</a>
+<a href="#open-a-terminal" class="toc-level-2">Open a terminal</a>
+<a href="#install-uv-once" class="toc-level-2">Install uv once</a>
 <a href="#windows-powershell" class="toc-level-3">Windows PowerShell</a>
-<a href="#macos-linux-or-git-bash" class="toc-level-3">macOS, Linux, or Git Bash</a>
+<a href="#macos-or-linux" class="toc-level-3">macOS or Linux</a>
+<a href="#install-the-cli-and-agent-skill" class="toc-level-2">Install the CLI and agent skill</a>
 <a href="#verify-readiness" class="toc-level-2">Verify readiness</a>
 <a href="#configure-local-folders" class="toc-level-2">Configure local folders</a>
+<a href="#read-one-file" class="toc-level-2">Read one file</a>
+<a href="#ask-your-agent" class="toc-level-2">Ask your agent</a>
 <a href="#confirm-the-installed-contract" class="toc-level-2">Confirm the installed contract</a>
+<a href="#repository-contributor-proof" class="toc-level-2">Repository contributor proof</a>
 <a href="#next" class="toc-level-2">Next</a></nav>
       </details>
       <article class="docs-article" id="top">
         <header class="article-header"><span>Start here</span><h1>Install Voidscape</h1></header>
-        <p>Install the Voidscape skill, keep the compatibility command available, and verify the local tools you actually plan to use. The installer does not read API keys or overwrite local workspace choices.</p>
-<h2 id="install-the-skill">Install the skill<a class="heading-anchor" href="#install-the-skill" aria-label="Link to Install the skill">#</a></h2>
-<p>From the repository root, run the command for your platform.</p>
+        <p>Install one global CLI and its bundled agent skill. You do not need to clone the repository, create an account, add an API key, or approve cloud processing.</p>
+<h2 id="open-a-terminal">Open a terminal<a class="heading-anchor" href="#open-a-terminal" aria-label="Link to Open a terminal">#</a></h2>
+<p>On Windows, open <strong>Start -&gt; PowerShell</strong>. On macOS or Linux, open the Terminal app.</p>
+<h2 id="install-uv-once">Install <code>uv</code> once<a class="heading-anchor" href="#install-uv-once" aria-label="Link to Install `uv` once">#</a></h2>
 <h3 id="windows-powershell">Windows PowerShell<a class="heading-anchor" href="#windows-powershell" aria-label="Link to Windows PowerShell">#</a></h3>
-<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">.\scripts\install-skill.ps1</code></pre></div>
-<h3 id="macos-linux-or-git-bash">macOS, Linux, or Git Bash<a class="heading-anchor" href="#macos-linux-or-git-bash" aria-label="Link to macOS, Linux, or Git Bash">#</a></h3>
-<div class="code-block"><div class="code-meta"><span>Shell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-bash">bash scripts/install-skill.sh</code></pre></div>
-<p>The installer copies the supported <code>voidscape</code> skill and keeps the documented <code>read-video</code> compatibility entry. New workflows should start with Voidscape.</p>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">winget install --id=astral-sh.uv -e</code></pre></div>
+<h3 id="macos-or-linux">macOS or Linux<a class="heading-anchor" href="#macos-or-linux" aria-label="Link to macOS or Linux">#</a></h3>
+<div class="code-block"><div class="code-meta"><span>Shell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-bash">curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre></div>
+<p>Skip this step if <code>uv --version</code> already works.</p>
+<h2 id="install-the-cli-and-agent-skill">Install the CLI and agent skill<a class="heading-anchor" href="#install-the-cli-and-agent-skill" aria-label="Link to Install the CLI and agent skill">#</a></h2>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">uv tool install https://github.com/RikepilB/void-scape/archive/refs/heads/main.zip
+uv tool update-shell
+voidscape init</code></pre></div>
+<p><code>uv tool install</code> creates the global <code>voidscape</code> command in an isolated environment and installs its <code>yt-dlp</code> dependency. <code>voidscape init</code> copies the primary skill into:</p>
+<ul><li><code>~/.codex/skills/voidscape</code> for Codex;</li><li><code>~/.agents/skills/voidscape</code> for shared agent discovery.</li></ul>
+<p>It preserves an existing local <code>workspace.json</code>, does not read API keys, and does not approve a cloud job or model download. If <code>voidscape</code> is not recognized immediately after <code>uv tool update-shell</code>, open one new terminal and run <code>voidscape init</code> there.</p>
+<p>Use <code>voidscape init --no-skill</code> for a CLI-only setup. To update, add <code>--upgrade</code> to the <code>uv tool install</code> command, then run <code>voidscape init</code> again.</p>
 <h2 id="verify-readiness">Verify readiness<a class="heading-anchor" href="#verify-readiness" aria-label="Link to Verify readiness">#</a></h2>
 <p>Run the read-only diagnostic before using personal media:</p>
-<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">python skill/scripts/voidscape.py doctor</code></pre></div>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">voidscape doctor</code></pre></div>
 <p>Doctor reports Python, FFmpeg, FFprobe, yt-dlp, workspace configuration, and optional local speech support. It does not install a missing dependency or download a model.</p>
+<p>If FFmpeg or FFprobe is missing, install the package for your platform:</p>
+<div class="code-block"><div class="code-meta"><span>Protocol</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-text">Windows:       winget install --id=Gyan.FFmpeg -e
+macOS:         brew install ffmpeg
+Debian/Ubuntu: sudo apt update &amp;&amp; sudo apt install ffmpeg</code></pre></div>
 <div class="table-scroll"><table><thead><tr><th scope="col">Tool</th><th scope="col">Required when</th></tr></thead><tbody><tr><td>Python 3.10+</td><td>Always</td></tr><tr><td>FFmpeg and FFprobe</td><td>Video, audio, screenshots, or short clips</td></tr><tr><td>yt-dlp</td><td>Supported public media URLs</td></tr><tr><td>faster-whisper</td><td>Local speech transcription without existing captions or sidecars</td></tr></tbody></table></div>
 <h2 id="configure-local-folders">Configure local folders<a class="heading-anchor" href="#configure-local-folders" aria-label="Link to Configure local folders">#</a></h2>
 <p>Configuration is optional. Preview the values first; save only after explicit confirmation.</p>
-<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">python skill/scripts/voidscape.py customize</code></pre></div>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">voidscape customize</code></pre></div>
 <p>Voidscape stores local paths and local defaults, not API keys. A first model download and every cloud transcription job remain separate decisions even when a default backend is configured.</p>
+<h2 id="read-one-file">Read one file<a class="heading-anchor" href="#read-one-file" aria-label="Link to Read one file">#</a></h2>
+<p>Replace <code>meeting.mp4</code> with a local image, audio file, video, folder, or supported public URL:</p>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">voidscape inspect &quot;meeting.mp4&quot;
+voidscape preview &quot;meeting.mp4&quot;
+voidscape read &quot;meeting.mp4&quot; --workdir voidscape-output</code></pre></div>
+<p>The final command can create <code>voidscape-output/manifest.json</code>, <code>transcript.txt</code>, and <code>frames/</code>. The exact artifacts depend on the source and scope you approved.</p>
+<h2 id="ask-your-agent">Ask your agent<a class="heading-anchor" href="#ask-your-agent" aria-label="Link to Ask your agent">#</a></h2>
+<p>Copy this prompt:</p>
+<aside class="callout">Open <code>voidscape-output/manifest.json</code> and <code>transcript.txt</code>, then inspect <code>frames/</code>. Summarize the recording in three bullets. Support every factual claim with an exact <code>[MM:SS]</code> citation. If the evidence is insufficient, say so.</aside>
+<p>If an agent session that was already open does not show Voidscape, start a new agent session after installation.</p>
 <h2 id="confirm-the-installed-contract">Confirm the installed contract<a class="heading-anchor" href="#confirm-the-installed-contract" aria-label="Link to Confirm the installed contract">#</a></h2>
-<p>Open the installed <code>SKILL.md</code> or run the repository command without arguments. The supported flow must still read <code>inspect -&gt; preview -&gt; read</code>. If an install claims browser-cookie discovery, automatic cloud use, or unattended approval flags, stop: that is not the Voidscape contract.</p>
+<p>Open the installed <code>SKILL.md</code> or run <code>voidscape</code> without arguments. The supported flow must still read <code>inspect -&gt; preview -&gt; read</code>. If an install claims browser-cookie discovery, automatic cloud use, or unattended approval flags, stop: that is not the Voidscape contract.</p>
+<h2 id="repository-contributor-proof">Repository contributor proof<a class="heading-anchor" href="#repository-contributor-proof" aria-label="Link to Repository contributor proof">#</a></h2>
+<p>Cloning is only needed for development. Contributors can run <code>python scripts/create-demo-fixture.py</code> from a source checkout to generate the copyright-free test fixture.</p>
 <h2 id="next">Next<a class="heading-anchor" href="#next" aria-label="Link to Next">#</a></h2>
-<p>Continue to <a href="quick-start.html">Quick start</a> for a reproducible first read with no personal source and no paid backend.</p>
+<p>Continue to <a href="quick-start.html">Quick start</a> for the meaning of each proof step, or <a href="workflow.html">Workflow and protocol</a> for real sources and approval fields.</p>
         <div class="article-edit"><a href="https://github.com/RikepilB/void-scape/edit/main/docs/agents/install.md" target="_blank" rel="noreferrer">Edit this page on GitHub ↗</a></div>
         <nav class="page-navigation" aria-label="Previous and next pages"><a class="previous" href="index.html"><span>Previous</span><strong>← Overview</strong></a><a class="next" href="quick-start.html"><span>Next</span><strong>Quick start →</strong></a></nav>
       </article>
@@ -99,12 +129,17 @@
     <aside class="page-toc" aria-label="On this page">
       <strong>On this page</strong>
       <nav><a href="#top" class="toc-level-2">Overview</a>
-<a href="#install-the-skill" class="toc-level-2">Install the skill</a>
+<a href="#open-a-terminal" class="toc-level-2">Open a terminal</a>
+<a href="#install-uv-once" class="toc-level-2">Install uv once</a>
 <a href="#windows-powershell" class="toc-level-3">Windows PowerShell</a>
-<a href="#macos-linux-or-git-bash" class="toc-level-3">macOS, Linux, or Git Bash</a>
+<a href="#macos-or-linux" class="toc-level-3">macOS or Linux</a>
+<a href="#install-the-cli-and-agent-skill" class="toc-level-2">Install the CLI and agent skill</a>
 <a href="#verify-readiness" class="toc-level-2">Verify readiness</a>
 <a href="#configure-local-folders" class="toc-level-2">Configure local folders</a>
+<a href="#read-one-file" class="toc-level-2">Read one file</a>
+<a href="#ask-your-agent" class="toc-level-2">Ask your agent</a>
 <a href="#confirm-the-installed-contract" class="toc-level-2">Confirm the installed contract</a>
+<a href="#repository-contributor-proof" class="toc-level-2">Repository contributor proof</a>
 <a href="#next" class="toc-level-2">Next</a></nav>
     </aside>
   </div>

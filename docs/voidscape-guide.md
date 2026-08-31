@@ -14,8 +14,7 @@ can understand what an agent used.
 
 ## Guided commands
 
-Run these from the repository as `python skill/scripts/voidscape.py ...`, or from an installed
-skill as `python scripts/voidscape.py ...`.
+Run these from any terminal with the installed `voidscape` command.
 
 | Command | Use it when | Changes media or configuration? |
 | --- | --- | --- |
@@ -29,18 +28,18 @@ skill as `python scripts/voidscape.py ...`.
 
 ```powershell
 # A screen recording: visual evidence first.
-python skill/scripts/voidscape.py preview "demo.mp4" --tier visual
+voidscape preview "demo.mp4" --tier visual
 
 # A voice memo: local audio path.
-python skill/scripts/voidscape.py preview "idea.m4a" --tier audio --backend faster-whisper
+voidscape preview "idea.m4a" --tier audio --backend faster-whisper
 
 # A focused question around five minutes.
-python skill/scripts/voidscape.py read "meeting.mp4" --start 270 --end 330 --workdir meeting-five-minutes
+voidscape read "meeting.mp4" --start 270 --end 330 --workdir meeting-five-minutes
 
 # One local folder becomes one filename-ordered carousel evidence bundle.
-python skill/scripts/voidscape.py inspect "slides"
-python skill/scripts/voidscape.py preview "slides"
-python skill/scripts/voidscape.py read "slides" --workdir slide-evidence
+voidscape inspect "slides"
+voidscape preview "slides"
+voidscape read "slides" --workdir slide-evidence
 ```
 
 Image folders are local and non-recursive, accept JPG/JPEG, PNG, and WebP, and are capped at

@@ -14,7 +14,10 @@ from typing import Any
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
 
-import video
+if __package__:
+    from . import video
+else:
+    import video
 
 
 ARTICLE_EXTENSIONS = {".html", ".htm", ".md", ".markdown", ".txt"}

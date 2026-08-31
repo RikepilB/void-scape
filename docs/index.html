@@ -8,6 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <script src="site-theme.js"></script>
   <style>
     :root {
       --ink: #030405;
@@ -52,7 +53,6 @@
       z-index: 5;
     }
     .wordmark { align-items: center; color: var(--paper); display: inline-flex; font: 680 19px/1 var(--display); gap: 9px; letter-spacing: -.055em; }
-    .wordmark span { background: linear-gradient(135deg, var(--blue), var(--lilac)); border-radius: 99px; box-shadow: 0 0 24px rgba(117, 173, 255, .55); display: block; height: 10px; width: 10px; }
     .site-header nav { display: flex; gap: 24px; }
     .site-header nav a { color: var(--mist); font-size: 13px; transition: color .2s ease; }
     .site-header nav a:hover { color: var(--paper); }
@@ -96,57 +96,12 @@
     @keyframes card-drift-two { 0%, 100% { translate: 0 0; } 50% { translate: -14px 14px; } }
     @keyframes card-drift-three { 0%, 100% { translate: 0 0; } 50% { translate: 5px -17px; } }
 
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 34px 0 46px; }
-    .stat { border-left: 1px dashed var(--line-strong); padding: 0 30px; }
-    .stat:first-child { border-left: 0; padding-left: 0; }
-    .stat b { background: linear-gradient(120deg, var(--blue), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; display: block; font: 600 clamp(34px, 3.4vw, 50px)/1 var(--display); letter-spacing: -.055em; }
-    .stat span { color: var(--muted); display: block; font: 700 10px var(--mono); letter-spacing: .12em; margin-top: 9px; text-transform: uppercase; }
-
     .eyebrow { color: var(--blue); display: block; font: 700 11px var(--mono); letter-spacing: .14em; margin-bottom: 14px; text-transform: uppercase; }
-
-    .console-grid { display: grid; gap: 22px; grid-template-columns: repeat(2, 1fr); }
-    .console-card { background: rgba(11, 15, 26, .55); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: border-color .2s ease, transform .2s ease; }
-    .console-card:hover { border-color: var(--line-strong); transform: translateY(-3px); }
-    .console-card:nth-child(5) { grid-column: 1 / -1; max-width: calc(50% - 11px); }
-    .console-body { padding: 22px 22px 20px; }
-    .console-body h3 { font: 600 19px/1.1 var(--mono); letter-spacing: -.02em; margin: 0 0 8px; }
-    .console-body h3 .cmd-name { color: var(--blue); }
-    .console-body p { color: var(--mist); font-size: 14px; margin: 0; }
-    .console-term { background: #05070c; border-top: 1px solid var(--line); color: #9fb4d8; font: 11.5px/1.75 var(--mono); overflow-x: auto; padding: 15px 18px; white-space: pre; }
-    .console-term .p { color: #8bb7ff; }
-    .console-term .ok { color: #79d9a7; }
-    .console-term .dim { color: #5b6b8c; }
-
-    .flags-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
-    .flag-chip { border: 1px dashed var(--line-strong); border-radius: 14px; padding: 20px; transition: background .2s ease, border-color .2s ease; }
-    .flag-chip:hover { background: rgba(177, 203, 255, .05); border-color: rgba(142, 179, 255, .45); }
-    .flag-chip code { color: var(--blue); display: block; font: 600 13px var(--mono); margin-bottom: 8px; }
-    .flag-chip p { color: var(--mist); font-size: 13px; line-height: 1.5; margin: 0; }
-
-    .reads { background: linear-gradient(180deg, #05070c, #0a0f1d 55%, #05070c); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); }
-    .reads-grid { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); min-width: 0; }
-    .read-card { background: rgba(13, 18, 32, .6); border: 1px solid var(--line); border-radius: 16px; min-width: 0; padding: 22px; transition: border-color .2s ease, transform .2s ease; }
-    .read-card:hover { border-color: rgba(142, 179, 255, .4); transform: translateY(-3px); }
-    .read-icon { align-items: center; background: rgba(117, 173, 255, .1); border: 1px solid rgba(142, 179, 255, .28); border-radius: 10px; color: var(--blue); display: inline-flex; height: 34px; justify-content: center; margin-bottom: 14px; width: 34px; }
-    .read-icon svg { height: 17px; width: 17px; }
-    .read-card h3 { font: 600 17px/1.2 var(--display); letter-spacing: -.03em; margin: 0 0 6px; }
-    .read-card > p { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 16px; }
-    .read-cmd { background: rgba(4, 6, 11, .8); border: 1px solid rgba(142, 179, 255, .16); border-radius: 9px; box-sizing: border-box; color: #a9caff; display: block; font: 11px/1.6 var(--mono); max-width: 100%; min-width: 0; overflow-x: auto; padding: 10px 12px; white-space: nowrap; }
-    .read-cmd .p { color: #8bb7ff; }
-    .read-cmd .flag { color: #b5bcff; }
 
     section { padding: 112px 0; position: relative; }
     .section-head { align-items: end; display: flex; gap: 30px; justify-content: space-between; margin-bottom: 48px; }
     .section-head h2 { font: 580 clamp(34px, 4vw, 58px)/1 var(--display); letter-spacing: -.062em; margin: 0; max-width: 680px; }
     .section-head p { color: var(--muted); font-size: 15px; margin: 0; max-width: 300px; }
-
-    .commands { border-top: 1px solid var(--line-strong); }
-    .command { border-bottom: 1px solid var(--line); display: grid; gap: 16px 24px; grid-template-columns: 78px 1.1fr 1.6fr; padding: 27px 0; transition: background .2s ease, padding .2s ease; }
-    .command:hover { background: rgba(177, 203, 255, .06); padding-left: 13px; padding-right: 13px; }
-    .number { color: var(--blue); font: 600 12px/1.4 var(--mono); padding-top: 5px; }
-    .command h3 { font: 600 23px/1 var(--display); letter-spacing: -.045em; margin: 0; }
-    .command p { color: var(--mist); font-size: 15px; margin: 0; max-width: 470px; }
-    .command code { background: rgba(112, 157, 255, .08); border: 1px solid rgba(142, 179, 255, .18); border-radius: 8px; color: #a9caff; font: 11px/1.4 var(--mono); grid-column: 2 / -1; overflow-x: auto; padding: 11px 13px; white-space: nowrap; }
 
     .gate-zone { background: linear-gradient(155deg, rgba(39, 62, 138, .37), rgba(13, 17, 31, .56) 57%, rgba(5, 7, 10, .9)); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); overflow: hidden; }
     .gate-grid { display: grid; gap: 24px; grid-template-columns: 1.08fr .92fr; position: relative; }
@@ -155,7 +110,6 @@
     .proof { align-self: center; background: rgba(11, 15, 26, .63); border: 1px solid rgba(210, 225, 255, .22); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; padding: 10px; }
     .proof-head { align-items: center; color: var(--muted); display: flex; font: 10px var(--mono); justify-content: space-between; letter-spacing: .06em; padding: 10px 10px 17px; text-transform: uppercase; }
     .proof-screen { background: linear-gradient(145deg, #06101e, #111c38); border-radius: 13px; padding: 20px; }
-    .proof-screen img { border: 1px solid rgba(255, 255, 255, .13); border-radius: 9px; display: block; height: auto; width: 100%; }
     .proof-stat { display: grid; gap: 3px; grid-template-columns: 1fr auto; margin-top: 17px; }
     .proof-stat b { font: 650 13px var(--mono); }
     .proof-stat span { color: var(--blue); font: 600 11px var(--mono); }
@@ -167,48 +121,14 @@
     .estimate-line.total { color: var(--paper); font-weight: 700; }
     .estimate-line.total span:last-child { color: #b5bcff; }
 
-    .use-cases { background: #f0f4fb; color: #10131b; }
-    .use-cases .section-head h2 { color: #10131b; }
-    .use-cases .section-head p { color: #566174; }
-    .capability-board { background: #cbd3e0; border: 1px solid #cbd3e0; display: grid; gap: 1px; grid-template-columns: repeat(3, 1fr); overflow: hidden; }
-    .capability-column { background: #f8faff; min-height: 560px; padding: 28px 26px; }
-    .capability-column.next { background: #edf2fb; }
-    .capability-column.horizon { background: #e5eafa; }
-    .capability-index, .capability-status { color: #285ac9; font: 700 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
-    .capability-status { color: #69748a; }
-    .capability-heading { color: #10131b; font: 570 clamp(25px, 2vw, 34px)/1.04 var(--display); letter-spacing: -.05em; margin: 13px 0 9px; }
-    .capability-intro { color: #566174; font-size: 14px; line-height: 1.5; margin: 0 0 28px; }
-    .capability-list { list-style: none; margin: 0; padding: 0; }
-    .capability-item { border-top: 1px solid #cbd3e0; padding: 18px 0 19px; }
-    .capability-item h4 { color: #10131b; font: 600 16px/1.15 var(--display); letter-spacing: -.025em; margin: 0 0 7px; }
-    .capability-item p { color: #566174; font-size: 13px; line-height: 1.5; margin: 0; }
-
-    .field-notes { padding-top: 0; }
-    .field-notes .section-head { margin-bottom: 36px; }
-    .case-files { display: grid; gap: 1px; grid-template-columns: repeat(2, 1fr); background: var(--line-strong); border: 1px solid var(--line-strong); }
-    .case-file { background: #0b0e15; min-height: 275px; padding: 30px; position: relative; }
-    .case-file::before { background: linear-gradient(110deg, rgba(102, 151, 255, .55), transparent 55%); content: ""; height: 1px; inset: 0 0 auto; position: absolute; }
-    .case-file h3 { font: 560 clamp(25px, 3vw, 37px)/1.03 var(--display); letter-spacing: -.055em; margin: 0 0 18px; max-width: 16ch; }
-    .case-file p { color: var(--mist); font-size: 15px; margin: 0; max-width: 42ch; }
-    .case-file footer { border: 0; color: var(--blue); font: 11px var(--mono); letter-spacing: .08em; margin-top: 42px; padding: 0; text-transform: uppercase; }
-
     .start { padding-bottom: 130px; }
     .start-panel { background: linear-gradient(120deg, #132f77, #4a62c8 47%, #7c7be7); border: 1px solid rgba(255, 255, 255, .32); border-radius: 24px; box-shadow: var(--shadow); overflow: hidden; padding: clamp(30px, 5vw, 64px); position: relative; }
     .start-panel::after { background: radial-gradient(circle, rgba(255, 255, 255, .5), transparent 68%); content: ""; filter: blur(4px); height: 410px; opacity: .63; position: absolute; right: -150px; top: -170px; width: 580px; }
     .start-panel > * { position: relative; z-index: 1; }
     .start-panel h2 { font: 580 clamp(38px, 5vw, 68px)/.98 var(--display); letter-spacing: -.07em; margin: 0 0 14px; max-width: 690px; }
     .start-intro { color: rgba(243, 246, 251, .8); font-size: 16px; margin: 0 0 34px; max-width: 660px; }
-    .install-grid { display: grid; gap: 13px; grid-template-columns: repeat(3, 1fr); max-width: 1000px; }
-    .install-step { background: rgba(3, 5, 10, .58); border: 1px solid rgba(255, 255, 255, .23); border-radius: 14px; display: flex; flex-direction: column; min-height: 230px; padding: 21px; }
-    .install-step:nth-child(2) { transform: translateY(18px); }
-    .install-step:nth-child(3) { background: rgba(3, 11, 31, .7); border-color: rgba(202, 221, 255, .45); transform: translateY(36px); }
-    .install-step b { color: #bcd3ff; font: 700 10px/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
-    .install-step h3 { font: 600 23px/1.08 var(--display); letter-spacing: -.045em; margin: 30px 0 10px; }
-    .install-step p { color: rgba(225, 234, 255, .72); font-size: 13px; margin: 0; }
     .install-command { background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .14); border-radius: 9px; color: #dbe5ff; display: block; font: 11px/1.7 var(--mono); margin-top: auto; overflow-wrap: anywhere; padding: 12px; white-space: pre-wrap; }
     .install-command .prompt { color: #8bb7ff; }
-    .install-proof { border-top: 1px solid rgba(225, 236, 255, .36); color: rgba(243, 246, 251, .84); display: grid; font-size: 13px; gap: 16px; grid-template-columns: 150px 1fr; margin-top: 66px; max-width: 1000px; padding-top: 20px; }
-    .install-proof b { color: #dbe5ff; font: 700 10px/1.45 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 
     .faq { background: linear-gradient(160deg, #07101f, #050609 68%); border-top: 1px solid var(--line); }
     .faq-list { border-top: 1px solid var(--line-strong); max-width: 920px; }
@@ -238,18 +158,7 @@
       .signal-orbit { opacity: .55; right: -110px; top: 145px; transform: scale(.76); transform-origin: top right; }
       .section-head { align-items: start; display: block; }
       .section-head p { margin-top: 22px; }
-      .command { gap: 11px; grid-template-columns: 45px 1fr; }
-      .command p { grid-column: 2; }
-      .command code { grid-column: 2; margin-top: 7px; white-space: normal; }
-      .gate-grid, .capability-board, .install-grid { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: repeat(2, 1fr); row-gap: 28px; }
-      .stat:nth-child(3) { border-left: 0; padding-left: 0; }
-      .console-grid, .flags-grid, .reads-grid { grid-template-columns: 1fr; }
-      .console-card:nth-child(5) { grid-column: auto; max-width: none; }
-      .capability-column { min-height: 0; }
-      .case-files { grid-template-columns: 1fr; }
-      .install-step:nth-child(n) { transform: none; }
-      .install-proof { grid-template-columns: 1fr; margin-top: 20px; }
+      .gate-grid { grid-template-columns: 1fr; }
       .footer-inner { align-items: start; flex-direction: column; gap: 14px; }
     }
     @media (max-width: 480px) {
@@ -261,21 +170,30 @@
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
     }
   </style>
+  <link rel="stylesheet" href="site-theme.css">
 </head>
 <body>
   <main>
-    <div class="shell">
+    <div class="shell site-header-shell">
       <header class="site-header">
-        <a class="wordmark" href="#top" aria-label="Voidscape home"><span></span>Voidscape</a>
-        <nav aria-label="Primary navigation">
-          <a href="#install">Install</a>
-          <a href="guide.html">Guide</a>
-          <a href="agents/">Agent docs</a>
-          <a href="#faq">FAQ</a>
-          <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
-          <a href="privacy.html">Privacy</a>
-          <a href="terms.html">Terms</a>
-        </nav>
+        <a class="wordmark" href="#top" aria-label="Voidscape home"><img src="favicon.svg" alt="" width="28" height="28">Voidscape</a>
+        <div class="site-header-tools">
+          <nav aria-label="Primary navigation">
+            <a class="download-link" href="#install">Download</a>
+            <a href="guide.html">Guide</a>
+            <a href="agents/">Agent docs</a>
+            <a href="#faq">FAQ</a>
+            <a href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">GitHub ↗</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+          </nav>
+          <button class="theme-toggle" type="button" data-site-theme-toggle aria-label="Switch color mode">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <g class="theme-sun"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g>
+              <path class="theme-moon" d="M20 15.2A8 8 0 0 1 8.8 4 8.1 8.1 0 1 0 20 15.2Z"/>
+            </svg>
+          </button>
+        </div>
       </header>
     </div>
 
@@ -284,16 +202,16 @@
       <div class="grain" aria-hidden="true"></div>
       <div class="signal-orbit" aria-hidden="true">
         <div class="signal-card one"><b>source</b><span>00:42</span></div>
-        <div class="signal-card two"><b>signal</b><span>2.4M</span></div>
-        <div class="signal-card three"><b>approved</b><i class="signal-dot"></i></div>
+        <div class="signal-card two"><b>evidence</b><span>frames + text</span></div>
+        <div class="signal-card three"><b>local path</b><i class="signal-dot"></i></div>
       </div>
       <div class="shell hero-copy">
-        <h1>Make the media you keep <em>legible.</em></h1>
-        <p class="lede">Transcription is one channel. Voidscape turns a local file or URL into frames, timestamped text, and a manifest an agent can inspect together—after cost, cloud processing, and model downloads are made visible.</p>
+        <h1>Turn media into evidence <em>your agent can cite.</em></h1>
+        <p class="lede">Voidscape reads video, audio, images, articles, and feeds through one visible sequence: inspect, preview, read.</p>
         <div class="actions">
-          <a class="button primary" href="#sequence">See the workflow <span class="arrow">↓</span></a>
-          <a class="button secondary" href="guide.html">Guide: how it works <span class="arrow">→</span></a>
-          <a class="button secondary" href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">Read the source <span class="arrow">↗</span></a>
+          <a class="button primary" href="#install">Download Voidscape <span class="arrow">↓</span></a>
+          <a class="button secondary" href="#use-cases">See what it can do <span class="arrow">→</span></a>
+          <a class="button secondary" href="guide.html">How it works <span class="arrow">↗</span></a>
         </div>
         <div class="status-row" aria-label="Product highlights">
           <div class="status"><strong>local-first</strong>audio stays yours by default</div>
@@ -305,127 +223,18 @@
 
     <div class="soft-divider" aria-hidden="true"></div>
 
-    <div class="shell">
-      <div class="stats" aria-label="Voidscape at a glance">
-        <div class="stat"><b>3</b><span>reader engines — video/audio · image · article/RSS</span></div>
-        <div class="stat"><b>5</b><span>guided commands</span></div>
-        <div class="stat"><b>1</b><span>consent-first sequence</span></div>
-        <div class="stat"><b>0</b><span>uploads by default</span></div>
-      </div>
-    </div>
-
-    <div class="soft-divider" aria-hidden="true"></div>
-
-    <section class="shell" id="sequence">
-      <div class="section-head">
-        <div>
-          <h2>Three deliberate moves. One clear decision.</h2>
-        </div>
-        <p>Start with source facts, preview the boundary, then prepare artifacts an agent can inspect.</p>
-      </div>
-      <div class="commands" aria-label="Voidscape command sequence">
-        <article class="command">
-          <span class="number">01 /</span>
-          <h3>Inspect the source.</h3>
-          <p>Inspect duration, resolution, audio, captions, and local sidecars before deciding what the task actually needs.</p>
-          <code>python skill/scripts/voidscape.py inspect "clip.mp4"</code>
-        </article>
-        <article class="command">
-          <span class="number">02 /</span>
-          <h3>Preview the tradeoff.</h3>
-          <p>Separate transcription spend from vision-token cost, flag dependencies, and show whether approval is required.</p>
-          <code>python skill/scripts/voidscape.py preview "clip.mp4" --tier both --backend captions</code>
-        </article>
-        <article class="command">
-          <span class="number">03 /</span>
-          <h3>Read with consent.</h3>
-          <p>Extract only the frames and transcript you approved, then hand agents artifacts they can cite and inspect.</p>
-          <code>python skill/scripts/voidscape.py read "clip.mp4" --tier both --backend captions</code>
-        </article>
-      </div>
-    </section>
-
-    <section class="shell" id="commands" aria-labelledby="commands-title">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">// Commands</span>
-          <h2 id="commands-title">Five commands. The sequence stays the same.</h2>
-        </div>
-        <p>The guided flow covers local files, public URLs, image folders, articles, and feeds—without bypassing the gates.</p>
-      </div>
-      <div class="console-grid">
-        <article class="console-card">
-          <div class="console-body">
-            <h3><span class="cmd-name">inspect</span> input</h3>
-            <p>Free source discovery. Duration, resolution, audio, captions, and sidecars — before anything is priced or touched.</p>
-          </div>
-          <div class="console-term"><span class="p">$</span> voidscape.py inspect "clip.mp4"
-<span class="ok">✓</span> duration 73.6s · 1920×1080 · audio
-<span class="ok">✓</span> sidecar transcript found
-<span class="dim">recommended scope: tier both · backend captions</span></div>
-        </article>
-        <article class="console-card">
-          <div class="console-body">
-            <h3><span class="cmd-name">preview</span> input</h3>
-            <p>The decision point. Separates transcription spend from vision-token cost and shows exactly which gates apply.</p>
-          </div>
-          <div class="console-term"><span class="p">$</span> voidscape.py preview "clip.mp4" --tier both
-<span class="dim">transcription    $0.0000  (captions)</span>
-<span class="dim">agent tokens     $0.0392  (60 frames)</span>
-<span class="ok">✓</span> free path · no approval required</div>
-        </article>
-        <article class="console-card">
-          <div class="console-body">
-            <h3><span class="cmd-name">read</span> input</h3>
-            <p>Extracts only the approved frames and transcript into a work folder, with a manifest an agent can cite.</p>
-          </div>
-          <div class="console-term"><span class="p">$</span> voidscape.py read "clip.mp4" --tier both
-<span class="ok">✓</span> frames/ · 12 selected (4 deduped)
-<span class="ok">✓</span> transcript.txt · manifest.json
-<span class="dim">cite as [MM:SS] · protocol 1.0</span></div>
-        </article>
-        <article class="console-card">
-          <div class="console-body">
-            <h3><span class="cmd-name">doctor</span></h3>
-            <p>Local readiness check — Python, ffmpeg, yt-dlp, and transcription backends. Changes nothing.</p>
-          </div>
-          <div class="console-term"><span class="p">$</span> voidscape.py doctor
-<span class="ok">✓</span> python · ffmpeg · ffprobe
-<span class="ok">✓</span> yt-dlp · faster-whisper
-<span class="dim">ready for local analysis</span></div>
-        </article>
-        <article class="console-card">
-          <div class="console-body">
-            <h3><span class="cmd-name">customize</span></h3>
-            <p>Preview or save local preferences — Inbox, Library, transcription defaults. Saves only with explicit confirmation.</p>
-          </div>
-          <div class="console-term"><span class="p">$</span> voidscape.py customize
-<span class="dim">inbox_dir    C:\Media\Inbox</span>
-<span class="dim">whisper      small (local)</span>
-<span class="ok">✓</span> preferences saved after confirmation</div>
-        </article>
-      </div>
-    </section>
-
-    <section class="shell" id="flags" aria-labelledby="flags-title">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">// Agent-first design</span>
-          <h2 id="flags-title">Built for agents. Legible for humans.</h2>
-        </div>
-        <p>One stable contract: JSON envelopes, deterministic exit codes, and gates an agent must check before it acts.</p>
-      </div>
-      <div class="flags-grid">
-        <div class="flag-chip"><code>--json / --envelope</code><p>Guided commands emit JSON; the engine emits <code>{ok,data,error,meta}</code>. Machines parse; humans read.</p></div>
-        <div class="flag-chip"><code>exit codes 0–6</code><p>Success, usage, input, approval required, dependency, and operation failure are distinct, deterministic values.</p></div>
-        <div class="flag-chip"><code>--tier visual|audio|both</code><p>Price and extract only the channels the task needs — frames, transcript, or both.</p></div>
-        <div class="flag-chip"><code>--start / --end</code><p>Scope work to a time window. Output timestamps stay pinned to the source timeline.</p></div>
-        <div class="flag-chip"><code>--allow-cloud</code><p>A capability for one invocation, not a setting. Cloud transcription is rejected before upload without it.</p></div>
-        <div class="flag-chip"><code>--allow-model-download</code><p>A first local Whisper model download needs its own explicit, per-run consent.</p></div>
-        <div class="flag-chip"><code>manifest --compact</code><p>Agents introspect commands, flags, and protocol version at runtime. No docs scraping needed.</p></div>
-        <div class="flag-chip"><code>[MM:SS] · [image N] · [article N] · [entry N]</code><p>Citation contracts are part of the output. Agents quote moments, frames, articles, and feed entries—not vibes.</p></div>
-        <div class="flag-chip"><code>--backend captions</code><p>Free transcription paths first: existing captions, sidecars, or local Whisper. Paid backends are opt-in.</p></div>
-      </div>
+    <section class="workflow-compact shell" id="sequence" aria-labelledby="sequence-title">
+      <header class="minimal-section-head">
+        <span class="eyebrow">// How it works</span>
+        <h2 id="sequence-title">Inspect. Preview. Read.</h2>
+        <p>One visible sequence turns an opaque source into evidence an agent can verify.</p>
+      </header>
+      <ol class="workflow-steps">
+        <li><span>01</span><strong>Inspect</strong><p>See what the source contains.</p></li>
+        <li><span>02</span><strong>Preview</strong><p>Check cost, dependencies, and consent.</p></li>
+        <li><span>03</span><strong>Read</strong><p>Create local artifacts with citations.</p></li>
+      </ol>
+      <a class="section-link" href="guide.html#commands">See the complete five-command guide <span aria-hidden="true">→</span></a>
     </section>
 
     <section class="gate-zone" id="screening" aria-labelledby="gate-title">
@@ -451,179 +260,183 @@
       </div>
     </section>
 
-    <section class="use-cases" id="workflow">
+    <section class="use-case-reel" id="use-cases" aria-labelledby="use-cases-title">
       <div class="shell">
-        <div class="section-head">
-          <div>
-            <h2>What Voidscape can read now—and where the system can grow.</h2>
+        <header class="minimal-section-head">
+          <span class="eyebrow">// Use cases</span>
+          <h2 id="use-cases-title">See what becomes evidence.</h2>
+          <p>One workflow, six useful outcomes. The reel pauses when you choose what to inspect.</p>
+        </header>
+
+        <div class="evidence-reel" data-use-case-carousel aria-roledescription="carousel" aria-label="Voidscape use cases">
+          <p class="sr-only" aria-live="polite" data-carousel-status>Showing use case 1 of 6.</p>
+          <div class="reel-track">
+            <article class="reel-slide" data-carousel-slide aria-label="1 of 6">
+              <div class="reel-copy">
+                <span class="reel-kicker">Video + audio</span>
+                <h3>Turn a tutorial into a cited note.</h3>
+                <p>Read the frames and transcript together, then keep the moments that support the answer.</p>
+                <span class="citation-chip">Evidence: [MM:SS]</span>
+              </div>
+              <div class="evidence-frame" aria-hidden="true">
+                <div class="frame-head"><span>tutorial.mp4</span><span>00:42</span></div>
+                <div class="frame-picture video-frame"><i></i><b>FRAME 08</b></div>
+                <div class="frame-caption"><span></span>“The constraint changes after preview…”</div>
+              </div>
+            </article>
+
+            <article class="reel-slide" data-carousel-slide aria-label="2 of 6" hidden>
+              <div class="reel-copy">
+                <span class="reel-kicker">Images + carousels</span>
+                <h3>Read a slide deck in its real order.</h3>
+                <p>Preserve every original image, natural filename order, and position-specific citation.</p>
+                <span class="citation-chip">Evidence: [image 1]</span>
+              </div>
+              <div class="evidence-frame" aria-hidden="true">
+                <div class="frame-head"><span>slides/</span><span>04 / 12</span></div>
+                <div class="frame-picture carousel-frame"><i></i><i></i><i></i></div>
+                <div class="frame-caption"><span></span>Original bytes · ordered manifest</div>
+              </div>
+            </article>
+
+            <article class="reel-slide" data-carousel-slide aria-label="3 of 6" hidden>
+              <div class="reel-copy">
+                <span class="reel-kicker">Voice memos</span>
+                <h3>Recover the decision from the recording.</h3>
+                <p>Transcribe locally, keep the source timeline, and let an agent compare ideas with the words actually said.</p>
+                <span class="citation-chip">Evidence: [MM:SS]</span>
+              </div>
+              <div class="evidence-frame" aria-hidden="true">
+                <div class="frame-head"><span>memo.m4a</span><span>06:18</span></div>
+                <div class="frame-picture audio-frame"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="frame-caption"><span></span>Local transcript · source time</div>
+              </div>
+            </article>
+
+            <article class="reel-slide" data-carousel-slide aria-label="4 of 6" hidden>
+              <div class="reel-copy">
+                <span class="reel-kicker">Articles + feeds</span>
+                <h3>Turn a research archive into ordered text.</h3>
+                <p>Read local Markdown, HTML, text, RSS, or Atom without flattening where each entry came from.</p>
+                <span class="citation-chip">Evidence: [article N] · [entry N]</span>
+              </div>
+              <div class="evidence-frame" aria-hidden="true">
+                <div class="frame-head"><span>research.xml</span><span>18 entries</span></div>
+                <div class="frame-picture article-frame"><b></b><span></span><span></span><span></span></div>
+                <div class="frame-caption"><span></span>Ordered entries · source metadata</div>
+              </div>
+            </article>
+
+            <article class="reel-slide" data-carousel-slide aria-label="5 of 6" hidden>
+              <div class="reel-copy">
+                <span class="reel-kicker">Screen recordings</span>
+                <h3>Make a bug capture inspectable.</h3>
+                <p>Combine selected frames with speech so an agent can trace what changed instead of guessing from a report.</p>
+                <span class="citation-chip">Evidence: frames + [MM:SS]</span>
+              </div>
+              <div class="evidence-frame" aria-hidden="true">
+                <div class="frame-head"><span>bug-demo.mp4</span><span>01:14</span></div>
+                <div class="frame-picture screen-frame"><i></i><b>STATE CHANGED</b></div>
+                <div class="frame-caption"><span></span>24 frames · transcript ready</div>
+              </div>
+            </article>
+
+            <article class="reel-slide" data-carousel-slide aria-label="6 of 6" hidden>
+              <div class="reel-copy">
+                <span class="reel-kicker">Public video URLs</span>
+                <h3>Keep the useful part of a public video.</h3>
+                <p>Bring a supported URL into the same visible gates, then keep local evidence instead of another forgotten tab.</p>
+                <span class="citation-chip">Evidence: local bundle</span>
+              </div>
+              <div class="evidence-frame" aria-hidden="true">
+                <div class="frame-head"><span>public URL</span><span>approved</span></div>
+                <div class="frame-picture url-frame"><i></i><b>URL → EVIDENCE</b></div>
+                <div class="frame-caption"><span></span>Inspect · preview · read</div>
+              </div>
+            </article>
           </div>
-          <p>Every direction is explicitly labeled: working today, designed next, or longer-term exploration.</p>
-        </div>
-        <div class="capability-board">
-          <section class="capability-column">
-            <span class="capability-index">01 / Available now</span>
-            <h3 class="capability-heading">Read the sources you already have.</h3>
-            <p class="capability-intro">A local-first pipeline for media, article, and feed evidence with visible approval gates.</p>
-            <ul class="capability-list">
-              <li class="capability-item"><h4>Local video and recordings</h4><p>Analyze demos, meetings, tutorials, screen captures, and personal archives from a local file.</p></li>
-              <li class="capability-item"><h4>Image and carousel reading</h4><p>Read one JPG, PNG, or WebP—or one local folder in natural filename order—through the same inspect → preview → read path. Originals stay untouched.</p></li>
-              <li class="capability-item"><h4>Public video URLs</h4><p>Bring a supported video URL into the same inspect → preview → read path, including individual YouTube links.</p></li>
-              <li class="capability-item"><h4>Audio, captions, and transcript sidecars</h4><p>Use available captions, transcribe locally, or reuse a matching SRT, VTT, or text sidecar without generating it again.</p></li>
-              <li class="capability-item"><h4>Scoped visual reads</h4><p>Choose visual, audio, or both; limit work to a time window; and keep output timestamps pinned to the source timeline.</p></li>
-              <li class="capability-item"><h4>Agent-native protocol</h4><p>Machine-readable envelopes, stable exit codes, and a discovery manifest let an agent plan and handle failures explicitly.</p></li>
-              <li class="capability-item"><h4>Articles and RSS/Atom</h4><p>Read local Markdown, HTML, text, and feeds. Public article fetches require a separate, explicit approval.</p></li>
-              <li class="capability-item"><h4>On-demand observe capture</h4><p>Create a chosen screenshot or short silent clip on supported hosts, then pass the local file through inspect → preview → read.</p></li>
-              <li class="capability-item"><h4>One inspectable evidence bundle</h4><p>Give an agent selected frames, timestamped text, and a source manifest together instead of asking it to infer a video from its title.</p></li>
-            </ul>
-          </section>
 
-          <section class="capability-column next">
-            <span class="capability-status">02 / Repository helpers — dev-only</span>
-            <h3 class="capability-heading">Capture with explicit boundaries.</h3>
-            <p class="capability-intro">Working repository tools that are not installed as supported Voidscape commands.</p>
-            <ul class="capability-list">
-              <li class="capability-item"><h4>Instagram URL queue helper</h4><p>Validate and deduplicate confirmed public Reel URLs without reading browser credentials, cookies, or storage.</p></li>
-              <li class="capability-item"><h4>Private YouTube queue capture</h4><p>Queue videos from a user-owned private playlist through the official YouTube Data API.</p></li>
-              <li class="capability-item"><h4>Reusable capture-adapter contract</h4><p>The two helpers share an explicit repository contract while remaining outside the installed skill surface.</p></li>
-            </ul>
-          </section>
-
-          <section class="capability-column horizon">
-            <span class="capability-status">03 / Parked or exploring</span>
-            <h3 class="capability-heading">A broader personal media system.</h3>
-            <p class="capability-intro">Directions worth testing after product, privacy, platform, and legal review.</p>
-            <ul class="capability-list">
-              <li class="capability-item"><h4>More saved-content sources</h4><p>Potential adapters for X bookmarks, TikTok favorites, LinkedIn saves, and authenticated newsletters.</p></li>
-              <li class="capability-item"><h4>Production MCP host</h4><p>Parked after a no-go spike: the shell stays canonical until the host proves clear workflow value.</p></li>
-              <li class="capability-item"><h4>Universal browser bridge</h4><p>Design-only until a separate security and repository decision authorizes a production extension.</p></li>
-              <li class="capability-item"><h4>Guided installation and hosted product</h4><p>Lower the setup barrier only after the local product, user controls, and operating model are ready.</p></li>
-              <li class="capability-item"><h4>Universal extension and multi-model reading</h4><p>Research directions—not current commitments—until their safety, cost, and platform constraints are validated.</p></li>
-            </ul>
-          </section>
-        </div>
-      </div>
-    </section>
-
-    <section class="field-notes shell" aria-labelledby="field-notes-title">
-      <div class="section-head">
-        <div>
-          <h2 id="field-notes-title">Built from footage, not hypotheticals.</h2>
-        </div>
-        <p>Voidscape is useful when a recording contains information an agent cannot safely infer from a title, thumbnail, or prompt.</p>
-      </div>
-      <div class="case-files">
-        <article class="case-file">
-          <h3>Saved learning video to research note.</h3>
-          <p>Bring a confirmed public Reel or video URL into a local queue, inspect it through the normal gate, then keep a timestamped note instead of another forgotten save.</p>
-          <footer>Research workflow / available now</footer>
-        </article>
-        <article class="case-file">
-          <h3>Voice memo to project decision.</h3>
-          <p>Transcribe a recorded brainstorm locally, preserve the evidence, and let an agent compare ideas against the words that were actually said.</p>
-          <footer>Audio evidence / available now</footer>
-        </article>
-      </div>
-    </section>
-
-    <section class="reads" id="reads" aria-labelledby="reads-title">
-      <div class="shell">
-        <div class="section-head">
-          <div>
-            <span class="eyebrow">// Use cases</span>
-            <h2 id="reads-title">What people read with Voidscape</h2>
+          <div class="reel-controls">
+            <button type="button" data-carousel-previous aria-label="Previous use case">←</button>
+            <div class="reel-dots" role="group" aria-label="Choose a use case">
+              <button type="button" data-carousel-dot aria-label="Show use case 1" aria-current="true"></button>
+              <button type="button" data-carousel-dot aria-label="Show use case 2"></button>
+              <button type="button" data-carousel-dot aria-label="Show use case 3"></button>
+              <button type="button" data-carousel-dot aria-label="Show use case 4"></button>
+              <button type="button" data-carousel-dot aria-label="Show use case 5"></button>
+              <button type="button" data-carousel-dot aria-label="Show use case 6"></button>
+            </div>
+            <span class="reel-mode" data-carousel-mode>Auto</span>
+            <button type="button" data-carousel-next aria-label="Next use case">→</button>
           </div>
-          <p>One sequence for kept media, articles, and feeds—files, URLs, and folders. Each read ends in citable evidence.</p>
         </div>
-        <div class="reads-grid">
-          <article class="read-card">
-            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="3.5"/><path d="m10 9.5 5 2.5-5 2.5z" fill="currentColor" stroke="none"/></svg></span>
-            <h3>YouTube tutorials</h3>
-            <p>Turn a public video into timestamped notes you can grep and cite.</p>
-            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"https://youtu.be/…"</span> --tier both</code>
-          </article>
-          <article class="read-card">
-            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></span>
-            <h3>Confirmed public Reels</h3>
-            <p>Validate and dedupe saved Reel URLs, then read them through the normal gate.</p>
-            <code class="read-cmd"><span class="p">$</span> voidscape.py inspect <span class="flag">"https://instagram.com/reel/…"</span></code>
-          </article>
-          <article class="read-card">
-            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3.5 3.5 0 0 0 3.5-3.5v-5a3.5 3.5 0 1 0-7 0v5A3.5 3.5 0 0 0 12 15z"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5"/></svg></span>
-            <h3>Voice memos &amp; meetings</h3>
-            <p>Transcribe recorded brainstorms locally; keep the words as evidence.</p>
-            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"memo.m4a"</span> --tier audio</code>
-          </article>
-          <article class="read-card">
-            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3.5"/><circle cx="8.8" cy="8.8" r="1.6"/><path d="m21 15-4.6-4.6a1.5 1.5 0 0 0-2.1 0L6 18.7"/></svg></span>
-            <h3>Slides &amp; carousels</h3>
-            <p>Read a folder of JPG/PNG/WebP in natural order — originals stay untouched.</p>
-            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"slides/"</span> --tier visual</code>
-          </article>
-          <article class="read-card">
-            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M8 21h8"/><path d="m9.5 12.5 2 2 3.5-4"/></svg></span>
-            <h3>Screen recordings</h3>
-            <p>Demos and bug captures become frame-plus-transcript evidence bundles.</p>
-            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"demo.mp4"</span> --frames 24</code>
-          </article>
-          <article class="read-card">
-            <span class="read-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 19.5a2.5 2.5 0 0 1 2.5-2.5h12.5v-13H7a2.5 2.5 0 0 0-2.5 2.5z"/><path d="M4.5 19.5A2.5 2.5 0 0 0 7 22h12.5v-5"/><path d="M9 8.5h7M9 12h5"/></svg></span>
-            <h3>Articles &amp; RSS feeds</h3>
-            <p>Read local Markdown, HTML, text, and feeds into ordered, citable evidence.</p>
-            <code class="read-cmd"><span class="p">$</span> voidscape.py read <span class="flag">"feed.xml"</span> --workdir "evidence-feed"</code>
-          </article>
-        </div>
+
+        <a class="section-link" href="agents/roadmap-status.html">See complete capability status <span aria-hidden="true">→</span></a>
       </div>
     </section>
 
     <section class="start shell" id="install">
       <div class="start-panel">
-        <h2>From clone to first proof.</h2>
-        <p class="start-intro">Install Voidscape, optionally set your local Library, then use a key-free fixture to inspect, preview, and read evidence. No paid or remote step is implied.</p>
-        <div class="install-grid" aria-label="Install and local demo commands">
-          <article class="install-step">
-            <b>01 / Install once</b>
-            <h3>Install Voidscape for Codex and shared agents.</h3>
-            <p>The installer adds the guided Voidscape skill plus the legacy compatibility entry point.</p>
-            <code class="install-command"><span class="prompt">$</span> .\scripts\install-skill.ps1</code>
-          </article>
-          <article class="install-step">
-            <b>02 / Customize locally</b>
-            <h3>Choose an Inbox and Library when you need them.</h3>
-            <p>Review local folders and transcription defaults first. Preferences save only with explicit confirmation.</p>
-            <code class="install-command"><span class="prompt">$</span> python skill/scripts/voidscape.py customize</code>
-          </article>
-          <article class="install-step">
-            <b>03 / Prove the flow</b>
-            <h3>Use original footage, then read the evidence.</h3>
-            <p>The fixture needs no account, key, or copyrighted media.</p>
-            <code class="install-command"><span class="prompt">$</span> python scripts/create-demo-fixture.py
-<span class="prompt">$</span> python skill/scripts/voidscape.py inspect samples/build-week-demo.mp4
-<span class="prompt">$</span> python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions
-<span class="prompt">$</span> python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output</code>
-          </article>
+        <span class="eyebrow">Install / first read</span>
+        <h2>Install once. Use it anywhere.</h2>
+        <p class="start-intro">Get the global CLI and bundled agent skill without cloning the repository. No account, API key, or paid backend is required.</p>
+        <p class="setup-prereq"><b>Before you start</b> Open PowerShell on Windows or Terminal on macOS/Linux. Voidscape checks FFmpeg and FFprobe before media work.</p>
+
+        <ol class="setup-steps">
+          <li class="setup-step">
+            <span class="setup-number">01</span>
+            <div>
+              <h3>Install <code>uv</code> once.</h3>
+              <p>On Windows, paste this into PowerShell:</p>
+              <code class="install-command"><span class="prompt">$</span> winget install --id=astral-sh.uv -e</code>
+              <details class="platform-alternative"><summary>macOS or Linux</summary><code class="install-command"><span class="prompt">$</span> curl -LsSf https://astral.sh/uv/install.sh | sh</code></details>
+              <p class="setup-result">Already have <code>uv</code>? Skip this step.</p>
+              <details class="platform-alternative"><summary>FFmpeg or FFprobe missing?</summary><p>Windows: <code>winget install --id=Gyan.FFmpeg -e</code>. macOS: <code>brew install ffmpeg</code>. Debian/Ubuntu: <code>sudo apt update &amp;&amp; sudo apt install ffmpeg</code>.</p></details>
+            </div>
+          </li>
+          <li class="setup-step">
+            <span class="setup-number">02</span>
+            <div>
+              <h3>Install Voidscape and its agent skill.</h3>
+              <p>One isolated CLI. One guided skill for Codex and shared agents.</p>
+              <code class="install-command install-command-stack"><span class="prompt">$</span> uv tool install https://github.com/RikepilB/void-scape/archive/refs/heads/main.zip<br><span class="prompt">$</span> uv tool update-shell<br><span class="prompt">$</span> voidscape init</code>
+              <p class="setup-result"><code>init</code> installs the bundled agent skill and checks local tools. It never approves cloud processing or a model download. If the command is not recognized yet, open one new terminal.</p>
+              <details class="platform-alternative"><summary>Choose an Inbox and Library (optional)</summary><code class="install-command"><span class="prompt">$</span> voidscape customize</code></details>
+            </div>
+          </li>
+          <li class="setup-step">
+            <span class="setup-number">03</span>
+            <div>
+              <h3>Read your first file.</h3>
+              <p>Replace <code>meeting.mp4</code> with a local image, audio file, video, folder, or supported public URL.</p>
+              <code class="install-command install-command-stack"><span class="prompt">$</span> voidscape doctor<br><span class="prompt">$</span> voidscape inspect "meeting.mp4"<br><span class="prompt">$</span> voidscape preview "meeting.mp4"<br><span class="prompt">$</span> voidscape read "meeting.mp4" --workdir voidscape-output</code>
+            </div>
+          </li>
+        </ol>
+
+        <div class="first-prompt">
+          <span><b>Then ask your agent</b>The evidence is now in <code>voidscape-output</code>.</span>
+          <code>Open voidscape-output/manifest.json and transcript.txt, then inspect frames/. Summarize the recording in three bullets. Support every factual claim with an exact [MM:SS] citation. If the evidence is insufficient, say so.</code>
         </div>
-        <div class="install-proof">
-          <b>What the agent reads</b>
-          <span>Open <code>manifest.json</code>, <code>transcript.txt</code>, and <code>frames/</code>, then answer with <code>[MM:SS]</code> citations. It reads evidence instead of guessing what happened in a video.</span>
+        <div class="actions">
+          <a class="button primary" href="guide.html#install">Open the setup guide <span class="arrow">→</span></a>
+          <a class="button secondary" href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">View source <span class="arrow">↗</span></a>
         </div>
-        <div class="actions"><a class="button primary" href="https://github.com/RikepilB/void-scape" target="_blank" rel="noreferrer">Open Voidscape on GitHub <span class="arrow">↗</span></a></div>
       </div>
     </section>
 
     <section class="faq" id="faq">
       <div class="shell">
         <div class="section-head">
-          <div><h2>Questions worth answering before you hand media to an agent.</h2></div>
-          <p>Voidscape makes the boundary visible: what stays local, what costs, and what exists today.</p>
+          <div><h2>Three things to know before the first read.</h2></div>
+          <p>The full FAQ covers setup, evidence, sign-in boundaries, and troubleshooting.</p>
         </div>
         <div class="faq-list">
-          <details><summary>Does Voidscape upload my media?</summary><p>Not by default. Local files, sidecar transcripts, and local transcription stay on your machine. Any cloud transcription route needs a current <code>--allow-cloud</code> approval; a first local model download needs its own <code>--allow-model-download</code>.</p></details>
-          <details><summary>What files does “read” create?</summary><p>A work folder containing selected frames, a transcript when requested, and a manifest that maps frames to timestamps. An agent can turn those artifacts into a Markdown note; the CLI does not pretend to write a semantic note itself.</p></details>
-          <details><summary>When should I inspect, preview, or read?</summary><p>Inspect is free source discovery. Preview is the cost and privacy decision. Read only follows once the path is acceptable and prepares the evidence an agent needs.</p></details>
-          <details><summary>Can I use it for Instagram research or voice notes?</summary><p>Audio-only reads use the installed CLI. Instagram support is a repository-only URL helper and user-observed development workflow, not an installed command.</p></details>
-          <details><summary>What if the media needs my login?</summary><p>Public URLs are the baseline. For media you are permitted to access, the CLI can optionally use a local cookie export while a browser-connected agent works from tabs only after your site approval. Voidscape never extracts your browser credentials, and first-party account connections are future work.</p></details>
+          <details><summary>Does Voidscape upload my media?</summary><p>Not by default. Local reads stay on your machine. Cloud transcription and first model downloads each require a current, separate approval.</p></details>
+          <details><summary>What does the agent receive?</summary><p>Selected frames, ordered text or a transcript, and a manifest that maps every citation back to the source.</p></details>
+          <details><summary>What can I read today?</summary><p>Video, audio, images and local carousels, articles, RSS/Atom, supported public video URLs, and explicit on-demand screenshots or short clips.</p></details>
         </div>
-        <div class="faq-more"><a href="faq.html">Browse all questions <span aria-hidden="true">→</span></a><p>26 answers on setup, evidence, privacy, sign-in, and what comes next.</p></div>
+        <div class="faq-more"><a href="faq.html">Browse all questions <span aria-hidden="true">→</span></a><p>Detailed answers live off the conversion path.</p></div>
       </div>
     </section>
   </main>
@@ -634,5 +447,6 @@
       <div class="footer-links"><a href="guide.html">Guide</a><a href="agents/">Agent docs</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/RikepilB/void-scape/blob/main/SECURITY.md" target="_blank" rel="noreferrer">Security</a><a href="https://github.com/RikepilB/void-scape/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a></div>
     </div>
   </footer>
+  <script src="landing.js"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@ and never add an approval flag merely to make a command pass.
 ## Run doctor first
 
 ```powershell
-python skill/scripts/voidscape.py doctor
+voidscape doctor
 ```
 
 Doctor reports readiness without installing packages, downloading a model, changing preferences,

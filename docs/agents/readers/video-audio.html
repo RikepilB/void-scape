@@ -62,6 +62,8 @@
         <nav aria-label="On this page"><a href="#top" class="toc-level-2">Overview</a>
 <a href="#choose-evidence" class="toc-level-2">Choose evidence</a>
 <a href="#backends-and-gates" class="toc-level-2">Backends and gates</a>
+<a href="#fast-api-path-for-long-recordings" class="toc-level-2">Fast API path for long recordings</a>
+<a href="#multiple-sources-and-provider-batches" class="toc-level-2">Multiple sources and provider batches</a>
 <a href="#guided-use" class="toc-level-2">Guided use</a>
 <a href="#citation-contract" class="toc-level-2">Citation contract</a></nav>
       </details>
@@ -76,10 +78,21 @@
 <h2 id="backends-and-gates">Backends and gates<a class="heading-anchor" href="#backends-and-gates" aria-label="Link to Backends and gates">#</a></h2>
 <ul><li>Existing sidecar <code>.srt</code>, <code>.vtt</code>, or <code>.txt</code>: local and reusable.</li><li>Captions backend: uses available platform captions without speech transcription.</li><li>Local faster-whisper: may require an approved first model download.</li><li>Cloud transcription: audio may leave the machine only after current <code>--allow-cloud</code> approval.</li></ul>
 <p>Backend chains may fall back, but never across an unapproved cloud or model-download boundary.</p>
+<h2 id="fast-api-path-for-long-recordings">Fast API path for long recordings<a class="heading-anchor" href="#fast-api-path-for-long-recordings" aria-label="Link to Fast API path for long recordings">#</a></h2>
+<p>When turnaround matters more than keeping audio fully local, Voidscape can use <code>groq</code>, <code>openai-mini</code>, <code>openai</code>, <code>openrouter</code>, or <code>gemini</code>. The cloud path still requires a current <code>--allow-cloud</code> approval for the exact source and scope; an API key is configuration, not consent.</p>
+<p><a href="https://console.groq.com/docs/speech-to-text" target="_blank" rel="noreferrer">Groq publishes a 189x real-time speed factor</a> for the <code>whisper-large-v3</code> model used by Voidscape. At that provider-published factor, six hours of audio corresponds to about 114 seconds of model processing. This explains why the transcription stage of a long recording can sometimes finish in under two minutes.</p>
+<p>That number is not a Voidscape end-to-end SLA or a benchmark from this repository. Media download, audio extraction, encoding, upload, provider queue and rate limits, network conditions, frame extraction, and the agent&#x27;s later evidence reading all add time. Run <code>preview</code> first and describe the result as a provider-backed fast path—not a guaranteed completion time.</p>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">$env:GROQ_API_KEY=&quot;...&quot;
+voidscape preview &quot;long-recording.mp4&quot; --tier audio --backend groq
+voidscape read &quot;long-recording.mp4&quot; --tier audio --backend groq --allow-cloud --workdir evidence-long</code></pre></div>
+<p>Voidscape compresses API audio and automatically splits a single oversized recording under the provider upload cap while preserving source-time offsets. Those chunks are submitted sequentially; automatic chunking is not the same as a provider batch job.</p>
+<h2 id="multiple-sources-and-provider-batches">Multiple sources and provider batches<a class="heading-anchor" href="#multiple-sources-and-provider-batches" aria-label="Link to Multiple sources and provider batches">#</a></h2>
+<p>Voidscape processes one source per invocation. A calling agent may coordinate several independent reads, but each source needs its own <code>inspect</code>, <code>preview</code>, approval decision, and unique work folder. The repository does not ship a multi-video batch command, scheduler, or unattended approval loop.</p>
+<p><a href="https://console.groq.com/docs/batch" target="_blank" rel="noreferrer">Groq&#x27;s Batch API</a> supports audio transcription at scale, but Voidscape does not invoke that API today. Groq documents a 24-hour to 7-day processing window, so that provider feature is useful for asynchronous throughput and cost—not for an under-two-minute latency promise. Treat it as vendor-documented integration work until Voidscape implements and tests a consent-preserving adapter.</p>
 <h2 id="guided-use">Guided use<a class="heading-anchor" href="#guided-use" aria-label="Link to Guided use">#</a></h2>
-<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">python skill/scripts/voidscape.py inspect &quot;clip.mp4&quot;
-python skill/scripts/voidscape.py preview &quot;clip.mp4&quot; --tier both --backend captions
-python skill/scripts/voidscape.py read &quot;clip.mp4&quot; --tier both --backend captions --workdir evidence</code></pre></div>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">voidscape inspect &quot;clip.mp4&quot;
+voidscape preview &quot;clip.mp4&quot; --tier both --backend captions
+voidscape read &quot;clip.mp4&quot; --tier both --backend captions --workdir evidence</code></pre></div>
 <p>Use <code>--start</code>, <code>--end</code>, or explicit timestamps in the raw reader for focused evidence. Transcript and frame timestamps remain on the absolute source timeline.</p>
 <h2 id="citation-contract">Citation contract<a class="heading-anchor" href="#citation-contract" aria-label="Link to Citation contract">#</a></h2>
 <p>Read <code>manifest.json</code>, <code>transcript.txt</code>, and <code>frames/</code> as available. Cite moments as <code>[MM:SS]</code> from the source timeline. Do not claim content outside the extracted range or narrate motion from near-identical frames.</p>
@@ -94,6 +107,8 @@ python skill/scripts/voidscape.py read &quot;clip.mp4&quot; --tier both --backen
       <nav><a href="#top" class="toc-level-2">Overview</a>
 <a href="#choose-evidence" class="toc-level-2">Choose evidence</a>
 <a href="#backends-and-gates" class="toc-level-2">Backends and gates</a>
+<a href="#fast-api-path-for-long-recordings" class="toc-level-2">Fast API path for long recordings</a>
+<a href="#multiple-sources-and-provider-batches" class="toc-level-2">Multiple sources and provider batches</a>
 <a href="#guided-use" class="toc-level-2">Guided use</a>
 <a href="#citation-contract" class="toc-level-2">Citation contract</a></nav>
     </aside>

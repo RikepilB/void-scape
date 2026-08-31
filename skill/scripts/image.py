@@ -11,7 +11,10 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-import video
+if __package__:
+    from . import video
+else:
+    import video
 
 
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}

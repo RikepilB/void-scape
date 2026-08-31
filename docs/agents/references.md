@@ -27,6 +27,15 @@ These sources inform the agent documentation and autonomy boundary; they are not
 Vendor documentation supports `vendor-documented` labels only. Voidscape verification requires its
 own scoped test evidence.
 
+## Official provider documentation
+
+- [Groq Speech to Text](https://console.groq.com/docs/speech-to-text) — model speed factors, file
+  limits, and transcription endpoint behavior.
+- [Groq Batch API](https://console.groq.com/docs/batch) — asynchronous audio batch availability,
+  cost model, retention, and processing windows.
+
+Provider performance numbers describe provider-side behavior, not a Voidscape end-to-end SLA.
+
 ## Pattern sources
 
 - [Herdr agent docs](https://herdr.dev/docs/agents/) — information-architecture inspiration:

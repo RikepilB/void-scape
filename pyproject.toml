@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voidscape"
+version = "0.1.0"
+description = "Local-first CLI and agent skill for turning media into inspectable evidence."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE", "CREDITS.md"]
+authors = [{name = "Richard Pillaca"}]
+dependencies = ["yt-dlp>=2024.1.1"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Multimedia :: Video",
+]
+
+[project.optional-dependencies]
+local = ["faster-whisper>=1.1.0"]
+gemini = ["google-genai>=1.0.0"]
+
+[project.scripts]
+voidscape = "skill.scripts.voidscape:main"
+
+[project.urls]
+Homepage = "https://voidscape.club/"
+Documentation = "https://voidscape.club/agents/"
+Repository = "https://github.com/RikepilB/void-scape"
+Issues = "https://github.com/RikepilB/void-scape/issues"
+
+[tool.setuptools.packages.find]
+include = ["skill", "skill.*"]
+
+[tool.setuptools.package-data]
+skill = [
+  "SKILL.md",
+  "pricing.json",
+  "workspace.example.json",
+  "references/*.md",
+  "evals/*",
+]

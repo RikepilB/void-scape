@@ -21,9 +21,9 @@ The reader copies accepted bytes; it does not resize, transcode, OCR, caption, o
 ## Guided use
 
 ```powershell
-python skill/scripts/voidscape.py inspect "slides"
-python skill/scripts/voidscape.py preview "slides"
-python skill/scripts/voidscape.py read "slides" --workdir image-evidence
+voidscape inspect "slides"
+voidscape preview "slides"
+voidscape read "slides" --workdir image-evidence
 ```
 
 Image preview estimates agent vision/output-token cost. It requires no cloud or model-download

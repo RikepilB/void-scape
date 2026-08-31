@@ -71,9 +71,9 @@
 <p class="source-note">Canonical sources: <a href="https://github.com/RikepilB/void-scape/blob/main/docs/workflow.md" target="_blank" rel="noreferrer">workflow</a>, <a href="https://github.com/RikepilB/void-scape/blob/main/docs/cli-reference.md" target="_blank" rel="noreferrer">CLI reference</a>, and the <a href="https://github.com/RikepilB/void-scape/blob/main/docs/superpowers/specs/2026-08-28-media-reader-interface-reassessment.md" target="_blank" rel="noreferrer">reader protocol decision</a></p>
 <h2 id="guided-coordination">Guided coordination<a class="heading-anchor" href="#guided-coordination" aria-label="Link to Guided coordination">#</a></h2>
 <p>Use the guided CLI when an agent can present approvals to a user:</p>
-<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">python skill/scripts/voidscape.py inspect &quot;clip.mp4&quot; --json
-python skill/scripts/voidscape.py preview &quot;clip.mp4&quot; --tier both --backend captions
-python skill/scripts/voidscape.py read &quot;clip.mp4&quot; --tier both --backend captions --workdir evidence</code></pre></div>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">voidscape inspect &quot;clip.mp4&quot; --json
+voidscape preview &quot;clip.mp4&quot; --tier both --backend captions
+voidscape read &quot;clip.mp4&quot; --tier both --backend captions --workdir evidence</code></pre></div>
 <p>The agent records the preview decision, stops when required, and adds only the approval flags the user granted for that invocation.</p>
 <h2 id="raw-coordination">Raw coordination<a class="heading-anchor" href="#raw-coordination" aria-label="Link to Raw coordination">#</a></h2>
 <p>Use focused readers for integrations that need stable envelopes:</p>

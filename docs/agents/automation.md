@@ -10,9 +10,9 @@ Agents may coordinate Voidscape non-interactively, but automation does not weake
 Use the guided CLI when an agent can present approvals to a user:
 
 ```powershell
-python skill/scripts/voidscape.py inspect "clip.mp4" --json
-python skill/scripts/voidscape.py preview "clip.mp4" --tier both --backend captions
-python skill/scripts/voidscape.py read "clip.mp4" --tier both --backend captions --workdir evidence
+voidscape inspect "clip.mp4" --json
+voidscape preview "clip.mp4" --tier both --backend captions
+voidscape read "clip.mp4" --tier both --backend captions --workdir evidence
 ```
 
 The agent records the preview decision, stops when required, and adds only the approval flags the

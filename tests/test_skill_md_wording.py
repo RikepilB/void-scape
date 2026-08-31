@@ -118,7 +118,7 @@ def test_landing_page_uses_voidscape_identity_only():
     legacy_name = "read-" + "video"
     assert legacy_name not in content
     assert "github.com/rikepilb/void-scape" in content
-    assert "open voidscape on github" in content
+    assert "view source" in content
 
 
 def test_public_pages_use_the_voidscape_favicon_assets():
@@ -131,25 +131,56 @@ def test_public_pages_use_the_voidscape_favicon_assets():
         assert (REPO / "docs" / name).is_file()
 
 
-def test_landing_tracks_shipped_readers_and_contains_mobile_grid():
+def test_public_pages_show_the_voidscape_logo_and_theme_control():
+    for page in PUBLIC_HTML_PAGES:
+        content = page.read_text(encoding="utf-8")
+        assert '<img src="favicon.svg" alt="" width="28" height="28">Voidscape' in content
+        assert 'src="site-theme.js"' in content
+        assert 'href="site-theme.css"' in content
+        assert "data-site-theme-toggle" in content
+
+    theme_script = (REPO / "docs" / "site-theme.js").read_text(encoding="utf-8")
+    for forbidden in ("localStorage", "sessionStorage", "document.cookie"):
+        assert forbidden not in theme_script
+    assert 'backToTop.className = "back-to-top"' in theme_script
+    assert "window.scrollY > 700" in theme_script
+    assert "window.scrollTo({ top: 0" in theme_script
+
+    theme_styles = (REPO / "docs" / "site-theme.css").read_text(encoding="utf-8")
+    assert 'html[data-theme="light"]' in theme_styles
+    assert 'html[data-theme="dark"]' in theme_styles
+    assert "prefers-reduced-motion" in theme_styles
+    assert ".site-header-shell" in theme_styles and "position: sticky" in theme_styles
+    assert ".back-to-top.visible" in theme_styles
+
+
+def test_landing_presents_shipped_readers_as_a_compact_use_case_reel():
     content = LANDING_PAGE.read_text(encoding="utf-8")
-    assert '<div class="stat"><b>3</b><span>reader engines' in content
-    assert "Articles &amp; RSS feeds" in content
+    assert content.count("data-carousel-slide") == 6
+    assert content.count("data-carousel-dot") == 6
+    assert "Images + carousels" in content
+    assert "Articles + feeds" in content
     assert "[article N] · [entry N]" in content
-    assert "repeat(3, minmax(0, 1fr))" in content
-    assert ".read-card" in content and "min-width: 0" in content
+    assert 'src="landing.js"' in content
+
+    script = (REPO / "docs" / "landing.js").read_text(encoding="utf-8")
+    assert "setInterval" in script
+    assert "prefers-reduced-motion" in script
+    assert 'mode.textContent = "Manual"' in script
+    assert "slide.hidden = !active" in script
 
 
 def test_landing_navigation_stays_focused_and_links_legal_pages():
     content = LANDING_PAGE.read_text(encoding="utf-8")
     nav = content.split('<nav aria-label="Primary navigation">', 1)[1].split("</nav>", 1)[0]
-    for label in ("Install", "Guide", "FAQ", "GitHub", "Privacy", "Terms"):
+    for label in ("Download", "Guide", "FAQ", "GitHub", "Privacy", "Terms"):
         assert f">{label}" in nav or f">{label} " in nav
     for removed in ("Sequence", "Screening", "Workflow"):
         assert f">{removed}<" not in nav
     assert 'href="privacy.html"' in nav
     assert 'href="terms.html"' in nav
     assert 'href="guide.html"' in nav
+    assert 'class="download-link" href="#install"' in nav
 
 
 def test_legal_pages_are_separate_truthful_prototype_drafts():
@@ -178,10 +209,10 @@ def test_legal_pages_are_separate_truthful_prototype_drafts():
     assert "No governing-law or dispute-resolution clause has been selected" in terms
 
 
-def test_landing_page_has_five_fast_faqs_and_links_to_the_full_faq():
+def test_landing_page_has_three_conversion_faqs_and_links_to_the_full_faq():
     content = LANDING_PAGE.read_text(encoding="utf-8")
     faq = content.split('<section class="faq" id="faq">', 1)[1].split("</section>", 1)[0]
-    assert faq.count("<details>") == 5
+    assert faq.count("<details>") == 3
     assert 'href="faq.html"' in faq
     assert "Browse all questions" in faq
 
@@ -215,7 +246,8 @@ def test_website_guide_tells_the_current_workflow_and_labels_capability_boundari
     landing = LANDING_PAGE.read_text(encoding="utf-8")
     guide = GUIDE_PAGE.read_text(encoding="utf-8")
     assert 'href="guide.html"' in landing
-    assert "Guide: how it works" in landing
+    assert 'href="guide.html#install"' in landing
+    assert "How it works" in landing
     for required in (
         "Inspect",
         "Preview",
@@ -226,15 +258,49 @@ def test_website_guide_tells_the_current_workflow_and_labels_capability_boundari
         "not a promise",
         "Transcription is one channel",
         "Already have a transcript?",
+        "winget install --id=astral-sh.uv -e",
+        "uv tool install https://github.com/RikepilB/void-scape/archive/refs/heads/main.zip",
+        "voidscape init",
     ):
         assert required in guide
+    assert "Five commands. The sequence stays the same." in guide
+    for command in ("inspect", "preview", "read", "doctor", "customize"):
+        assert f"<code>{command}</code>" in guide
+    assert 'id="commands"' not in landing
+    assert 'id="capabilities"' not in landing
+    assert "01 / Available now" not in landing
+
+
+def test_beginner_install_path_needs_no_clone_and_reaches_grounded_proof():
+    landing = LANDING_PAGE.read_text(encoding="utf-8")
+    guide = GUIDE_PAGE.read_text(encoding="utf-8")
+    readme = README.read_text(encoding="utf-8")
+    combined = "\n".join((landing, guide, readme))
+
+    assert "Install once. Use it anywhere." in landing
     for required in (
-        "Transcription is one channel",
-        "Agent-native protocol",
-        "Scoped visual reads",
-        "One inspectable evidence bundle",
+        "winget install --id=astral-sh.uv -e",
+        "curl -LsSf https://astral.sh/uv/install.sh | sh",
+        "uv tool install https://github.com/RikepilB/void-scape/archive/refs/heads/main.zip",
+        "uv tool update-shell",
+        "voidscape init",
+        "voidscape customize",
+        "voidscape doctor",
+        'voidscape inspect "meeting.mp4"',
+        'voidscape preview "meeting.mp4"',
+        'voidscape read "meeting.mp4" --workdir voidscape-output',
+        "voidscape-output/manifest.json",
+        "transcript.txt",
+        "frames/",
+        "[MM:SS]",
+        "If the evidence is insufficient, say so.",
     ):
-        assert required in landing
+        assert required in combined
+    assert "No account, API key, or paid backend is required." in landing
+    for content in (landing, guide, readme):
+        assert "git clone https://github.com/RikepilB/void-scape.git" not in content
+        assert ".\\scripts\\install-skill.ps1" not in content
+        assert "bash scripts/install-skill.sh" not in content
 
 
 def test_architecture_describes_current_cost_timeline_and_backend_contracts():
@@ -280,12 +346,9 @@ def test_local_image_and_carousel_reader_is_documented_in_release_candidate_sour
     landing = LANDING_PAGE.read_text(encoding="utf-8")
     demo = DEMO_SHOT_LIST.read_text(encoding="utf-8")
 
-    available = landing.split("01 / Available now", 1)[1].split(
-        "02 / Repository helpers", 1,
-    )[0]
-    not_installed = landing.split("02 / Repository helpers", 1)[1]
-    assert "Image and carousel reading" in available
-    assert "Image and carousel reading" not in not_installed
+    assert "Images + carousels" in landing
+    assert "Read a slide deck in its real order." in landing
+    assert "Evidence: [image 1]" in landing
     for content in (skill, readme, reference, guide):
         assert "image.py manifest --compact" in content
         assert "[image 1]" in content

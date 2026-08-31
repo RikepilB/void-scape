@@ -76,9 +76,9 @@
 <h2 id="approval-boundary">Approval boundary<a class="heading-anchor" href="#approval-boundary" aria-label="Link to Approval boundary">#</a></h2>
 <p>Local documents and feeds require no network. Fetching an article URL transfers the URL/request to the remote server and is blocked until the previewed job is approved (<code>--allow-cloud</code> in the guided CLI or <code>--allow-fetch</code> in <code>article.py</code>). The reader does not reuse browser login state.</p>
 <h2 id="guided-use">Guided use<a class="heading-anchor" href="#guided-use" aria-label="Link to Guided use">#</a></h2>
-<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">python skill/scripts/voidscape.py inspect &quot;feed.xml&quot;
-python skill/scripts/voidscape.py preview &quot;feed.xml&quot;
-python skill/scripts/voidscape.py read &quot;feed.xml&quot; --workdir article-evidence</code></pre></div>
+<div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">voidscape inspect &quot;feed.xml&quot;
+voidscape preview &quot;feed.xml&quot;
+voidscape read &quot;feed.xml&quot; --workdir article-evidence</code></pre></div>
 <p>Raw commands follow <code>manifest -&gt; probe -&gt; estimate -&gt; run</code>; <code>run</code> writes <code>manifest.json</code> and ordered text files under <code>entries/</code>.</p>
 <h2 id="citation-contract">Citation contract<a class="heading-anchor" href="#citation-contract" aria-label="Link to Citation contract">#</a></h2>
 <ul><li>A single article uses <code>[article N]</code>, normally <code>[article 1]</code>.</li><li>RSS/Atom items use <code>[entry N]</code> in manifest order.</li></ul>

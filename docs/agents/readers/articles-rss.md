@@ -26,9 +26,9 @@ CLI or `--allow-fetch` in `article.py`). The reader does not reuse browser login
 ## Guided use
 
 ```powershell
-python skill/scripts/voidscape.py inspect "feed.xml"
-python skill/scripts/voidscape.py preview "feed.xml"
-python skill/scripts/voidscape.py read "feed.xml" --workdir article-evidence
+voidscape inspect "feed.xml"
+voidscape preview "feed.xml"
+voidscape read "feed.xml" --workdir article-evidence
 ```
 
 Raw commands follow `manifest -> probe -> estimate -> run`; `run` writes `manifest.json` and ordered

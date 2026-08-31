@@ -1,23 +1,19 @@
 # Quick start
 
-Complete one key-free read from source inspection to a citation-grounded answer. Run every command
-from the repository root and keep each decision visible.
+Complete one read from source inspection to a citation-grounded answer. Run every command from any
+terminal and keep each decision visible.
 
 If Voidscape is not ready yet, see [Install](install.md).
 
-## Create the demo source
+## Choose one source
 
-```powershell
-python scripts/create-demo-fixture.py
-```
-
-This creates the repository's short local fixture. It contains enough visual and transcript
-evidence to exercise the normal reader without an account, API key, browser session, or cloud path.
+Use a local image, audio file, video, folder, or supported public URL you are allowed to process.
+The examples below use `meeting.mp4`; replace that name with your path or URL.
 
 ## Inspect the source
 
 ```powershell
-python skill/scripts/voidscape.py inspect samples/build-week-demo.mp4
+voidscape inspect "meeting.mp4"
 ```
 
 Inspect reports source facts such as duration, dimensions, audio, and available caption or sidecar
@@ -26,7 +22,7 @@ paths. It does not extract frames, transcribe speech, or upload the source.
 ## Preview the decision
 
 ```powershell
-python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions
+voidscape preview "meeting.mp4"
 ```
 
 Read the preview before continuing. Check the evidence scope, dependencies, estimated agent-reading
@@ -39,15 +35,15 @@ cost, and these independent fields:
 | `needs_install` | A required local dependency is missing |
 | `free` | The selected evidence-preparation path has no out-of-pocket backend cost |
 
-The demo captions path should not require a cloud or model-download approval. If your output says
-otherwise, stop and diagnose it rather than copying approval flags from this guide.
+If the preview requires a cloud or model-download approval, stop and make that decision for this
+source. Do not copy approval flags from this guide.
 
 ## Read the evidence
 
 Use a new work folder:
 
 ```powershell
-python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output
+voidscape read "meeting.mp4" --workdir voidscape-output
 ```
 
 The read prepares `manifest.json`, selected `frames/`, and `transcript.txt`. It does not write the
@@ -57,7 +53,7 @@ final interpretation for the agent.
 
 Give the work folder to your agent and ask:
 
-> Summarize the demo in three bullets. Support each factual bullet with an exact `[MM:SS]` citation
+> Summarize the recording in three bullets. Support each factual bullet with an exact `[MM:SS]` citation
 > from the prepared evidence. Say when the evidence does not support a claim.
 
 Open the cited transcript or frame and verify at least one statement yourself. The citation points
@@ -65,7 +61,7 @@ to source evidence; it is not a guarantee that transcription or interpretation i
 
 ## Try your own source
 
-Replace the fixture path with one source you are allowed to use. Run `inspect` and `preview` again;
+Replace the example path with another source you are allowed to use. Run `inspect` and `preview` again;
 approvals belong to the current source, scope, tier, and backend. Use a fresh workdir for the read.
 
 For images, articles, feeds, URLs, time windows, or raw JSON envelopes, continue with

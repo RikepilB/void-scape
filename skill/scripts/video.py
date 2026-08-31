@@ -37,7 +37,9 @@ from urllib.request import Request, urlopen
 
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 PRICING_PATH = SKILL_ROOT / "pricing.json"
-WORKSPACE_PATH = SKILL_ROOT / "workspace.json"
+LOCAL_WORKSPACE_PATH = SKILL_ROOT / "workspace.json"
+USER_WORKSPACE_PATH = Path.home() / ".voidscape" / "workspace.json"
+WORKSPACE_PATH = LOCAL_WORKSPACE_PATH if LOCAL_WORKSPACE_PATH.exists() else USER_WORKSPACE_PATH
 SUB_EXTS = (".srt", ".vtt", ".txt")
 URL_RE = re.compile(r"^https?://", re.I)
 # Matches a VTT/SRT cue timing line; SRT uses ',' for ms, VTT uses '.'.
