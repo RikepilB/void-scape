@@ -267,8 +267,9 @@ def test_website_guide_tells_the_current_workflow_and_labels_capability_boundari
     for command in ("inspect", "preview", "read", "doctor", "customize"):
         assert f"<code>{command}</code>" in guide
     assert 'id="commands"' not in landing
-    assert 'id="capabilities"' not in landing
-    assert "01 / Available now" not in landing
+    assert 'id="capabilities"' in landing
+    assert "03 / Exploration, not promised" in landing
+    assert "01 / Available now" in landing
 
 
 def test_beginner_install_path_needs_no_clone_and_reaches_grounded_proof():
