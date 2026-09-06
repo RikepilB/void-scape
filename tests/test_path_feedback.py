@@ -1,6 +1,7 @@
 """A first-run mistake has to explain itself: where Voidscape looked, and how to fix it."""
 import json
 import os
+import re
 
 import pytest
 
@@ -61,11 +62,11 @@ def test_missing_full_path_stays_a_single_line(no_workspace, tmp_path):
 def test_every_reader_raises_the_explaining_message(no_workspace, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
 
-    with pytest.raises(FileNotFoundError, match="no such file: hello.mp4"):
+    with pytest.raises(FileNotFoundError, match=re.escape("no such file: hello.mp4")):
         video.probe("hello.mp4")
-    with pytest.raises(FileNotFoundError, match="no such file or folder: shots"):
+    with pytest.raises(FileNotFoundError, match=re.escape("no such file or folder: shots")):
         image.probe("shots")
-    with pytest.raises(FileNotFoundError, match="no such file: post.html"):
+    with pytest.raises(FileNotFoundError, match=re.escape("no such file: post.html")):
         article.probe("post.html")
 
     for reader, argument in ((video, "hello.mp4"), (image, "shots"), (article, "post.html")):
@@ -84,6 +85,16 @@ def test_next_step_hint_keeps_windows_separators_copy_pasteable():
 
 def test_next_step_hint_leaves_a_plain_path_unquoted():
     assert voidscape._shell_arg("hello.mp4") == "hello.mp4"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="cmd.exe metacharacter rules")
+@pytest.mark.parametrize("metacharacter", list('&|<>^()%!,;= "'))
+def test_next_step_hint_never_leaves_a_command_metacharacter_bare(metacharacter):
+    """A pasted hint must not let a filename turn into command syntax."""
+    hint = voidscape._shell_arg(f"clip{metacharacter}name.mp4")
+
+    assert hint.startswith('"') and hint.endswith('"')
+    assert hint.count('"') % 2 == 0
 
 
 def test_interactive_customize_saves_after_one_confirmation(tmp_path, monkeypatch, capsys):

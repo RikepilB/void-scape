@@ -479,11 +479,17 @@ def init(args: argparse.Namespace) -> int:
     return 0
 
 
+CMD_UNSAFE = set(' \t"&|<>^()%!,;=')
+
+
 def _shell_arg(value: str) -> str:
     """Quote for the user's own shell, not for Python. repr() doubles every backslash, which makes
-    a copied Windows path unusable, and single quotes are not quoting in cmd.exe."""
+    a copied Windows path unusable, and single quotes are not quoting in cmd.exe. A hint the user
+    is expected to paste must not let a filename's metacharacters become command syntax."""
     if os.name == "nt":
-        return f'"{value}"' if value == "" or any(ch in value for ch in ' 	"') else value
+        if value and not CMD_UNSAFE.intersection(value):
+            return value
+        return '"' + value.replace('"', '""') + '"'
     return shlex.quote(value)
 
 
