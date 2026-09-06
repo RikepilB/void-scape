@@ -9,8 +9,13 @@ These sources inform the agent documentation and autonomy boundary; they are not
 - [`skill/SKILL.md`](../../skill/SKILL.md) — installed agent behavior and approval workflow.
 - [`docs/architecture.md`](../architecture.md) — data flow, pricing, backends, and security posture.
 - [`docs/workflow.md`](../workflow.md) — guided decision flow.
+- [`docs/source-capabilities.md`](../source-capabilities.md) — platform routing and capture truth.
+- [Upgrade verification matrix](../verification/2026-09-04-upgrade-matrix.md) — complete issue,
+  backlog, platform, test, and security disposition for the current local candidate.
 - [`docs/harness-support.md`](../harness-support.md) — browser, remote-host, and install boundaries.
 - [`docs/ROADMAP.md`](../ROADMAP.md) — planning and parked work.
+- [SkillSpector static review](../security/2026-09-04-skillspector-review.md) — current plugin
+  install stop, manual disposition, and raw-report hash.
 - [Agent-docs information architecture](../superpowers/specs/2026-08-29-agent-docs-information-architecture.md).
 - [Browser-bridge security contract](../superpowers/specs/2026-08-28-harness-neutral-browser-bridge-design.md).
 - [Browser-bridge implementation contract](../superpowers/specs/2026-08-29-browser-bridge-implementation-contract.md).

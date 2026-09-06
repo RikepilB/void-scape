@@ -4,6 +4,20 @@ For the guided human path, start with [Voidscape's guide](voidscape-guide.md):
 `voidscape.py inspect → preview → read`. This page documents the stable lower-level engine used by
 existing scripts, subagents, and non-interactive automation.
 
+The guided CLI also exposes two zero-mutation discovery commands:
+
+```powershell
+voidscape sources --json
+voidscape route <file-or-url> --json
+```
+
+`sources` returns the truthful platform/reader/capture matrix. `route` selects the default reader
+and lists safe alternatives. Mixed sources can use `--reader video|article|image` on `inspect`,
+`preview`, and `read`; the override never grants fetch, cloud, model, browser, or account approval.
+Route/probe metadata strips URL credentials, query values, and fragments before printing or writing
+evidence; the selected input is still used internally only for its approved operation.
+See [source capabilities](source-capabilities.md).
+
 The engine is a single Python CLI with four subcommands. It is **agent-first**: every command prints
 **JSON** to stdout, unless you pass `--human` for a readable estimate. Existing callers retain the
 legacy JSON shape; agents can opt into a stable envelope and deterministic exit metadata.

@@ -17,10 +17,10 @@ from urllib.request import Request, urlopen
 
 from capture_adapter import (
     CaptureError,
-    append_and_confirm,
+    append_and_confirm as append_and_confirm,
     durable_append_or_raise,
     emit_capture_error,
-    is_duplicate,
+    is_duplicate as is_duplicate,
     preview_action_for_url,
 )
 

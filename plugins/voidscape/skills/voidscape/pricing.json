@@ -1,0 +1,25 @@
+{
+  "_note": "Editable rate table read by scripts/video.py. transcription_per_min = USD per minute of audio. model_per_mtok = API-equivalent USD per 1,000,000 tokens. Codex subscription usage may not be billed per API token. Update as provider prices drift. Updated July 2026.",
+  "transcription_per_min": {
+    "captions": 0.0,
+    "sidecar": 0.0,
+    "local": 0.0,
+    "trx": 0.0,
+    "faster-whisper": 0.0,
+    "groq": 0.0007,
+    "openai-mini": 0.003,
+    "openai": 0.006,
+    "openrouter": 0.006,
+    "gemini": 0.037
+  },
+  "model_per_mtok": {
+    "_active": "gpt-5.6-terra",
+    "gpt-5.6-sol":   { "input": 5.0,  "output": 30.0, "vision_estimator": "openai_patch32" },
+    "gpt-5.6-terra": { "input": 2.5,  "output": 15.0, "vision_estimator": "openai_patch32" },
+    "gpt-5.6-luna":  { "input": 1.0,  "output": 6.0,  "vision_estimator": "openai_patch32" }
+  },
+  "frame": {
+    "target_width": 512,
+    "_comment": "Frames are downscaled to this width before the agent reads them. GPT-5.6 uses ceil(w/32)*ceil(h/32) patches."
+  }
+}

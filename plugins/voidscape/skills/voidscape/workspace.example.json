@@ -1,0 +1,9 @@
+{
+  "_comment": "Copy this to workspace.json (gitignored) and edit for your machine. Every key is optional — with no workspace.json the skill still works, you just pass full paths and don't get auto-save.",
+  "inbox_dir": "C:\\path\\to\\your\\media\\_Inbox",
+  "out_dir": "C:\\path\\to\\your\\media\\Transcripts",
+  "default_tier": "both",
+  "default_backend": "captions",
+  "whisper_model": "small",
+  "transcription_thorough_threshold_s": 45
+}

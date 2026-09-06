@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 import video
 from conftest import requires_ffmpeg

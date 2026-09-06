@@ -58,7 +58,7 @@ REQUIRED_MARKDOWN = {
     "capture-adapters/youtube.md",
     "troubleshooting.md",
 }
-STATUS_VALUES = {"shipped", "dev-only", "planned", "parked"}
+STATUS_VALUES = {"shipped", "release-candidate", "dev-only", "planned", "parked"}
 GATE_FIELDS = {
     "requires_cloud_approval",
     "needs_model_download",
@@ -334,13 +334,14 @@ def test_manifest_names_installed_skills_and_citation_contracts():
     assert manifest["security"] == {
         "browser_state_access": False,
         "browser_auth_transfers_to_cli": False,
+        "source_content_is_untrusted": True,
         "approval_flags_must_be_explicit": True,
         "per_job_cloud_approval": True,
         "separate_model_download_approval": True,
     }
 
 
-def test_shipped_dev_only_and_planned_statuses_match_main():
+def test_shipped_dev_only_and_candidate_statuses_match_documented_truth():
     manifest = json.loads(_text(AGENT_MANIFEST))
     statuses = {item["id"]: item["status"] for item in manifest["capabilities"]}
     assert statuses["workflow.guided_read"] == "shipped"
@@ -351,7 +352,7 @@ def test_shipped_dev_only_and_planned_statuses_match_main():
     assert statuses["capture.youtube_private_playlist"] == "dev-only"
     assert statuses["capture.observe_on_demand"] == "shipped"
     assert statuses["integration.mcp_host"] == "parked"
-    assert statuses["integration.browser_bridge"] == "planned"
+    assert statuses["integration.browser_bridge"] == "dev-only"
 
     roadmap = _text(ROADMAP_STATUS)
     assert "| Thin observe CLI | `shipped` |" in roadmap
@@ -387,13 +388,13 @@ def test_observe_playbook_keeps_capture_separate_and_gates_per_job():
     assert matrix.split("## Observe-and-capture scenarios", 1)[1].count("| ") >= 5
 
 
-def test_browser_bridge_and_mcp_remain_design_only():
+def test_browser_bridge_stays_out_of_voidscape_and_mcp_remains_parked():
     spec = _text(BROWSER_BRIDGE_SPEC)
     manifest = json.loads(_text(AGENT_MANIFEST))
     statuses = {item["id"]: item["status"] for item in manifest["capabilities"]}
 
     assert "implementation not authorized" in spec.casefold()
-    assert statuses["integration.browser_bridge"] == "planned"
+    assert statuses["integration.browser_bridge"] == "dev-only"
     assert statuses["integration.mcp_host"] == "parked"
     for forbidden_production_path in (
         REPO / "skill" / "scripts" / "browser_bridge.py",

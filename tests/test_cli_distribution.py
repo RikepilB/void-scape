@@ -29,7 +29,7 @@ def test_packaged_module_help_uses_global_command_name():
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "usage: voidscape" in result.stdout
-    assert "{init,inspect,preview,read,customize,doctor}" in result.stdout
+    assert "{init,inspect,preview,read,customize,doctor,route,sources}" in result.stdout
 
 
 def test_public_beginner_paths_use_the_global_cli_without_a_clone():
