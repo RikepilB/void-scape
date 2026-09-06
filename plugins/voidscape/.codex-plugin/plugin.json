@@ -1,0 +1,31 @@
+{
+  "name": "voidscape",
+  "version": "0.1.0",
+  "description": "Local-first evidence readers and approval-gated media workflows for Codex.",
+  "author": {
+    "name": "Richard Pillaca",
+    "url": "https://github.com/RikepilB"
+  },
+  "homepage": "https://voidscape.club/agents/",
+  "repository": "https://github.com/RikepilB/void-scape",
+  "license": "MIT",
+  "keywords": ["media", "video", "audio", "images", "rss", "evidence"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Voidscape",
+    "shortDescription": "Turn permitted media into grounded evidence.",
+    "longDescription": "Inspect, preview, and read local or approved public media while preserving explicit cloud, model-download, browser, and content-trust boundaries.",
+    "developerName": "Richard Pillaca",
+    "category": "Productivity",
+    "capabilities": ["Local media evidence", "Article and RSS evidence", "Approval-gated network access"],
+    "websiteURL": "https://voidscape.club/",
+    "privacyPolicyURL": "https://voidscape.club/privacy.html",
+    "termsOfServiceURL": "https://voidscape.club/terms.html",
+    "defaultPrompt": [
+      "Inspect and preview this media before reading it.",
+      "Route this source to the safest Voidscape reader.",
+      "List Voidscape source capabilities and limits."
+    ],
+    "brandColor": "#F4A261"
+  }
+}
