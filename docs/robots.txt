@@ -1,0 +1,7 @@
+# Voidscape - https://voidscape.club
+# Everything here is public documentation. Crawling is welcome, including AI crawlers.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://voidscape.club/sitemap.xml
