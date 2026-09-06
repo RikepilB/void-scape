@@ -14,11 +14,13 @@ if __package__:
     from . import article as article_engine
     from . import image as image_engine
     from . import observe as observe_engine
+    from . import sources as source_registry
     from . import video
 else:
     import article as article_engine
     import image as image_engine
     import observe as observe_engine
+    import sources as source_registry
     import video
 
 
@@ -36,6 +38,8 @@ Your private media, made legible.
   inspect <file-or-url>   See what is there and choose a scope.
   preview <file-or-url>   See cost, privacy, and dependencies.
   read <file-or-url>      Create approved frames, transcript, and manifest.
+  route <file-or-url>     Explain reader choice and source boundaries.
+  sources                 List platform capabilities without overclaiming.
 
   init                    Install the agent skill and check readiness.
   customize               Choose local folders and defaults (optional).
@@ -123,6 +127,58 @@ def _is_article_source(value: str) -> bool:
     return article_engine.is_article_input(video.resolve_input(value))
 
 
+def _select_reader(value: str, requested: str | None = None) -> str:
+    routed = source_registry.route(value)
+    if routed["source"] == "unsupported":
+        raise ValueError(routed["note"])
+    if requested and requested != "auto":
+        if routed["source"] == "url" and requested not in routed["reader_options"]:
+            raise ValueError(f"reader {requested!r} is not supported for this routed source")
+        return requested
+    if routed["source"] == "url":
+        reader = routed["default_reader"]
+        if reader is None:
+            raise ValueError(routed["note"])
+        return reader
+    if _is_image_source(value):
+        return "image"
+    if _is_article_source(value):
+        return "article"
+    return "video"
+
+
+def route_source(args: argparse.Namespace) -> int:
+    result = source_registry.route(args.input)
+    if args.json:
+        _emit(result, True)
+        return 0
+    print("Voidscape source route")
+    print(f"  Platform: {result['platform']}")
+    print(f"  Reader: {result['default_reader'] or 'localize-first'}")
+    if len(result["reader_options"]) > 1:
+        print("  Alternatives: " + ", ".join(result["reader_options"]))
+    print(f"  Capture: {result['capture']}")
+    print(f"  Note: {result['note']}")
+    return 0
+
+
+def list_sources(args: argparse.Namespace) -> int:
+    result = source_registry.manifest()
+    if args.json:
+        _emit(result, True)
+        return 0
+    print("Voidscape source capabilities")
+    for profile in result["platforms"]:
+        readers = "/".join(profile["reader_options"])
+        print(
+            f"  {profile['id']}: reader={readers}; public={profile['public_read']}; "
+            f"capture={profile['capture']}"
+        )
+    print("  generic-web: article by default; --reader video for known media pages")
+    print("  remote-images: save locally or capture one permitted tab screenshot")
+    return 0
+
+
 def _print_image_skipped(result: dict[str, Any]) -> None:
     skipped = result.get("skipped") or []
     if skipped:
@@ -144,8 +200,9 @@ def _print_article_skipped(result: dict[str, Any]) -> None:
 
 def inspect_source(args: argparse.Namespace) -> int:
     try:
-        image_source = _is_image_source(args.input)
-        article_source = False if image_source else _is_article_source(args.input)
+        reader = _select_reader(args.input, args.reader)
+        image_source = reader == "image"
+        article_source = reader == "article"
         if image_source:
             info = image_engine.probe(args.input)
         elif article_source:
@@ -213,8 +270,9 @@ def _estimate_from_args(args: argparse.Namespace, workspace: dict[str, Any]) -> 
 def preview(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
-        image_source = _is_image_source(args.input)
-        article_source = False if image_source else _is_article_source(args.input)
+        reader = _select_reader(args.input, args.reader)
+        image_source = reader == "image"
+        article_source = reader == "article"
         agent_model = args.agent_model or _defaults(workspace)["agent_model"]
         if image_source:
             estimate = image_engine.estimate(args.input, args.out_words, agent_model)
@@ -259,8 +317,9 @@ def preview(args: argparse.Namespace) -> int:
 def read(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
-        image_source = _is_image_source(args.input)
-        article_source = False if image_source else _is_article_source(args.input)
+        reader = _select_reader(args.input, args.reader)
+        image_source = reader == "image"
+        article_source = reader == "article"
         if image_source:
             result = image_engine.run(args.input, args.workdir)
         elif article_source:
@@ -512,6 +571,12 @@ def doctor(args: argparse.Namespace) -> int:
 
 def _add_analysis_options(parser: argparse.ArgumentParser, include_run: bool = False) -> None:
     parser.add_argument("input")
+    parser.add_argument(
+        "--reader",
+        choices=["auto", "video", "image", "article"],
+        default="auto",
+        help="override automatic source routing",
+    )
     parser.add_argument("--tier", choices=["visual", "audio", "both"])
     parser.add_argument("--backend")
     parser.add_argument("--frames", type=int)
@@ -550,6 +615,9 @@ def main(argv: list[str] | None = None) -> int:
     init_parser.set_defaults(handler=init)
     inspect_parser = commands.add_parser("inspect", help="inspect source facts and recommended scope")
     inspect_parser.add_argument("input")
+    inspect_parser.add_argument(
+        "--reader", choices=["auto", "video", "image", "article"], default="auto",
+    )
     inspect_parser.add_argument("--json", action="store_true")
     inspect_parser.set_defaults(handler=inspect_source)
     preview_parser = commands.add_parser("preview", help="preview cost, privacy, and dependencies")
@@ -573,6 +641,13 @@ def main(argv: list[str] | None = None) -> int:
     doctor_parser.add_argument("--config")
     doctor_parser.add_argument("--json", action="store_true")
     doctor_parser.set_defaults(handler=doctor)
+    route_parser = commands.add_parser("route", help="explain reader choice and source boundaries")
+    route_parser.add_argument("input")
+    route_parser.add_argument("--json", action="store_true")
+    route_parser.set_defaults(handler=route_source)
+    sources_parser = commands.add_parser("sources", help="list platform capability truth")
+    sources_parser.add_argument("--json", action="store_true")
+    sources_parser.set_defaults(handler=list_sources)
     args = parser.parse_args(args_list)
     return args.handler(args)
 

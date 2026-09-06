@@ -1,7 +1,6 @@
 """Guided Voidscape commands delegate safely to the matching media engine."""
 import base64
 import json
-from pathlib import Path
 
 import pytest
 

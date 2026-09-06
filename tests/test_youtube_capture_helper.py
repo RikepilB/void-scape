@@ -191,8 +191,6 @@ def test_client_maps_auth_errors():
 
 
 def test_client_rejects_invalid_json():
-    call_idx = {"i": 0}
-
     def fake_urlopen(req, timeout=60, context=None):
         resp = MagicMock()
         resp.read.return_value = b"not-json"

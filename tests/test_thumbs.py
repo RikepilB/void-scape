@@ -1,8 +1,6 @@
 import subprocess
 from pathlib import Path
 
-import pytest
-
 import video
 from conftest import requires_ffmpeg
 

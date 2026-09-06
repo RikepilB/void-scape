@@ -14,7 +14,8 @@ mode that uses access the user already has.
 | Public Reel or TikTok URL | Try `inspect` with the direct media URL | Sometimes, even when the page looks public | Best effort through `yt-dlp`, not a guaranteed platform adapter |
 | Instagram saved collection | Sign in manually in Chrome and use the repository capture workflow | Yes | User-observed development workflow; not an installed command |
 | Private, age-gated, or subscriber-only media | Export cookies for the target site, then pass their path locally | Yes | Optional CLI bridge; the user owns and controls the cookie file |
-| Public or subscriber Substack article | Read it in the browser | Sometimes | Not a media-CLI input; Substack/RSS ingestion is planned |
+| Public Substack article or RSS/Atom feed | Pass the URL to `inspect`, then approve the remote fetch at `read` | No | Shipped article/feed reader; fetches only public-network text/XML targets |
+| Subscriber-only Substack article | Read it in the approved browser, then save permitted text locally | Yes | Browser-owned; the CLI never imports the session |
 
 Always test the public path first. Do not require a personal account, a private saved collection, or
 Richard's folders to demonstrate Voidscape's core CLI.
@@ -139,9 +140,9 @@ requests leave through different routes. Voidscape does not manage VPN configura
 
 ### Substack opens in Chrome but fails in the CLI
 
-That is expected for an article page. Voidscape currently reads media, not general web pages. A
-browser-connected agent can read the page after access approval; Substack/RSS ingestion remains a
-planned adapter.
+Public article and feed URLs are supported by the article reader after an explicit fetch approval.
+A subscriber-only page can still reject the anonymous CLI request; use the approved browser and
+save only permitted text locally. Voidscape never imports the browser session or bypasses a paywall.
 
 ## Future account connections
 

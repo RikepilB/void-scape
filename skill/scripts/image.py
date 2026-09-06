@@ -204,6 +204,8 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
     destination = Path(workdir).expanduser() if workdir else Path(
         tempfile.mkdtemp(prefix="voidscape-images-")
     )
+    if destination.is_symlink():
+        raise ValueError(f"workdir cannot be a symlink: {destination}")
     if destination.exists():
         if not destination.is_dir() or any(destination.iterdir()):
             raise ValueError(f"workdir already exists and is not empty: {destination}")
@@ -236,6 +238,7 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
         "item_count": info["item_count"],
         "images": copied,
         "skipped": info["skipped"],
+        "content_trust": video.EVIDENCE_TRUST.copy(),
     }
     try:
         (destination / "manifest.json").write_text(

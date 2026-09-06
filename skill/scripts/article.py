@@ -3,15 +3,19 @@ from __future__ import annotations
 
 import argparse
 import html
+import http.client
+import ipaddress
 import json
 import re
-import shutil
+import socket
+import ssl
 import sys
 import tempfile
 import urllib.error
 from pathlib import Path
 from typing import Any
-from urllib.request import Request, urlopen
+from urllib.parse import urljoin, urlsplit
+from urllib.request import Request
 from xml.etree import ElementTree as ET
 
 if __package__:
@@ -25,6 +29,18 @@ FEED_EXTENSIONS = {".xml", ".rss", ".atom"}
 SUPPORTED_EXTENSIONS = ARTICLE_EXTENSIONS | FEED_EXTENSIONS
 MAX_ENTRIES = 100
 DEFAULT_URL_WORDS = 1200
+MAX_REMOTE_BYTES = 5 * 1024 * 1024
+MAX_REDIRECTS = 5
+ALLOWED_REMOTE_PORTS = {80, 443}
+REMOTE_CONTENT_TYPES = {
+    "application/atom+xml",
+    "application/rss+xml",
+    "application/xhtml+xml",
+    "application/xml",
+    "text/html",
+    "text/plain",
+    "text/xml",
+}
 VIDEO_HOST_RE = re.compile(
     r"^https?://(?:www\.)?(?:"
     r"youtube\.com|youtu\.be|vimeo\.com|twitch\.tv|"
@@ -40,6 +56,204 @@ SCRIPT_STYLE_RE = re.compile(
 )
 WHITESPACE_RE = re.compile(r"\s+")
 ATOM_NS = "http://www.w3.org/2005/Atom"
+
+
+class _PinnedHTTPConnection(http.client.HTTPConnection):
+    def __init__(self, host: str, port: int, pinned_address: str, timeout: float):
+        self._pinned_address = pinned_address
+        super().__init__(host, port=port, timeout=timeout)
+
+    def connect(self):
+        self.sock = socket.create_connection(
+            (self._pinned_address, self.port),
+            self.timeout,
+            self.source_address,
+        )
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, host: str, port: int, pinned_address: str, timeout: float):
+        self._pinned_address = pinned_address
+        super().__init__(host, port=port, timeout=timeout, context=ssl.create_default_context())
+
+    def connect(self):
+        raw_socket = socket.create_connection(
+            (self._pinned_address, self.port),
+            self.timeout,
+            self.source_address,
+        )
+        try:
+            self.sock = self._context.wrap_socket(raw_socket, server_hostname=self.host)
+        except Exception:
+            raw_socket.close()
+            raise
+
+
+class _PinnedResponse:
+    def __init__(self, response, connection):
+        self._response = response
+        self._connection = connection
+        self.headers = response.headers
+
+    def read(self, size=-1):
+        return self._response.read(size)
+
+    def close(self):
+        try:
+            self._response.close()
+        finally:
+            self._connection.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        self.close()
+        return False
+
+
+def _validated_target(url: str, *, resolver=None):
+    if not isinstance(url, str) or not url or len(url) > 4096:
+        raise ValueError("remote article URL must be a bounded non-empty string")
+    try:
+        parsed = urlsplit(url)
+        port = parsed.port
+    except ValueError as ex:
+        raise ValueError(f"remote article URL is invalid: {ex}") from ex
+    if parsed.scheme.casefold() not in {"http", "https"}:
+        raise ValueError("remote article URL must use http or https")
+    if not parsed.hostname:
+        raise ValueError("remote article URL must include a hostname")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("remote article URL cannot include credentials")
+    if any(ord(character) < 32 or ord(character) == 127 for character in url):
+        raise ValueError("remote article URL cannot contain control characters")
+    try:
+        parsed.hostname.encode("ascii")
+    except UnicodeEncodeError as ex:
+        raise ValueError("remote article hostname must use ASCII or IDNA form") from ex
+    if parsed.fragment:
+        url = parsed._replace(fragment="").geturl()
+        parsed = urlsplit(url)
+
+    expected_port = 443 if parsed.scheme.casefold() == "https" else 80
+    target_port = port or expected_port
+    if target_port != expected_port or target_port not in ALLOWED_REMOTE_PORTS:
+        raise ValueError("remote article URL must use its standard port 80 or 443")
+    try:
+        resolver_fn = resolver or socket.getaddrinfo
+        addresses = resolver_fn(
+            parsed.hostname,
+            target_port,
+            type=socket.SOCK_STREAM,
+        )
+    except OSError as ex:
+        raise ValueError(f"remote article hostname could not be resolved: {ex}") from ex
+    if not addresses:
+        raise ValueError("remote article hostname did not resolve")
+
+    resolved: set[ipaddress.IPv4Address | ipaddress.IPv6Address] = set()
+    for address in addresses:
+        try:
+            resolved.add(ipaddress.ip_address(address[4][0]))
+        except (IndexError, ValueError) as ex:
+            raise ValueError("remote article hostname resolved to an invalid address") from ex
+    if not resolved or any(not address.is_global for address in resolved):
+        raise ValueError("remote article URL resolves to a non-public network address")
+    return url, parsed, tuple(sorted(str(address) for address in resolved))
+
+
+def _connection_for(parsed, address: str, timeout_s: float):
+    port = parsed.port or (443 if parsed.scheme.casefold() == "https" else 80)
+    connection_type = (
+        _PinnedHTTPSConnection if parsed.scheme.casefold() == "https" else _PinnedHTTPConnection
+    )
+    return connection_type(parsed.hostname, port, address, timeout_s)
+
+
+def _open_url(request: Request, timeout_s: float):
+    """Open directly to one validated public IP; never resolve again while connecting."""
+    url, parsed, addresses = _validated_target(request.full_url)
+    path = parsed.path or "/"
+    if parsed.query:
+        path = f"{path}?{parsed.query}"
+    last_error = None
+    for address in addresses:
+        connection = _connection_for(parsed, address, timeout_s)
+        try:
+            headers = dict(request.header_items())
+            headers.setdefault("Accept-Encoding", "identity")
+            connection.request(request.get_method(), path, headers=headers)
+            response = connection.getresponse()
+        except (OSError, ssl.SSLError, http.client.HTTPException) as ex:
+            last_error = ex
+            connection.close()
+            continue
+        if response.status >= 300:
+            response_headers = response.headers
+            status = response.status
+            reason = response.reason
+            response.close()
+            connection.close()
+            raise urllib.error.HTTPError(url, status, reason, response_headers, None)
+        return _PinnedResponse(response, connection)
+    raise urllib.error.URLError(last_error or "no validated public address was reachable")
+
+
+def _validate_remote_url(
+    url: str,
+    *,
+    resolver=None,
+) -> str:
+    """Validate one fetch target and reject non-public network destinations."""
+    validated_url, _, _ = _validated_target(url, resolver=resolver)
+    return validated_url
+
+
+def _evidence_url(url: str) -> tuple[str, bool]:
+    """Validate URL shape without DNS and remove secret-bearing URL components."""
+    if not isinstance(url, str) or not url or len(url) > 4096:
+        raise ValueError("remote article URL must be a bounded non-empty string")
+    try:
+        parsed = urlsplit(url)
+        port = parsed.port
+    except ValueError as ex:
+        raise ValueError(f"remote article URL is invalid: {ex}") from ex
+    if parsed.scheme.casefold() not in {"http", "https"} or not parsed.hostname:
+        raise ValueError("remote article URL must use http or https with a hostname")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("remote article URL cannot include credentials")
+    if any(ord(character) < 32 or ord(character) == 127 for character in url):
+        raise ValueError("remote article URL cannot contain control characters")
+    expected_port = 443 if parsed.scheme.casefold() == "https" else 80
+    if port not in {None, expected_port}:
+        raise ValueError("remote article URL must use its standard port 80 or 443")
+    hostname = parsed.hostname.casefold().rstrip(".")
+    if hostname == "localhost" or hostname.endswith(".localhost"):
+        raise ValueError("remote article URL cannot target localhost")
+    try:
+        address = ipaddress.ip_address(hostname)
+    except ValueError:
+        try:
+            hostname.encode("ascii")
+        except UnicodeEncodeError as ex:
+            raise ValueError("remote article hostname must use ASCII or IDNA form") from ex
+    else:
+        if not address.is_global:
+            raise ValueError("remote article URL cannot target a non-public network address")
+    host = f"[{hostname}]" if ":" in hostname else hostname
+    netloc = host if port in {None, expected_port} else f"{host}:{port}"
+    sanitized = parsed._replace(netloc=netloc, query="", fragment="").geturl()
+    return sanitized, sanitized != url
+
+
+def _sanitize_evidence_link(value: str) -> str:
+    if not value.casefold().startswith(("http://", "https://")):
+        return value
+    try:
+        return _evidence_url(value)[0]
+    except ValueError:
+        return "[REDACTED_URL]"
 
 
 def is_article_input(value: str) -> bool:
@@ -85,6 +299,8 @@ def _child_text(parent: ET.Element, names: tuple[str, ...]) -> str:
 
 
 def _parse_feed_xml(text: str) -> dict[str, Any]:
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", text, re.I):
+        raise ValueError("feed XML cannot contain document type or entity declarations")
     try:
         root = ET.fromstring(text)
     except ET.ParseError as ex:
@@ -118,6 +334,7 @@ def _parse_feed_xml(text: str) -> dict[str, Any]:
             if name == "link" and _text_content(child):
                 link = _text_content(child)
                 break
+        link = _sanitize_evidence_link(link)
         guid = _child_text(raw, ("guid", "id")) or link or title
         published = _child_text(raw, ("pubDate", "published", "updated"))
         body = _child_text(raw, ("content:encoded", "content", "description", "summary"))
@@ -212,9 +429,11 @@ def _extract_markdown_title(content: str) -> str:
 
 
 def _url_probe(inp: str) -> dict[str, Any]:
+    display_input, input_redacted = _evidence_url(inp)
     return {
         "source": "url",
-        "input": inp,
+        "input": display_input,
+        "input_redacted": input_redacted,
         "kind": "article_url",
         "entry_kind": "article",
         "availability": "remote_fetch_required",
@@ -228,8 +447,8 @@ def _url_probe(inp: str) -> dict[str, Any]:
         "estimated_words": DEFAULT_URL_WORDS,
         "entries": [{
             "index": 1,
-            "title": inp,
-            "link": inp,
+            "title": display_input,
+            "link": display_input,
             "published": "",
             "word_count": DEFAULT_URL_WORDS,
             "availability": "not_fetched",
@@ -239,40 +458,88 @@ def _url_probe(inp: str) -> dict[str, Any]:
 
 
 def _fetch_url(url: str, timeout_s: float = 20.0) -> str:
-    request = Request(url, headers={"User-Agent": "Voidscape/1.0 article-reader"})
-    try:
-        with urlopen(request, timeout=timeout_s) as response:
+    current_url = url
+    for redirect_count in range(MAX_REDIRECTS + 1):
+        current_url = _validate_remote_url(current_url)
+        request = Request(
+            current_url,
+            headers={
+                "Accept": "text/html, text/plain, application/rss+xml, application/atom+xml, application/xml;q=0.9",
+                "User-Agent": "Voidscape/1.0 article-reader",
+            },
+        )
+        try:
+            response = _open_url(request, timeout_s)
+        except urllib.error.HTTPError as ex:
+            if ex.code in {301, 302, 303, 307, 308}:
+                location = ex.headers.get("Location", "")
+                if not location:
+                    raise RuntimeError("network fetch failed: redirect missing Location") from ex
+                if redirect_count >= MAX_REDIRECTS:
+                    raise RuntimeError("network fetch failed: too many redirects") from ex
+                next_url = urljoin(current_url, location)
+                if (
+                    urlsplit(current_url).scheme.casefold() == "https"
+                    and urlsplit(next_url).scheme.casefold() == "http"
+                ):
+                    raise RuntimeError("network fetch failed: HTTPS redirect downgrade refused") from ex
+                current_url = next_url
+                continue
+            if ex.code in (401, 403):
+                raise PermissionError(
+                    "remote article may require authenticated browser access; "
+                    "CLI fetch cannot use browser credentials"
+                ) from ex
+            raise RuntimeError(f"network fetch failed: HTTP {ex.code}") from ex
+        except urllib.error.URLError as ex:
+            raise RuntimeError(f"network fetch failed: {ex.reason}") from ex
+
+        with response:
             content_type = response.headers.get("Content-Type", "")
+            media_type = content_type.split(";", 1)[0].strip().casefold()
+            if not media_type or media_type not in REMOTE_CONTENT_TYPES:
+                raise ValueError(
+                    f"remote article returned unsupported content type: {media_type or '(missing)'}"
+                )
+            content_encoding = response.headers.get("Content-Encoding", "").strip().casefold()
+            if content_encoding not in {"", "identity"}:
+                raise ValueError("remote article returned unsupported content encoding")
             charset = "utf-8"
-            if "charset=" in content_type.lower():
-                charset = content_type.lower().split("charset=", 1)[1].split(";", 1)[0].strip()
-            return response.read().decode(charset, errors="replace")
-    except urllib.error.HTTPError as ex:
-        if ex.code in (401, 403):
-            raise PermissionError(
-                "remote article may require authenticated browser access; "
-                "CLI fetch cannot use browser credentials"
-            ) from ex
-        raise RuntimeError(f"network fetch failed: HTTP {ex.code}") from ex
-    except urllib.error.URLError as ex:
-        raise RuntimeError(f"network fetch failed: {ex.reason}") from ex
+            if "charset=" in content_type.casefold():
+                charset = (
+                    content_type.casefold().split("charset=", 1)[1].split(";", 1)[0]
+                    .strip().strip("\"'")
+                )
+            payload = response.read(MAX_REMOTE_BYTES + 1)
+            if len(payload) > MAX_REMOTE_BYTES:
+                raise ValueError(
+                    f"remote article exceeds the {MAX_REMOTE_BYTES}-byte response limit"
+                )
+            try:
+                return payload.decode(charset, errors="replace")
+            except LookupError as ex:
+                raise ValueError(f"remote article declared unsupported charset: {charset}") from ex
+    raise RuntimeError("network fetch failed: too many redirects")
 
 
 def _read_url(url: str) -> dict[str, Any]:
     content = _fetch_url(url)
+    display_url, input_redacted = _evidence_url(url)
     if _looks_like_feed(content[:4096]):
         parsed = _parse_feed_xml(content)
-        parsed["input"] = url
+        parsed["input"] = display_url
+        parsed["input_redacted"] = input_redacted
         parsed["source"] = "url"
         return parsed
     body = _html_to_text(content)
     if not body:
         raise ValueError("unsupported or empty remote content")
-    title = _extract_html_title(content) or url
+    title = _extract_html_title(content) or display_url
     return {
         "kind": "article",
         "source": "url",
-        "input": url,
+        "input": display_url,
+        "input_redacted": input_redacted,
         "title": title,
         "body": body,
         "word_count": _word_count(body),
@@ -280,9 +547,9 @@ def _read_url(url: str) -> dict[str, Any]:
             "title": title,
             "body": body,
             "word_count": _word_count(body),
-            "link": url,
+            "link": display_url,
             "published": "",
-            "guid": url,
+            "guid": display_url,
         }],
         "entry_kind": "article",
         "skipped": [],
@@ -372,6 +639,7 @@ def estimate(inp: str, out_words: int = 600,
     requires_fetch = info["source"] == "url"
     return {
         "input": info["input"],
+        "input_redacted": bool(info.get("input_redacted", False)),
         "source": info["source"],
         "kind": info["kind"],
         "entry_kind": info["entry_kind"],
@@ -419,6 +687,10 @@ def run(inp: str, workdir: str | None = None, *,
         path = Path(resolved).expanduser()
         if not path.exists():
             raise FileNotFoundError(f"no such file: {resolved}")
+        if path.is_symlink():
+            raise ValueError(f"article input cannot be a symlink: {resolved}")
+        if not path.is_file():
+            raise ValueError(f"article input is not a file: {resolved}")
         info = _read_document(path)
 
     entries = _ordered_entries(info)
@@ -428,6 +700,8 @@ def run(inp: str, workdir: str | None = None, *,
     destination = Path(workdir).expanduser() if workdir else Path(
         tempfile.mkdtemp(prefix="voidscape-articles-")
     )
+    if destination.is_symlink():
+        raise ValueError(f"workdir cannot be a symlink: {destination}")
     if destination.exists():
         if not destination.is_dir() or any(destination.iterdir()):
             raise ValueError(f"workdir already exists and is not empty: {destination}")
@@ -439,7 +713,7 @@ def run(inp: str, workdir: str | None = None, *,
 
     written = []
     for item in entries:
-        slug = re.sub(r"[^A-Za-z0-9._-]+", "-", item["title"]).strip("-") or "entry"
+        slug = (re.sub(r"[^A-Za-z0-9._-]+", "-", item["title"]).strip("-") or "entry")[:80]
         target = entries_dir / f"{item['index']:03d}-{slug}.txt"
         header = [
             f"title: {item['title']}",
@@ -469,11 +743,13 @@ def run(inp: str, workdir: str | None = None, *,
         "kind": info["kind"],
         "source": info["source"],
         "input": info["input"],
+        "input_redacted": bool(info.get("input_redacted", False)),
         "feed_title": info.get("feed_title"),
         "entry_kind": info["entry_kind"],
         "item_count": len(written),
         "entries": written,
         "skipped": info.get("skipped", []),
+        "content_trust": video.EVIDENCE_TRUST.copy(),
         "citation_guide": (
             f"cite each excerpt with {info['entry_kind']} N, e.g. "
             f"[{info['entry_kind']} 1]"

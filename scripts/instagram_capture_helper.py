@@ -10,7 +10,11 @@ import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
-from capture_adapter import append_and_confirm, is_duplicate, queue_append_result
+from capture_adapter import (
+    append_and_confirm as append_and_confirm,
+    is_duplicate as is_duplicate,
+    queue_append_result,
+)
 
 _ALLOWED_HOSTS = {"instagram.com", "www.instagram.com"}
 _PATH_RE = re.compile(r"^/(?:reel|p|tv)/([A-Za-z0-9_-]+)")
