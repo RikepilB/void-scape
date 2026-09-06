@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import platform
+import shlex
 import shutil
 import sys
 from pathlib import Path
@@ -222,7 +223,7 @@ def inspect_source(args: argparse.Namespace) -> int:
         print("  Order: " + ", ".join(item["source_name"] for item in info["images"]))
         _print_image_skipped(info)
         print("  Processing: local only · originals preserved")
-        print(f"Next: voidscape preview {args.input!r}")
+        print(f"Next: voidscape preview {_shell_arg(args.input)}")
         return 0
     if article_source:
         label = "Feed" if info["kind"] == "feed" else "Article"
@@ -237,7 +238,7 @@ def inspect_source(args: argparse.Namespace) -> int:
             print("  Availability: remote URL · fetch requires explicit approval")
         else:
             print("  Processing: local only · originals preserved")
-        print(f"Next: voidscape preview {args.input!r}")
+        print(f"Next: voidscape preview {_shell_arg(args.input)}")
         return 0
     source = "web link" if info.get("source") == "url" else "local file"
     print("Voidscape inspection")
@@ -248,7 +249,7 @@ def inspect_source(args: argparse.Namespace) -> int:
         "captions may be available" if info.get("captions_available") else "no transcript found")
     print(f"  Text: {transcript}")
     print(f"  Suggested scope: {_recommend_tier(info)}")
-    print(f"Next: voidscape preview {args.input!r}")
+    print(f"Next: voidscape preview {_shell_arg(args.input)}")
     return 0
 
 
@@ -468,16 +469,36 @@ def init(args: argparse.Namespace) -> int:
     print("Next:")
     print("  voidscape customize   # optional Inbox, Library, and local defaults")
     print("  voidscape doctor      # detailed readiness check")
-    print('  voidscape inspect "meeting.mp4"')
+    print(r'  voidscape inspect "C:\path\to\meeting.mp4"' if os.name == "nt"
+          else '  voidscape inspect "/path/to/meeting.mp4"')
+    print("  Pass the full path, quoted if it contains spaces. A bare filename works only")
+    print("  after customize sets an Inbox, and resolves against that Inbox.")
     if not result["ready_for_video"]:
         print("Install FFmpeg and FFprobe before reading video or audio.")
         print(f"  {_ffmpeg_install_hint()}")
     return 0
 
 
+def _shell_arg(value: str) -> str:
+    """Quote for the user's own shell, not for Python. repr() doubles every backslash, which makes
+    a copied Windows path unusable, and single quotes are not quoting in cmd.exe."""
+    if os.name == "nt":
+        return f'"{value}"' if value == "" or any(ch in value for ch in ' 	"') else value
+    return shlex.quote(value)
+
+
 def _ask(prompt: str, default: str) -> str:
     answer = input(f"{prompt} [{default}]: ").strip()
     return answer or default
+
+
+def _confirm(prompt: str) -> bool:
+    """Explicit yes/no, defaulting to no. Answering the prompts IS the confirmation, so an
+    interactive session never has to retype the whole flow just to add --yes."""
+    try:
+        return input(f"{prompt} [y/N]: ").strip().lower() in {"y", "yes"}
+    except EOFError:
+        return False
 
 
 def customize(args: argparse.Namespace) -> int:
@@ -513,14 +534,26 @@ def customize(args: argparse.Namespace) -> int:
     print(json.dumps(data, indent=2, ensure_ascii=False))
     if args.import_read_video:
         print(f"Legacy config considered: {legacy_path}")
-    if not args.yes:
-        print("No files changed. Re-run with --yes to save these preferences.")
+    confirmed = args.yes
+    if not confirmed and interactive:
+        confirmed = _confirm(f"Save these preferences to {path}?")
+    if not confirmed:
+        if interactive:
+            print("No files changed.")
+        else:
+            print("No files changed. Re-run with --yes to save these preferences.")
         return 0
-    for folder in (Path(data["inbox_dir"]), Path(data["out_dir"])):
-        if not folder.exists() and not args.create_dirs:
-            print(f"Folder does not exist: {folder}. Re-run with --create-dirs to create it.", file=sys.stderr)
+    create_dirs = args.create_dirs
+    missing = [folder for folder in (Path(data["inbox_dir"]), Path(data["out_dir"]))
+               if not folder.exists()]
+    if missing and not create_dirs:
+        if interactive:
+            listed = ", ".join(str(folder) for folder in missing)
+            create_dirs = _confirm(f"Create missing folder(s) {listed}?")
+        if not create_dirs:
+            print(f"Folder does not exist: {missing[0]}. Re-run with --create-dirs to create it.", file=sys.stderr)
             return 3
-    if args.create_dirs:
+    if create_dirs:
         for folder in (Path(data["inbox_dir"]), Path(data["out_dir"])):
             folder.mkdir(parents=True, exist_ok=True)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -553,7 +586,12 @@ def doctor(args: argparse.Namespace) -> int:
     print("Voidscape doctor")
     for name, available in tools.items():
         print(f"  {'OK' if available else 'MISSING'} {name}")
-    print(f"  {'OK' if workspace else 'OPTIONAL'} workspace: {workspace_path}")
+    if workspace:
+        print(f"  OK workspace: {workspace_path}")
+    else:
+        print(f"  OPTIONAL workspace: not configured ({workspace_path})")
+        print("    No Inbox, so a bare filename will not resolve; pass full paths, or run")
+        print("    voidscape customize to set one.")
     print(f"  {'OK' if report['local_backend_available'] else 'OPTIONAL'} faster-whisper")
     if not observe_report["capture_supported"]:
         print(f"  UNSUPPORTED observe capture: {observe_report.get('reason', observe_report['platform'])}")

@@ -133,6 +133,25 @@ def resolve_input(inp: str) -> str:
     return inp
 
 
+def describe_missing_input(inp: str, *, kind: str = "file") -> str:
+    """Explain where the lookup actually happened so a bare filename failure is self-correcting.
+    A bare name resolves against the current folder, then against inbox_dir when a workspace
+    exists; with neither, the old one-line error left the user with nothing to act on."""
+    lines = [f"no such {kind}: {inp}"]
+    if not is_url(inp) and not Path(inp).expanduser().is_absolute():
+        lines.append(f"  looked in the current folder: {Path.cwd()}")
+        inbox = load_workspace().get("inbox_dir")
+        if inbox:
+            lines.append(f"  looked in the configured Inbox: {inbox}")
+        else:
+            lines.append("  no Inbox is configured, so a bare name only resolves "
+                         "against the current folder")
+            lines.append('  configure one: voidscape customize --inbox "<folder>" '
+                         "--create-dirs --yes")
+        lines.append("  or pass the full path, quoted if it contains spaces")
+    return "\n".join(lines)
+
+
 def is_url(s: str) -> bool:
     return bool(URL_RE.match(s))
 
@@ -288,7 +307,7 @@ def probe(inp: str) -> dict[str, Any]:
             **ytdlp_meta(inp),
         }
     if not Path(inp).exists():
-        raise FileNotFoundError(f"no such file: {inp}")
+        raise FileNotFoundError(describe_missing_input(inp))
     if Path(inp).is_symlink():
         raise ValueError(f"media input cannot be a symlink: {inp}")
     base = ffprobe_local(inp)

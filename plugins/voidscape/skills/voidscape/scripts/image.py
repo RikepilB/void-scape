@@ -107,7 +107,7 @@ def probe(inp: str) -> dict[str, Any]:
     resolved = video.resolve_input(inp)
     path = Path(resolved).expanduser()
     if not path.exists():
-        raise FileNotFoundError(f"no such file or folder: {resolved}")
+        raise FileNotFoundError(video.describe_missing_input(resolved, kind="file or folder"))
     if path.is_symlink():
         raise ValueError(f"image input cannot be a symlink: {resolved}")
     if not path.is_file() and not path.is_dir():
