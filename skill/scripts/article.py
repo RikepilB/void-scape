@@ -579,7 +579,7 @@ def probe(inp: str) -> dict[str, Any]:
         return _url_probe(resolved)
     path = Path(resolved).expanduser()
     if not path.exists():
-        raise FileNotFoundError(f"no such file: {resolved}")
+        raise FileNotFoundError(video.describe_missing_input(resolved))
     if path.is_symlink():
         raise ValueError(f"article input cannot be a symlink: {resolved}")
     if not path.is_file():
@@ -686,7 +686,7 @@ def run(inp: str, workdir: str | None = None, *,
     else:
         path = Path(resolved).expanduser()
         if not path.exists():
-            raise FileNotFoundError(f"no such file: {resolved}")
+            raise FileNotFoundError(video.describe_missing_input(resolved))
         if path.is_symlink():
             raise ValueError(f"article input cannot be a symlink: {resolved}")
         if not path.is_file():
