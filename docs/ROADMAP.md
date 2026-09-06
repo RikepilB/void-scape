@@ -42,20 +42,20 @@ core:
 
 ## Phase 0 — Foundation: generalize the two axes this repo currently hard-codes
 
-Everything today is hard-wired to "Instagram" (capture) and "video" (read). Two orthogonal
-interfaces need to exist before anything else in this roadmap makes sense:
+The project began hard-wired to "Instagram" (capture) and "video" (read). Both axes now have
+concrete, tested contracts:
 
 - **Capture axis** — bookmark / saved-collection / folder → queue file. Today:
-  `instagram_capture_helper.py` does this for one platform via Codex Chrome control browser
-  automation, writing to `urls.md`.
+  `capture_adapter.py` shares queue/dedup/process semantics across the dev-only Instagram and
+  YouTube helpers. Platform discovery/auth/mutation stays adapter-specific.
 - **Read axis** — media to ordered evidence. `video.py` handles video and audio URLs/files.
   `image.py` handles local images and carousels. `article.py` handles local HTML/Markdown and
   RSS/Atom plus non-video article URLs. The guided CLI dispatches between these focused readers.
 
-**Milestone 0.1 — Capture-adapter interface.** Separate what `instagram_capture_helper.py` does
-that's IG-specific (selectors, auth, saved-collection shape) from what's generic (append-to-queue,
-dedup via unsave-or-mark, dry-run-first, abort-cleanly-on-selector-break). Define that interface
-once, so a new platform is "implement this interface," not "copy and rewrite the whole thing."
+**Milestone 0.1 — Capture-adapter interface (closed 2026-08-29).** The second concrete adapter
+(YouTube) shipped first, then the shared queue, dedup, preview, durable-write, and partial-failure
+contract was extracted into `scripts/capture_adapter.py`. Instagram and YouTube remain dev-only;
+the interface is shipped development infrastructure, not proof of live account compatibility.
 
 **Milestone 0.2 — Media-reader interface (closed 2026-08-28, issue #15).** Compared
 `video.py`, `image.py`, and `article.py` after article/RSS intake shipped. **Decision: document a
@@ -70,11 +70,10 @@ behavioral differences.
 ## Phase 1 — Media-type expansion (the "read" side)
 
 - **1.1 Local images and carousels** — shipped in PR #9 (merged 2026-08-28).
-- **1.2 Audio-only** — podcasts, voice memos, X Spaces, LinkedIn audio posts. Reuses the existing
-  transcription-backend cascade almost as-is.
-- **1.3 Blog / post / text** — Substack articles, LinkedIn posts, X threads, long-form blogs. No
-  frames or transcript at all — closer to "fetch + summarize" than to `video.py`'s current shape.
-  May end up as its own lightweight script rather than being forced through the video interface.
+- **1.2 Audio-only reader — shipped.** Podcasts and voice memos use the existing video/audio reader
+  with `--tier audio`. X Spaces and LinkedIn audio still need platform acquisition evidence.
+- **1.3 Blog / post / text reader — shipped 2026-08-28.** `article.py` reads local HTML/Markdown,
+  RSS/Atom, and approved public article/feed URLs. Subscriber/account capture remains separate.
 
 ## Phase 2 — Platform expansion (the "capture" side)
 
@@ -82,27 +81,31 @@ One milestone per platform, each its own spec/plan/implementation cycle, each ga
 platform have a bookmark/saved-collection concept; what does its ToS say about automation; is
 there a Codex Chrome control-drivable UI or a real API alternative.
 
-- **2.1 X (Twitter) bookmarks**
-- **2.2 TikTok favorites/saved**
-- **2.3 LinkedIn saved posts**
-- **2.4 Substack saved/subscribed posts** — likely API/RSS-based, not browser automation;
+- **2.1 X (Twitter) bookmarks — not started**
+- **2.2 TikTok favorites/saved — not started**
+- **2.3 LinkedIn saved posts — not started**
+- **2.4 Reddit saved posts — not started**
+- **2.5 Substack saved/subscribed posts — partial.** Public article/RSS reading is shipped; account
+  subscription capture is not. Prefer public feeds over browser automation where possible;
   Substack has no bookmark-grid UI to drive the way IG/TikTok do.
-- **2.5 YouTube private-playlist capture - up next (sharpened 2026-07-09, corrected 2026-07-17;
+- **2.6 YouTube private-playlist capture — dev-only implementation complete, live OAuth unverified
+  (sharpened 2026-07-09, corrected 2026-07-17;
   see `docs/decisions.md`).** Read axis already works (`video.py`/`yt-dlp` take a YouTube URL
   directly) - this milestone is capture only. Official **YouTube Data API v3** (OAuth, not browser
   automation), source = a user-owned private queue playlist such as `Read Video Queue` because
   current Data API docs report Watch Later playlist items as inaccessible; captured videos are
   removed from that queue playlist as the "captured" marker (mirrors IG's unsave pattern), with
   content-keyed dedup against the vault on top (unchanged from `/ig-pipeline`). Ships as a second
-  one-off adapter, same discipline as Instagram's - **not** built against a pre-designed interface.
-- **2.6 Facebook** — raised 2026-07-09, not yet scoped. Facebook's saved-items API is limited/
+  one-off adapter. The shared capture contract was extracted only after this second adapter existed.
+- **2.7 Facebook** — raised 2026-07-09, not yet scoped. Facebook's saved-items API is limited/
   largely deprecated and its automation ToS is stricter than IG/YouTube — needs its own
   feasibility+ToS pass before it can even get a milestone number that means anything.
 
 ## Phase 3 — Technical-audience packaging
 
-Builds on Phase 0-2; realistically starts once at least one new platform and one new media type
-exist, so the docs describe a real pattern instead of a single one-off.
+**Status: substantially shipped.** The Agent Docs tree, reader/capture extension guides, static
+site, no-clone CLI distribution, and contributor docs now describe multiple readers and two
+capture adapters. Continue updating them from the capability registry rather than prose memory.
 
 - **3.1** Generalize "how to use" docs (SKILL.md/README/CONTRIBUTING already exist in miniature
   for read-video alone) to cover N platforms × M media types.
@@ -116,14 +119,15 @@ exist, so the docs describe a real pattern instead of a single one-off.
 
 Can start any time after Phase 0 — doesn't block on Phase 1/2/3.
 
-- **4.1** Formalize each capture-adapter and media-reader as its own installable skill bundle
-  (same `SKILL.md` + `scripts/install-skill.*` pattern already shipped for read-video), so an
-  agent harness can install "the LinkedIn adapter" independently of "the audio reader."
-- **4.2** Agent-facing discovery docs — not prose for humans, a machine-readable index (tool
-  manifest / `agents.md`-style file) so an agent can discover what it can read and capture from,
-  without a human curating every session.
-- **4.3** Consider an MCP server wrapping the whole pipeline, so any MCP-capable agent (not only
-  Codex) can drive it as tool calls instead of shelling out to a CLI.
+- **4.1 — in progress.** The primary self-contained skill and a local Codex plugin bundle package
+  all readers together. The bundle validates structurally but remains dev-only because its
+  SkillSpector static scan is `CRITICAL/DO_NOT_INSTALL`; no installation or publication is approved.
+  Split adapter skills only after their account flows are verified.
+- **4.2 — shipped / expanding.** Agent-facing discovery docs and `docs/agents/manifest.json` exist;
+  `voidscape sources --json` adds runtime source capability discovery without relying on prose
+  memory or claiming unverified account capture.
+- **4.3 — parked by completed no-go spike.** The shell CLI remains canonical. Revisit an optional
+  sibling MCP package only after two named harness workflows prove shell invocation insufficient.
 
 ## Phase 5 — Non-technical distribution
 
@@ -182,24 +186,24 @@ or restrict based on that data.
   block automation risks Instagram ToS violation and account suspension. Same legal-review gate
   applies before this starts, regardless of which phase it's filed under.
 
-## Next-project candidate — universal browser-extension reader
+## Active spike — harness-neutral browser extension (issue #27)
 
-**Not authorized for implementation. Next-endeavors only, raised 2026-07-17 (mid Build Week —
-explicitly deferred by the user to stay focused on the current submission).** The existing CLI
+**A bounded disposable spike is now authorized in the separate sibling `PROYECTOS/agent-bridge`;
+production implementation remains unauthorized.** The existing CLI
 manifest and `{ok,data,error,meta}` envelope are the portable core. A universal browser bridge
 still needs a transport, tool schemas, permission and approval handling, host routing, and a
 per-platform policy review. It requires a separate design and security review.
 
-- **Why parked, not scoped:** this is a different shape of project than the CLI-first, one-adapter-
-  at-a-time discipline every phase above follows (see the "not a pre-designed interface" rule
-  Phase 2.5/2.6 already state) — it needs its own ideation pass (`grill-with-docs`) and probably
-  its own repo-vs-package decision (see Open questions below), not a bolt-on to Phase 0-6.
+- **Why separate:** this is a different shape of project than the CLI-first, one-adapter-at-a-time
+  discipline every phase above follows. The ideation and repo decision are complete; the security
+  boundary requires its own implementation and release lifecycle outside Voidscape.
   Also every platform named here inherits the same per-platform ToS/legal gate Phase 6.4 and the
   follower-management idea above already flag — none of that changes just because the access
   method is a browser extension instead of an API.
-  - **Next step when picked up:** file as GitHub issues (one per platform-adapter idea + one for
-    the multi-model orchestration layer) and/or a dedicated milestone, then run `grill-with-docs`
-  before any spec work — do not start coding from this paragraph alone.
+  - **Current slice:** Chrome + OpenCode-shaped fake-harness proof for `snapshot`, `screenshot`, and
+    `navigate` is implemented and locally verified in the sibling repo. It uses an authenticated
+    loopback broker and popup-only MV3 source with no eval/cookies/storage/credentials. No real
+    extension enablement, profile access, or OpenCode integration has been run or approved.
 
 ## Orchestration — reassessed 2026-08-28 (was: parked until after the submission)
 
@@ -216,20 +220,20 @@ waiting on. GitHub issue #6 tracked this reassessment and is closed by it.
 3. **Zero-code operating workflow** — a documented manual loop over the CLI that already ships,
    adding no code and no new privacy surface.
 
-**Decision: option 3 now, options 1 and 2 deferred behind the capture-adapter interface.**
+**Decision: option 3 remains live. Options 1 and 2 are still deferred for product/privacy reasons,
+not because the capture-adapter interface is missing.**
 
 - **Live now — the zero-code operating loop.** Operate the existing CLI by hand:
   `inspect → preview → read`, with the cost gate answered per run and the output filed by the
   user. No scheduler, no worker, no new credential handling. This is what "orchestration" means
   in this repo today.
-- **Deferred — background job execution (option 1) and the demo slice (option 2).** Both target
-  a capture-adapter surface that does not exist yet. Milestone 0.1 deliberately extracts that
-  interface *after* a second real adapter exists (see Suggested sequencing above, and Phase 2.5).
-  Building a scheduler against today's one-off scripts means rebuilding it once 0.1 lands, so
-  these wait for: private YouTube queue → articles/RSS → adapter extraction.
-- **Deferred — source-platform output routing.** Same reason: routing is a property of the
-  adapter interface, not of any single script. Designing it per-script now hard-codes exactly
-  what Phase 0.1 exists to generalize.
+- **Deferred — background job execution (option 1) and the demo slice (option 2).** The capture
+  contract, YouTube helper, and article/RSS reader now exist. The remaining blockers are approval
+  persistence, cancellation/recovery, live-account evidence, and a threat model for unattended
+  account mutation—not missing foundation code.
+- **Release candidate — source discovery routing.** `voidscape route` and `voidscape sources`
+  classify readers and capability status. Automated destination routing for unattended queues
+  remains deferred with the worker itself.
 - **Deferred — scheduling/headless worker and its privacy gates.** Windows Task Scheduler or
   equivalent, a headless Codex worker, and failure recovery stay unscoped. The privacy and
   approval gates are the load-bearing part and get designed *with* the adapter interface, not
@@ -242,8 +246,8 @@ waiting on. GitHub issue #6 tracked this reassessment and is closed by it.
 - **Naming/identity** — "read-video" undersells a multi-platform, multi-media,
   capture-and-read pipeline. Rename the whole thing, or keep `read-video` as the "reader" half
   and give capture-adapters their own umbrella name?
-- **One repo or many** — does Phase 0's generalization argue for splitting into a `read-anything`
-  reader engine plus one `capture-adapters/*` package per platform inside this repo, or into
-  fully separate repos?
+- **One repo or many — partially resolved.** The browser bridge is a separate sibling repo.
+  Voidscape readers and current capture helpers stay here; a platform adapter splits only when its
+  independent credential, release, or policy boundary justifies it.
 - **Per-platform ToS ownership** — who actually reads and signs off on each platform's terms
   before an adapter ships, even at "developers self-host it" scope, let alone SaaS scope?

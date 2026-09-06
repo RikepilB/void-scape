@@ -48,6 +48,8 @@
         "inspect",
         "preview",
         "read",
+        "route",
+        "sources",
         "customize",
         "doctor"
       ],
@@ -152,6 +154,11 @@
       "citation_contract": "[entry N]"
     },
     {
+      "id": "discovery.source_registry",
+      "status": "release-candidate",
+      "entry_point": "guided"
+    },
+    {
       "id": "capture.instagram_queue",
       "status": "dev-only",
       "entry_point": "instagram_capture_adapter"
@@ -172,7 +179,7 @@
     },
     {
       "id": "integration.browser_bridge",
-      "status": "planned"
+      "status": "dev-only"
     }
   ],
   "gate_fields": [
@@ -190,6 +197,7 @@
   "security": {
     "browser_state_access": false,
     "browser_auth_transfers_to_cli": false,
+    "source_content_is_untrusted": true,
     "approval_flags_must_be_explicit": true,
     "per_job_cloud_approval": true,
     "separate_model_download_approval": true

@@ -170,6 +170,18 @@ def test_landing_presents_shipped_readers_as_a_compact_use_case_reel():
     assert "slide.hidden = !active" in script
 
 
+def test_landing_manual_carousel_selection_permanently_stops_autoplay():
+    script = (REPO / "docs" / "landing.js").read_text(encoding="utf-8")
+
+    assert "if (manuallyStopped || timer || document.hidden) return;" in script
+    assert "manuallyStopped = true;" in script
+
+    dot_handler = script.index('dots.forEach((dot, index) => dot.addEventListener("click"')
+    stop_call = script.index("stop();", dot_handler)
+    selected_slide = script.index("show(index, true);", dot_handler)
+    assert stop_call < selected_slide
+
+
 def test_landing_navigation_stays_focused_and_links_legal_pages():
     content = LANDING_PAGE.read_text(encoding="utf-8")
     nav = content.split('<nav aria-label="Primary navigation">', 1)[1].split("</nav>", 1)[0]

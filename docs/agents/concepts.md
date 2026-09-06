@@ -57,6 +57,7 @@ should not invent timestamps, pages, OCR, hidden motion, or missing publication 
 ## Capability status
 
 - `shipped`: supported entry point on current `main`, backed by tests;
+- `release-candidate`: implemented and locally verified, but not merged, installed, or published;
 - `dev-only`: working repository helper, not an installed command;
 - `planned`: approved direction without a shipped implementation;
 - `parked`: explicitly deferred behind a product, security, legal, or distribution gate.

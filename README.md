@@ -76,6 +76,8 @@ API keys. A model download and every cloud transcription job remain separate app
 
 ```powershell
 voidscape doctor
+voidscape route "https://www.reddit.com/r/videos/comments/..." --json
+voidscape sources
 voidscape inspect "meeting.mp4"
 voidscape preview "meeting.mp4"
 voidscape read "meeting.mp4" --workdir voidscape-output
@@ -144,7 +146,8 @@ the exact points where testers need help.
 | Prepare an Instagram Reel URL | Repository helper (not installed) | `scripts/instagram_capture_helper.py` validates and deduplicates confirmed URLs; browser capture remains a user-observed development workflow. |
 | Work from a signed-in saved collection | Browser selection, then `inspect -> preview -> read` on one permitted media URL | The user signs in and approves browser access; private collection automation is not shipped. |
 | Run from an agent, hook, or schedule | `voidscape.py ... --json` or raw `video.py ... --envelope --compact` | Non-interactive commands; Voidscape does not ship a scheduler. |
-| Read a Substack series or RSS feed | Planned | Text/RSS ingestion is not part of the video engine yet. |
+| Read a public Substack article or RSS/Atom feed | `inspect -> preview -> read` | Article/feed reading is shipped; remote fetch requires explicit approval and public-network validation. |
+| Route Reddit, LinkedIn, X, TikTok, or another web source | `voidscape route <url>` | Shows the default reader, safe override, capture status, and browser boundary without claiming universal compatibility. |
 
 ## Typical questions
 
@@ -205,6 +208,8 @@ python skill/scripts/image.py run "slides" --workdir slide-evidence --envelope -
 ```
 
 The envelope is `{ok,data,error,meta}` with deterministic error codes and retryability metadata.
+Run `voidscape sources --json` for the machine-readable platform matrix and use
+`--reader video|article|image` only when an ambiguous source needs an explicit override.
 See the [guided workflow and automation guide](docs/voidscape-guide.md),
 [advanced CLI reference](docs/cli-reference.md), and [privacy/backend notes](skill/references/backends.md).
 

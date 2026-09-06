@@ -53,7 +53,8 @@ and support matrix before promising that an agent can use it.
 ## Know what is actually available
 
 Read [Roadmap status](roadmap-status.md) before composing integrations. `shipped` means merged,
-tested, and available through a supported entry point. `dev-only` helpers exist in the repository
+tested, and available through a supported entry point. `release-candidate` means locally implemented
+and verified but not yet merged, installed, or published. `dev-only` helpers exist in a repository
 but are not installed commands. `planned` and `parked` items are not callable capabilities.
 
 For machine discovery, open [manifest.json](manifest.json), then inspect the selected reader's own
