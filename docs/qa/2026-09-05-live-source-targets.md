@@ -59,3 +59,22 @@ Recover the Chrome connection, inspect each supplied URL, record authentication 
 availability, then select a bounded representative media sample per site. Keep browser navigation,
 capture availability, and successful Voidscape inspect/preview/read evidence as separate results.
 Resolve the X route from visible navigation; do not silently substitute bookmarks or history.
+
+## Connection diagnostic — 2026-09-06
+
+Supported-path check only; no navigation, no page read, no native-host repair, no cookie,
+storage, or credential access.
+
+| Check | Result |
+| --- | --- |
+| Claude-in-Chrome extension enumeration | One local Windows browser instance connected and addressable |
+| ChatGPT-Chrome / agent-browser path | Not retried in this pass; last recorded state was `Browser is not available: chrome` |
+
+The harness-owned Chrome channel is therefore reachable again through the Claude extension. That
+result identifies the break as path-specific rather than a dead Chrome or a missing extension: the
+earlier failure came from the ChatGPT-Chrome/agent-browser route, not from Chrome itself.
+
+Not yet done, and deliberately not claimed: the Substack archive, Reddit, and X target checks were
+**not** retried, because retrying them needs the user to authorize a signed-in session and to select
+which connected browser to drive. Page access remains separate from any reader certification, and no
+representative media `inspect/preview/read` is claimed from this diagnostic.
