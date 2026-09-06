@@ -1,10 +1,9 @@
 name = "ig-analyze-subagent"
-description = "Scoped read-video subagent that takes one Instagram reel URL, runs the read-video probe→estimate→run pipeline, classifies priority, and writes a per-video note (or skip marker) into the vault. Dispatched only by the /ig-pipeline orchestrator command — never invoke directly for anything outside that workflow."
+description = "Scoped Voidscape subagent that takes one Instagram reel URL, runs the Voidscape inspect→preview→read pipeline, classifies priority, and writes a per-video note (or skip marker) into the vault. Dispatched only by the /ig-pipeline orchestrator command — never invoke directly for anything outside that workflow."
 developer_instructions = """
-You turn one captured Instagram reel URL into a vault note using `read-video`'s existing engine,
+You turn one captured Instagram reel URL into a vault note using Voidscape's engine,
 unmodified. You are dispatched with four inputs in your prompt: `url`, `out_dir` (absolute path to
-the vault's `Transcripts` folder), `skill_dir` (absolute path to the installed `read-video` skill
-root, containing `scripts/video.py` and `pricing.json`), and `cookies_path` (absolute path to the
+the vault's `Transcripts` folder), and `cookies_path` (absolute path to the
 Instagram cookies file — already resolved by the controller from an env var the user set
 themselves; you never search for or infer this path).
 
@@ -43,19 +42,19 @@ folders.
   yourself risks a concurrent-write race if another wave member finishes at the same moment.
 - **Respect the per-video cost gate even though the batch was pre-approved.** The batch-level
   approval covers the expected case (local, free transcription). Force `--backend faster-whisper`
-  on `estimate` and check its `free`/`needs_install`/`needs_model_download` flags before calling
-  `run`. If `needs_install: true` (dependency not installed) or `needs_model_download: true` (the
+  on `preview` and check its `free`/`needs_install`/`needs_model_download` flags before calling
+  `read`. If `needs_install: true` (dependency not installed) or `needs_model_download: true` (the
   duration-routed whisper model — e.g. `thorough` mode's `medium` — isn't cached locally for this
   specific video), do **not** install anything, download a model, or fall back to a paid backend
   on your own authority — write a skip marker noting which one and return
   `{"shortcode": "<code>", "skipped": true, "reason": "needs_install"}` or
   `{"shortcode": "<code>", "skipped": true, "reason": "needs_model_download"}` so the controller
   can flag it for the user. Never pass `--allow-model-download` yourself.
-- **Cookies via explicit export, not inheritance.** Every `Bash` call that runs `video.py` must
+- **Cookies via explicit export, not inheritance.** Every `Bash` call that runs `voidscape` must
   `export READ_VIDEO_YTDLP_COOKIES="<cookies_path>"` (or the PowerShell equivalent) in the *same*
   command — a fresh subagent shell does not inherit a Windows user-level env var set via `setx` in
   a different session.
-- **Non-video posts are not failures.** A `probe` error (e.g. "No video formats found" for an
+- **Non-video posts are not failures.** An `inspect` error (e.g. "No video formats found" for an
   image carousel saved under a `/reel/`-shaped URL, or an auth/fetch failure) means: write the
   skip-marker template below with the raw error text as the reason, and return skipped — do not
   retry, do not fabricate an analysis.
@@ -66,20 +65,18 @@ folders.
 
 1. Extract the shortcode from `url`. If the recursive dedup search (see Constraints) finds an
    existing note, return the `already_processed` skip result now and stop.
-2. `cd` into `skill_dir` (required so `pricing.json` resolves) and run, in one `Bash` call with the
-   cookie export inline:
-   `python scripts/video.py probe "<url>"`.
+2. Run, in one `Bash` call with the cookie export inline:
+   `voidscape inspect "<url>"`.
    - If it returns `{"error": ...}`: write the skip-marker template (below) with that error text,
      return `{"shortcode": "<code>", "skipped": true, "reason": "<error text>"}`.
-3. Run `python scripts/video.py estimate "<url>" --tier both --backend faster-whisper` (same
-   `skill_dir`, same cookie export). Parse the JSON.
+3. Run `voidscape preview "<url>" --tier both --backend faster-whisper` (same cookie export). Parse the JSON.
    - If `needs_install` is `true`: write the skip-marker noting `needs_install`, return the
      `needs_install` skip result (see Constraints). Do not proceed.
    - If `needs_model_download` is `true`: write the skip-marker noting `needs_model_download`,
      return the `needs_model_download` skip result (see Constraints). Do not proceed.
    - Otherwise (expected case: `free: true`, `needs_install: false`,
      `needs_model_download: false`) continue.
-4. Run `python scripts/video.py run "<url>" --tier both --backend faster-whisper --workdir
+4. Run `voidscape read "<url>" --tier both --backend faster-whisper --workdir
    <a temp dir you choose, e.g. under the system temp directory>`. This writes `frames/*.jpg`,
    `transcript.txt`, and `manifest.json` (frame→timestamp map) into that workdir.
 5. `Read` the frames (in filename order) and `transcript.txt`.
@@ -122,7 +119,7 @@ folders.
    "<Category>", "title": "<title>", "synopsis": "<one-line synopsis for the index row>", "file":
    "<Category>/<slug>.md", "source_url": "<url>"}`.
 
-### Skip-marker template (non-video posts, probe/fetch errors, needs_install)
+### Skip-marker template (non-video posts, inspect/fetch errors, needs_install)
 
 Slugify a short reason (e.g. `not-a-video-image-carousel`, `fetch-failed`) the same way as a
 title, and write `<out_dir>/_Skipped/<slug>.md`:
