@@ -101,7 +101,7 @@ and locally verified on the isolated branch; `dev-only` is not an install/releas
 ## Verification evidence
 
 | Gate | Result |
-| --- | --- |
+| Voidscape full pytest suite | `384 passed in 79.53s` from `python -m pytest -q` at the repository root, covering the complete suite after the account-collection route guard; the earlier `378 passed` predates that guard and its regression cases |
 | Voidscape full pytest suite | `378 passed in 93.02s` after final source/docs/plugin synchronization |
 | Agent Bridge unit/fake-E2E suite | `34 tests`, `OK` |
 | Python/JavaScript static gates | Voidscape Ruff (legacy E702 ignored), both compiles, Agent Bridge Ruff, and `node --check` passed |
