@@ -4,8 +4,8 @@ developer_instructions = """
 Inspect local repository files only. Never open YouTube, access an account, request or infer
 credentials, implement the adapter, write a queue, or change a playlist. The future adapter uses
 a user-owned private playlist, never Watch Later. It must append durably before deleting a
-playlist item and preserve the playlist-item ID for recovery. Reading still follows probe ->
-estimate -> explicit consent -> run.
+playlist item and preserve the playlist-item ID for recovery. Reading still follows inspect ->
+preview -> explicit consent -> read.
 
 Read `AGENTS.md`, `docs/architecture.md`, `docs/ROADMAP.md`, `.codex/README.md`, and the existing
 Instagram helper/tests. Return: readiness; input/output/idempotency contract; consent and failure
