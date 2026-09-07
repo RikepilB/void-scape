@@ -351,11 +351,36 @@ def _have_local_backend(backend: str) -> bool:
         return which("trx") is not None
     if backend in ("faster-whisper", "local"):
         return _have("faster_whisper")
-    return True
+    # An unrecognised name is never available: `_transcribe_one` has no branch for it and raises.
+    return backend in KNOWN_BACKENDS
 
 
 def _backend_chain(backend: str) -> list[str]:
     return [b.strip() for b in backend.split(",") if b.strip()] or [backend]
+
+
+# The exact set `_transcribe_one` can dispatch. Preview and read both validate against this, so a
+# name the read path would refuse can never be priced as a runnable one.
+KNOWN_BACKENDS = frozenset({"captions", "faster-whisper", "local", "trx", "gemini", *BACKEND_API})
+
+
+def validate_backend_chain(backend: str) -> list[str]:
+    """Reject a backend the read path cannot dispatch, before it is ever priced.
+
+    `--backend` is free text, so a typo used to reach the estimate, resolve to "available" through
+    the old `_have_local_backend` default, and be reported free and installed -- then fail at read
+    with "no usable transcription backend". A wrong estimate is a silent cost-gate bypass, so the
+    two paths have to agree on one list.
+    """
+    chain = _backend_chain(backend) if backend else []
+    unknown = [b for b in chain if b not in KNOWN_BACKENDS]
+    if unknown:
+        raise ValueError(
+            f"unknown transcription backend: {', '.join(unknown)}. "
+            f"Known backends: {', '.join(sorted(KNOWN_BACKENDS))}. "
+            f"See references/backends.md"
+        )
+    return chain
 
 
 def _agent_rate(pr: dict[str, Any], agent_model: str | None) -> tuple[str, dict[str, Any], str]:
@@ -418,7 +443,7 @@ def estimate(inp: str, frames: int | None = None, backend: str = "captions",
     dur_min = dur / 60.0
     want_frames = tier in ("visual", "both")
     want_audio = tier in ("audio", "both")
-    chain = _backend_chain(backend) if backend else [backend]
+    chain = validate_backend_chain(backend) if backend else [backend]
 
     n = frames if frames else adaptive_frames(dur)
     target_w = int(pr.get("frame", {}).get("target_width", 512))
@@ -500,7 +525,7 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
     dur = info["duration_s"] or 0.0
     want_frames = tier in ("visual", "both")
     want_audio = tier in ("audio", "both")
-    chain = _backend_chain(backend) if want_audio else []
+    chain = validate_backend_chain(backend) if want_audio else []
     # A sidecar transcript short-circuits _transcribe() before the chain is ever consulted, so a
     # cloud backend named in the chain is never actually called -- don't demand consent for it.
     if (not info.get("sidecar_transcript") and any(b in CLOUD_BACKENDS for b in chain)
