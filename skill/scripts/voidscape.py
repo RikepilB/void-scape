@@ -13,12 +13,14 @@ from typing import Any
 
 if __package__:
     from . import article as article_engine
+    from . import chat as chat_engine
     from . import image as image_engine
     from . import observe as observe_engine
     from . import sources as source_registry
     from . import video
 else:
     import article as article_engine
+    import chat as chat_engine
     import image as image_engine
     import observe as observe_engine
     import sources as source_registry
@@ -124,6 +126,12 @@ def _is_image_source(value: str) -> bool:
     return image_engine.is_image_input(video.resolve_input(value))
 
 
+def _is_chat_source(value: str) -> bool:
+    if video.is_url(value):
+        return False
+    return chat_engine.is_chat_input(video.resolve_input(value))
+
+
 def _is_article_source(value: str) -> bool:
     return article_engine.is_article_input(video.resolve_input(value))
 
@@ -143,6 +151,8 @@ def _select_reader(value: str, requested: str | None = None) -> str:
         return reader
     if _is_image_source(value):
         return "image"
+    if _is_chat_source(value):
+        return "chat"
     if _is_article_source(value):
         return "article"
     return "video"
@@ -203,9 +213,12 @@ def inspect_source(args: argparse.Namespace) -> int:
     try:
         reader = _select_reader(args.input, args.reader)
         image_source = reader == "image"
+        chat_source = reader == "chat"
         article_source = reader == "article"
         if image_source:
             info = image_engine.probe(args.input)
+        elif chat_source:
+            info = chat_engine.probe(args.input)
         elif article_source:
             info = article_engine.probe(args.input)
         else:
@@ -222,6 +235,16 @@ def inspect_source(args: argparse.Namespace) -> int:
         print(f"  {label}: {info['item_count']} {count_label}")
         print("  Order: " + ", ".join(item["source_name"] for item in info["images"]))
         _print_image_skipped(info)
+        print("  Processing: local only · originals preserved")
+        print(f"Next: voidscape preview {_shell_arg(args.input)}")
+        return 0
+    if chat_source:
+        counts = info["kind_counts"]
+        print("Voidscape inspection")
+        print(f"  Chat: {info['chat_title']}")
+        print(f"  Messages: {info['item_count']} "
+              f"({counts['text']} text · {counts['media']} media · {counts['system']} system)")
+        print(f"  Participants: {', '.join(info['participants']) or 'unknown'}")
         print("  Processing: local only · originals preserved")
         print(f"Next: voidscape preview {_shell_arg(args.input)}")
         return 0
@@ -273,10 +296,13 @@ def preview(args: argparse.Namespace) -> int:
     try:
         reader = _select_reader(args.input, args.reader)
         image_source = reader == "image"
+        chat_source = reader == "chat"
         article_source = reader == "article"
         agent_model = args.agent_model or _defaults(workspace)["agent_model"]
         if image_source:
             estimate = image_engine.estimate(args.input, args.out_words, agent_model)
+        elif chat_source:
+            estimate = chat_engine.estimate(args.input, args.out_words, agent_model)
         elif article_source:
             estimate = article_engine.estimate(args.input, args.out_words, agent_model)
         else:
@@ -289,12 +315,17 @@ def preview(args: argparse.Namespace) -> int:
     print("Voidscape preview")
     if image_source:
         print(image_engine._fmt_estimate(estimate))
+    elif chat_source:
+        print(chat_engine._fmt_estimate(estimate))
     elif article_source:
         print(article_engine._fmt_estimate(estimate))
     else:
         print(video._fmt_estimate(estimate))
     if image_source:
         _print_image_skipped(estimate)
+        print("Next: evidence can be prepared locally with voidscape read.")
+        return 0
+    if chat_source:
         print("Next: evidence can be prepared locally with voidscape read.")
         return 0
     if article_source:
@@ -320,9 +351,12 @@ def read(args: argparse.Namespace) -> int:
     try:
         reader = _select_reader(args.input, args.reader)
         image_source = reader == "image"
+        chat_source = reader == "chat"
         article_source = reader == "article"
         if image_source:
             result = image_engine.run(args.input, args.workdir)
+        elif chat_source:
+            result = chat_engine.run(args.input, args.workdir)
         elif article_source:
             estimate = article_engine.estimate(
                 args.input, args.out_words,
@@ -364,6 +398,10 @@ def read(args: argparse.Namespace) -> int:
     if image_source:
         print(f"  Images: {result['item_count']}")
         print("Next: ask your agent to read manifest.json and images/ with [image 1] citations.")
+        return 0
+    if chat_source:
+        print(f"  Messages: {result['item_count']}")
+        print(f"Next: ask your agent to read manifest.json and messages.txt with {result['citation_guide']}.")
         return 0
     if article_source:
         print(f"  Entries: {result['item_count']}")
@@ -617,7 +655,7 @@ def _add_analysis_options(parser: argparse.ArgumentParser, include_run: bool = F
     parser.add_argument("input")
     parser.add_argument(
         "--reader",
-        choices=["auto", "video", "image", "article"],
+        choices=["auto", "video", "image", "article", "chat"],
         default="auto",
         help="override automatic source routing",
     )
@@ -660,7 +698,7 @@ def main(argv: list[str] | None = None) -> int:
     inspect_parser = commands.add_parser("inspect", help="inspect source facts and recommended scope")
     inspect_parser.add_argument("input")
     inspect_parser.add_argument(
-        "--reader", choices=["auto", "video", "image", "article"], default="auto",
+        "--reader", choices=["auto", "video", "image", "article", "chat"], default="auto",
     )
     inspect_parser.add_argument("--json", action="store_true")
     inspect_parser.set_defaults(handler=inspect_source)

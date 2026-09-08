@@ -2,10 +2,11 @@
 name: voidscape
 description: >-
   Inspect, preview, and read local images, filename-ordered carousels, videos, recordings, voice
-  material, articles, RSS or Atom feeds, and supported public URLs.
+  material, chat exports, articles, RSS or Atom feeds, and supported public URLs.
   Use when a user asks to watch, summarize, transcribe, describe, extract timestamps, or answer a
-  question from media or article evidence. Voidscape shows cost and privacy gates before any paid
-  or remote action and grounds answers in [image 1], [MM:SS], [article N], or [entry N] evidence.
+  question from media, chat, or article evidence. Voidscape shows cost and privacy gates before any
+  paid or remote action and grounds answers in [image 1], [MM:SS], [message N], [article N], or
+  [entry N] evidence.
 ---
 
 # Voidscape
@@ -86,6 +87,20 @@ python scripts/article.py probe <article-or-feed> --envelope --compact
 python scripts/article.py estimate <article-or-feed> --envelope --compact
 python scripts/article.py run <article-or-feed> --workdir <empty-folder> --envelope --compact
 ```
+
+Local chat exports (WhatsApp-style `_chat.txt` with `[timestamp] sender: message` lines) have the
+same raw protocol:
+
+```text
+python scripts/chat.py manifest --compact
+python scripts/chat.py probe <chat-export.txt> --envelope --compact
+python scripts/chat.py estimate <chat-export.txt> --envelope --compact
+python scripts/chat.py run <chat-export.txt> --workdir <empty-folder> --envelope --compact
+```
+
+Chat exports are local files only, capped at 2000 messages, and produce `messages.txt` plus a
+manifest citing `[message N]`. Media referenced in the export is listed, not extracted; hand any
+existing media file to the image or video reader separately.
 
 The envelope is `{ok,data,error,meta}`. On failure, inspect `error.code`, `error.exit_code`, and
 `error.retryable`; do not parse prose to decide whether to retry. Existing callers may omit the

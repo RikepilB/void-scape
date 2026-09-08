@@ -89,9 +89,30 @@
       "status": "shipped"
     },
     {
+      "id": "chat_reader",
+      "path": "skill/scripts/chat.py",
+      "commands": [
+        "manifest",
+        "probe",
+        "estimate",
+        "run"
+      ],
+      "status": "shipped"
+    },
+    {
       "id": "instagram_capture_adapter",
       "path": "scripts/instagram_capture_helper.py",
       "commands": [
+        "process"
+      ],
+      "status": "dev-only"
+    },
+    {
+      "id": "instagram_follow_audit_adapter",
+      "path": "scripts/ig_follow_audit_helper.py",
+      "commands": [
+        "inspect",
+        "preview",
         "process"
       ],
       "status": "dev-only"
@@ -154,6 +175,12 @@
       "citation_contract": "[entry N]"
     },
     {
+      "id": "evidence.chat_export",
+      "status": "shipped",
+      "entry_point": "chat_reader",
+      "citation_contract": "[message N]"
+    },
+    {
       "id": "discovery.source_registry",
       "status": "release-candidate",
       "entry_point": "guided"
@@ -162,6 +189,11 @@
       "id": "capture.instagram_queue",
       "status": "dev-only",
       "entry_point": "instagram_capture_adapter"
+    },
+    {
+      "id": "capture.instagram_follow_audit",
+      "status": "dev-only",
+      "entry_point": "instagram_follow_audit_adapter"
     },
     {
       "id": "capture.youtube_private_playlist",
@@ -192,7 +224,8 @@
     "image": "[image N]",
     "video_audio": "[MM:SS]",
     "article": "[article N]",
-    "rss_atom": "[entry N]"
+    "rss_atom": "[entry N]",
+    "chat": "[message N]"
   },
   "security": {
     "browser_state_access": false,
