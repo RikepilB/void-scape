@@ -160,6 +160,18 @@ html[data-theme="light"] .legal-section a { color: var(--blue); }
 .screen-frame i::after { top: 83px; }
 .url-frame i { border-radius: 11px; height: 72px; width: 260px; }
 .url-frame i::before { background: #75adff; border-radius: 99px; content: ""; height: 7px; left: 18px; position: absolute; top: 32px; width: 165px; }
+.browser-frame i { border: 1px solid rgba(117, 173, 255, .42); border-radius: 11px; height: 160px; width: 250px; }
+.browser-frame i::before, .browser-frame i::after { background: rgba(117, 173, 255, .35); border-radius: 99px; content: ""; height: 7px; left: 52px; position: absolute; top: 18px; width: 150px; }
+.browser-frame i::after { background: linear-gradient(150deg, #5c83dc, #8d91ff); left: 14px; top: 15px; width: 30px; }
+.extension-frame i { background: linear-gradient(150deg, #5c83dc, #8d91ff); border: 1px solid rgba(255, 255, 255, .3); border-radius: 14px; height: 64px; width: 200px; }
+.extension-frame i::before { background: #75adff; border-radius: 99px; box-shadow: 22px 0 0 #75adff, 44px 0 0 #75adff; content: ""; height: 9px; left: 74px; position: absolute; top: 28px; width: 9px; }
+.extension-frame i::after { border: 1px solid rgba(255, 255, 255, .4); border-radius: 99px; content: ""; height: 34px; left: 32px; position: absolute; top: 15px; width: 34px; }
+.docs-frame { gap: 13px; }
+.docs-frame i { background: #0d1526; border: 1px solid rgba(117, 173, 255, .38); border-radius: 8px; height: 150px; transform: rotate(-5deg); width: 110px; }
+.docs-frame i::before, .docs-frame i::after { background: rgba(117, 173, 255, .3); content: ""; height: 5px; left: 16px; position: absolute; right: 16px; top: 26px; }
+.docs-frame i::after { top: 40px; background: rgba(141, 145, 255, .45); }
+.docs-frame i:nth-child(2) { height: 176px; transform: translateY(-4px); }
+.docs-frame i:nth-child(3) { transform: rotate(5deg); }
 .reel-controls { align-items: center; border-top: 1px solid var(--line); display: flex; gap: 14px; padding: 15px 18px; }
 .reel-controls > button { align-items: center; background: transparent; border: 1px solid var(--line-strong); border-radius: 8px; color: var(--paper); cursor: pointer; display: inline-flex; height: 34px; justify-content: center; width: 38px; }
 .reel-controls > button:hover { border-color: var(--blue); color: var(--blue); }
@@ -218,6 +230,11 @@ html[data-theme="light"] .legal-section a { color: var(--blue); }
   .carousel-frame i:nth-child(2) { height: 136px; }
   .screen-frame i { width: 210px; }
   .url-frame i { width: 220px; }
+  .browser-frame i { width: 220px; }
+  .extension-frame i { width: 180px; }
+  .extension-frame i::before { left: 64px; }
+  .docs-frame i { height: 112px; width: 82px; }
+  .docs-frame i:nth-child(2) { height: 136px; }
   .reel-controls { gap: 10px; padding: 13px; }
   .reel-mode { display: none; }
   .setup-step { gap: 12px; grid-template-columns: 34px minmax(0, 1fr); }
