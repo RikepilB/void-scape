@@ -18,6 +18,11 @@ reused as a free local sidecar instead of being generated again.
 
 `read-video` remains the stable engine and compatibility name for existing scripts and automations.
 
+**Watch it work:** a 52-second terminal recording of the real flow —
+[`doctor` → `inspect` → `preview` → `read` on the key-free demo fixture](docs/assets/cli-demo.mp4)
+(no account, no API key, recorded live). The same video is embedded in the
+[guide](https://voidscape.club/guide.html).
+
 ## Start here
 
 You do not need to clone this repository. Install the CLI once, let it add the bundled agent skill,

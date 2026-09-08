@@ -39,3 +39,23 @@ A design spec or fake spike never upgrades a capability to `shipped`.
 
 For phase-level history and deferred platform ideas, read the canonical roadmap. The open issue
 list is scheduling evidence, not product evidence.
+
+## Incoming — what exploration could unlock
+
+The long-term direction is one idea: every piece of media you already keep becomes inspectable,
+citable evidence through the same gates. None of the directions below is shipped, installed, or
+promised; each is listed with what it would take to become real.
+
+| Direction | What it would give you | Standing gates |
+| --- | --- | --- |
+| X bookmarks, TikTok favorites, LinkedIn saves | one evidence library across every platform you save to | per-platform permission review; signed-in capture is never implied by public reading |
+| Newsletter collections | inbox reading with sender and issue order preserved | delivery-platform review; no mailbox credentials, ever |
+| Browser bridge (live pages) | read what a page shows at read time, with the page state recorded | site-by-site approval; no credentials, cookies, or storage access |
+| Screenshot CLI/MCP integrations (Iris-style) | turn a visible screen region into citable frames | capture-scope consent; same inspect -> preview -> read discipline |
+| Agent plugins and multi-model reading | choose per-task models for transcription and vision | model-download and cloud approvals stay per-run, never global settings |
+| Hosted edition | Voidscape without local setup | product, billing, connector, and legal gates; local-first stays the default |
+
+Two boundaries hold across every row. First, Voidscape is a reader: follower audits, creator
+performance dashboards, and job-search tooling are separate companion projects, and permission to
+read never implies following, unfollowing, messaging, or publishing. Second, security review gates
+apply before any exploration becomes an installed capability — a working prototype is not a release.

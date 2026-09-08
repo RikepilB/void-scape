@@ -61,7 +61,8 @@
         <summary>On this page <span>Overview</span></summary>
         <nav aria-label="On this page"><a href="#top" class="toc-level-2">Overview</a>
 <a href="#status-board" class="toc-level-2">Status board</a>
-<a href="#interpretation-rules" class="toc-level-2">Interpretation rules</a></nav>
+<a href="#interpretation-rules" class="toc-level-2">Interpretation rules</a>
+<a href="#incoming-what-exploration-could-unlock" class="toc-level-2">Incoming — what exploration could unlock</a></nav>
       </details>
       <article class="docs-article" id="top">
         <header class="article-header"><span>Reference</span><h1>Roadmap status</h1></header>
@@ -72,6 +73,10 @@
 <h2 id="interpretation-rules">Interpretation rules<a class="heading-anchor" href="#interpretation-rules" aria-label="Link to Interpretation rules">#</a></h2>
 <p><code>shipped</code> requires merged implementation and tests on <code>main</code>. <code>release-candidate</code> means the local upgrade is implemented and verified but is not merged, installed, or published. Repository capture adapters and the fake browser spike are <code>dev-only</code> because no supported installer exposes them. A design spec or fake spike never upgrades a capability to <code>shipped</code>.</p>
 <p>For phase-level history and deferred platform ideas, read the canonical roadmap. The open issue list is scheduling evidence, not product evidence.</p>
+<h2 id="incoming-what-exploration-could-unlock">Incoming — what exploration could unlock<a class="heading-anchor" href="#incoming-what-exploration-could-unlock" aria-label="Link to Incoming — what exploration could unlock">#</a></h2>
+<p>The long-term direction is one idea: every piece of media you already keep becomes inspectable, citable evidence through the same gates. None of the directions below is shipped, installed, or promised; each is listed with what it would take to become real.</p>
+<div class="table-scroll"><table><thead><tr><th scope="col">Direction</th><th scope="col">What it would give you</th><th scope="col">Standing gates</th></tr></thead><tbody><tr><td>X bookmarks, TikTok favorites, LinkedIn saves</td><td>one evidence library across every platform you save to</td><td>per-platform permission review; signed-in capture is never implied by public reading</td></tr><tr><td>Newsletter collections</td><td>inbox reading with sender and issue order preserved</td><td>delivery-platform review; no mailbox credentials, ever</td></tr><tr><td>Browser bridge (live pages)</td><td>read what a page shows at read time, with the page state recorded</td><td>site-by-site approval; no credentials, cookies, or storage access</td></tr><tr><td>Screenshot CLI/MCP integrations (Iris-style)</td><td>turn a visible screen region into citable frames</td><td>capture-scope consent; same inspect -&gt; preview -&gt; read discipline</td></tr><tr><td>Agent plugins and multi-model reading</td><td>choose per-task models for transcription and vision</td><td>model-download and cloud approvals stay per-run, never global settings</td></tr><tr><td>Hosted edition</td><td>Voidscape without local setup</td><td>product, billing, connector, and legal gates; local-first stays the default</td></tr></tbody></table></div>
+<p>Two boundaries hold across every row. First, Voidscape is a reader: follower audits, creator performance dashboards, and job-search tooling are separate companion projects, and permission to read never implies following, unfollowing, messaging, or publishing. Second, security review gates apply before any exploration becomes an installed capability — a working prototype is not a release.</p>
         <div class="article-edit"><a href="https://github.com/RikepilB/void-scape/edit/main/docs/agents/roadmap-status.md" target="_blank" rel="noreferrer">Edit this page on GitHub ↗</a></div>
         <nav class="page-navigation" aria-label="Previous and next pages"><a class="previous" href="capture-adapters/youtube.html"><span>Previous</span><strong>← YouTube</strong></a><a class="next" href="references.html"><span>Next</span><strong>References →</strong></a></nav>
       </article>
@@ -81,7 +86,8 @@
       <strong>On this page</strong>
       <nav><a href="#top" class="toc-level-2">Overview</a>
 <a href="#status-board" class="toc-level-2">Status board</a>
-<a href="#interpretation-rules" class="toc-level-2">Interpretation rules</a></nav>
+<a href="#interpretation-rules" class="toc-level-2">Interpretation rules</a>
+<a href="#incoming-what-exploration-could-unlock" class="toc-level-2">Incoming — what exploration could unlock</a></nav>
     </aside>
   </div>
 

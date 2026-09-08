@@ -6,6 +6,8 @@ workspace.json
 samples/*
 !samples/.gitkeep
 *.mp4
+# demo recording shipped with the docs (guide embed + README link)
+!docs/assets/cli-demo.mp4
 *.mov
 *.mkv
 *.webm

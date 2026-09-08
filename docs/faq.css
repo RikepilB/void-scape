@@ -46,3 +46,7 @@ main { padding-top: 70px; }
   .category-nav a { border-bottom: 1px solid var(--line); flex: 1 1 46%; }
   .faq-category { padding: 46px 0; }
 }
+
+.demo-video { border: 1px solid rgba(206, 222, 249, .18); border-radius: 14px; margin: 26px 0 6px; overflow: hidden; }
+.demo-video video { background: #05070c; display: block; height: auto; max-width: 100%; width: 100%; }
+.demo-video figcaption { border-top: 1px solid rgba(206, 222, 249, .18); color: inherit; font-size: 13px; line-height: 1.5; padding: 12px 16px; }
