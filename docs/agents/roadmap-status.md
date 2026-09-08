@@ -13,9 +13,13 @@ does not authorize install, publication, or roadmap expansion.
 | Local/URL video and audio evidence | `shipped` | `skill/scripts/video.py`; video tests |
 | Local image and carousel evidence | `shipped` | `skill/scripts/image.py`; image tests |
 | Local articles, RSS/Atom, approved public article fetch | `shipped` | `skill/scripts/article.py`; article tests |
+| Local chat export (WhatsApp-style) evidence | `shipped` | `skill/scripts/chat.py`; chat reader tests |
+| Connectors contract page | `shipped` | this tree: `connectors.md` |
+| Harness skill kit (copy-and-adapt templates) | `shipped` | `harness/skills/`; template tests |
 | Shared reader protocol and envelope | `shipped` | reader manifests; protocol tests |
 | Source capability registry and reader override | `release-candidate` | `voidscape route`, `voidscape sources`; source tests |
 | Instagram URL queue helper | `dev-only` | repository script; not installed with the skill |
+| Instagram follow-relationship audit (read-only) | `dev-only` | repository script; local exports only; never unfollows |
 | YouTube private-playlist queue adapter | `dev-only` | repository script; official API; not installed with the skill |
 | Agent documentation tree | `shipped` | this page and sibling pages |
 | Machine-readable agent discovery manifest | `shipped` | `docs/agents/manifest.json` |

@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import article
+import chat
 import image
 import video
 
@@ -54,7 +55,11 @@ REQUIRED_MARKDOWN = {
     "readers/images.md",
     "readers/video-audio.md",
     "readers/articles-rss.md",
+    "readers/chats-whatsapp.md",
+    "connectors.md",
+    "harness-kit.md",
     "capture-adapters/instagram.md",
+    "capture-adapters/ig-follow-audit.md",
     "capture-adapters/youtube.md",
     "troubleshooting.md",
 }
@@ -304,7 +309,7 @@ def test_agent_docs_forbid_browser_state_and_implicit_approval():
 
 def test_manifest_matches_reader_protocol_and_known_entry_points():
     manifest = json.loads(_text(AGENT_MANIFEST))
-    reader_manifests = [_reader_manifest(module) for module in (video, image, article)]
+    reader_manifests = [_reader_manifest(module) for module in (video, image, article, chat)]
 
     assert manifest["schema_version"] == "1.0"
     assert manifest["protocol"]["version"] == "1.0"
@@ -330,6 +335,7 @@ def test_manifest_names_installed_skills_and_citation_contracts():
         "video_audio": "[MM:SS]",
         "article": "[article N]",
         "rss_atom": "[entry N]",
+        "chat": "[message N]",
     }
     assert manifest["security"] == {
         "browser_state_access": False,
@@ -348,6 +354,7 @@ def test_shipped_dev_only_and_candidate_statuses_match_documented_truth():
     assert statuses["evidence.image_carousel"] == "shipped"
     assert statuses["evidence.video_audio"] == "shipped"
     assert statuses["evidence.article"] == "shipped"
+    assert statuses["evidence.chat_export"] == "shipped"
     assert statuses["capture.instagram_queue"] == "dev-only"
     assert statuses["capture.youtube_private_playlist"] == "dev-only"
     assert statuses["capture.observe_on_demand"] == "shipped"

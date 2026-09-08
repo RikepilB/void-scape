@@ -177,6 +177,19 @@ Want the deep patterns — step-by-step collection runs, formatted deliverables
 [Workflow and protocol](docs/agents/workflow.md) and
 [Agent automation](docs/agents/automation.md).
 
+### Connectors and the harness kit
+
+Voidscape stays a local evidence engine. Harness connectors — a messaging MCP the harness already
+trusts, an approved browser tab, or the repository capture adapters — only deliver local files or
+public URLs into the same `inspect → preview → read` gates; the
+[connectors contract](docs/agents/connectors.md) keeps it that way (an MCP server itself remains
+a documented no-go). Two pieces ship with that story:
+
+- **Chat exports** — a WhatsApp-style `_chat.txt` reads natively as ordered `[message N]`
+  evidence, fully local, referenced media included.
+- **[Harness skill kit](docs/agents/harness-kit.md)** — copy-and-adapt templates (inbox triage,
+  evidence-grounded outreach, learning capture, catch-up) that ride on Voidscape citations.
+
 ## Choose the right path
 
 | You have… | You want… | Do this |

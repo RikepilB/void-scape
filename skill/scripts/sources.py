@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ipaddress
+import re
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
@@ -13,6 +14,23 @@ MEDIA_EXTENSIONS = {
     ".3gp", ".aac", ".flac", ".m4a", ".m4v", ".mkv", ".mov", ".mp3", ".mp4",
     ".mpeg", ".mpg", ".ogg", ".opus", ".wav", ".webm", ".wma", ".wmv",
 }
+# Minimal detection twin of chat.looks_like_chat_export; the registry stays
+# reader-independent, so the full parser lives in chat.py.
+CHAT_HEADER_RE = re.compile(r"^\[[^\]]{4,40}\]\s?\S")
+
+
+def _looks_like_chat_export(path: Path) -> bool:
+    try:
+        sample = path.read_text(encoding="utf-8", errors="replace")[:8192]
+    except OSError:
+        return False
+    matches = 0
+    for line in sample.splitlines():
+        if CHAT_HEADER_RE.match(line):
+            matches += 1
+            if matches >= 2:
+                return True
+    return False
 
 
 PLATFORM_PROFILES: tuple[dict[str, Any], ...] = (
@@ -323,6 +341,9 @@ def route(value: str) -> dict[str, Any]:
         elif suffix in IMAGE_EXTENSIONS:
             reader = "image"
             note = "Local image evidence is copied byte-for-byte."
+        elif suffix == ".txt" and path.is_file() and _looks_like_chat_export(path):
+            reader = "chat"
+            note = "WhatsApp-style chat export evidence stays local; media files are referenced, not extracted."
         elif suffix in ARTICLE_EXTENSIONS:
             reader = "article"
             note = "Local article/feed evidence stays local."
@@ -372,6 +393,7 @@ def manifest() -> dict[str, Any]:
             "video": "local media and best-effort public media URLs",
             "image": "local images and filename-ordered carousel folders",
             "article": "local documents/feeds and approved public article/feed fetches",
+            "chat": "local WhatsApp-style chat export files",
         },
         "platforms": [dict(profile) for profile in PLATFORM_PROFILES],
         "generic_web": {

@@ -156,14 +156,16 @@ def test_public_pages_show_the_voidscape_logo_and_theme_control():
 
 def test_landing_presents_shipped_readers_as_a_compact_use_case_reel():
     content = LANDING_PAGE.read_text(encoding="utf-8")
-    assert content.count("data-carousel-slide") == 9
-    assert content.count("data-carousel-dot") == 9
+    assert content.count("data-carousel-slide") == 10
+    assert content.count("data-carousel-dot") == 10
     assert "Images + carousels" in content
     assert "Articles + feeds" in content
     assert "[article N] · [entry N]" in content
     assert "Agent browser" in content
     assert "Capture extension — planned" in content
     assert "Outputs: md · html · xlsx · docx · pdf" in content
+    assert "Chat exports" in content
+    assert "Evidence: [message N]" in content
     assert 'src="landing.js"' in content
 
     script = (REPO / "docs" / "landing.js").read_text(encoding="utf-8")

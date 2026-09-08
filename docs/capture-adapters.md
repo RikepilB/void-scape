@@ -34,6 +34,15 @@ implements the shared contract in `scripts/capture_adapter.py`.
   confirmed duplicate); delete aborts with `partial_write` if append succeeded
   but removal failed.
 
+### Instagram follow audit (`ig_follow_audit_helper.py`)
+
+- **Inspect / preview / process** are fully local: the user exports both lists
+  (Instagram data-download JSON or one-handle-per-line text) and the helper
+  diffs them into a citable report. No network, no browser, no account access.
+- **Read-only by contract:** it never unfollows, follows, or messages; the
+  suggested review list is acted on by the human. See
+  [`agents/capture-adapters/ig-follow-audit.md`](agents/capture-adapters/ig-follow-audit.md).
+
 ## Contract
 
 1. **Inspect** — read source state only; no `urls.md` or account mutation.
