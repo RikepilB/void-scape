@@ -223,13 +223,20 @@ def _have(module: str) -> bool:
     return importlib.util.find_spec(module) is not None
 
 
-def _ytdlp_cookie_args() -> list[str]:
+def _ytdlp_cookie_args(url: str) -> list[str]:
     """Optional auth for platforms (e.g. Instagram) that refuse anonymous fetches.
 
     Points at a Netscape-format cookies.txt exported by the user themselves (e.g. a browser
     extension) — never extracted by this script. Path comes only from an env var, matching the
     rest of the skill's "no credentials read from files it scans itself" stance.
+
+    Withheld for a non-HTTPS target. yt-dlp uses `http.cookiejar`, which only restricts cookies
+    carrying the `Secure` attribute, so a matching non-Secure cookie in the user's export would
+    otherwise travel in cleartext on an `http://` URL. The user exported that file to reach one
+    platform; sending it over plaintext is not a tradeoff they agreed to.
     """
+    if urlsplit(url).scheme.lower() != "https":
+        return []
     path = os.environ.get("READ_VIDEO_YTDLP_COOKIES")
     if path and Path(path).exists():
         return ["--cookies", path]
@@ -282,7 +289,7 @@ def find_sidecar(path: str) -> str | None:
 
 def ytdlp_meta(url: str) -> dict[str, Any]:
     url = validate_remote_media_url(url)
-    cp = run_cmd(["yt-dlp", "--no-warnings", "--skip-download", "-J", *_ytdlp_cookie_args(), url])
+    cp = run_cmd(["yt-dlp", "--no-warnings", "--skip-download", "-J", *_ytdlp_cookie_args(url), url])
     if cp.returncode != 0:
         raise RuntimeError(f"yt-dlp metadata failed: {_ytdlp_error(cp.stderr)}")
     info = json.loads(cp.stdout)
@@ -351,11 +358,36 @@ def _have_local_backend(backend: str) -> bool:
         return which("trx") is not None
     if backend in ("faster-whisper", "local"):
         return _have("faster_whisper")
-    return True
+    # An unrecognised name is never available: `_transcribe_one` has no branch for it and raises.
+    return backend in KNOWN_BACKENDS
 
 
 def _backend_chain(backend: str) -> list[str]:
     return [b.strip() for b in backend.split(",") if b.strip()] or [backend]
+
+
+# The exact set `_transcribe_one` can dispatch. Preview and read both validate against this, so a
+# name the read path would refuse can never be priced as a runnable one.
+KNOWN_BACKENDS = frozenset({"captions", "faster-whisper", "local", "trx", "gemini", *BACKEND_API})
+
+
+def validate_backend_chain(backend: str) -> list[str]:
+    """Reject a backend the read path cannot dispatch, before it is ever priced.
+
+    `--backend` is free text, so a typo used to reach the estimate, resolve to "available" through
+    the old `_have_local_backend` default, and be reported free and installed -- then fail at read
+    with "no usable transcription backend". A wrong estimate is a silent cost-gate bypass, so the
+    two paths have to agree on one list.
+    """
+    chain = _backend_chain(backend) if backend else []
+    unknown = [b for b in chain if b not in KNOWN_BACKENDS]
+    if unknown:
+        raise ValueError(
+            f"unknown transcription backend: {', '.join(unknown)}. "
+            f"Known backends: {', '.join(sorted(KNOWN_BACKENDS))}. "
+            f"See references/backends.md"
+        )
+    return chain
 
 
 def _agent_rate(pr: dict[str, Any], agent_model: str | None) -> tuple[str, dict[str, Any], str]:
@@ -418,7 +450,7 @@ def estimate(inp: str, frames: int | None = None, backend: str = "captions",
     dur_min = dur / 60.0
     want_frames = tier in ("visual", "both")
     want_audio = tier in ("audio", "both")
-    chain = _backend_chain(backend) if backend else [backend]
+    chain = validate_backend_chain(backend) if backend else [backend]
 
     n = frames if frames else adaptive_frames(dur)
     target_w = int(pr.get("frame", {}).get("target_width", 512))
@@ -500,7 +532,7 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
     dur = info["duration_s"] or 0.0
     want_frames = tier in ("visual", "both")
     want_audio = tier in ("audio", "both")
-    chain = _backend_chain(backend) if want_audio else []
+    chain = validate_backend_chain(backend) if want_audio else []
     # A sidecar transcript short-circuits _transcribe() before the chain is ever consulted, so a
     # cloud backend named in the chain is never actually called -- don't demand consent for it.
     if (not info.get("sidecar_transcript") and any(b in CLOUD_BACKENDS for b in chain)
@@ -588,7 +620,7 @@ def _download(url: str, wd: Path) -> str:
     out = str(wd / "source.%(ext)s")
     cp = run_cmd(["yt-dlp", "-f", "bv*[height<=720]+ba/b[height<=720]/b",
                   "--concurrent-fragments", "8", "-o", out, "--no-warnings",
-                  *_ytdlp_cookie_args(), url])
+                  *_ytdlp_cookie_args(url), url])
     if cp.returncode != 0:
         raise RuntimeError(f"yt-dlp download failed: {_ytdlp_error(cp.stderr)}")
     files = sorted(wd.glob("source.*"))
@@ -879,7 +911,7 @@ def _fetch_captions(url: str, wd: Path, window_start: float | None = None,
     out = str(wd / "caps")
     run_cmd(["yt-dlp", "--skip-download", "--write-subs", "--write-auto-subs",
              "--sub-format", "vtt", "--sub-langs", "en.*,en",
-             "-o", out, "--no-warnings", *_ytdlp_cookie_args(), url])
+             "-o", out, "--no-warnings", *_ytdlp_cookie_args(url), url])
     vtts = sorted(wd.glob("caps*.vtt"))
     if not vtts:
         return None

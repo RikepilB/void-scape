@@ -78,19 +78,19 @@ def test_to_audio_resolves_src(monkeypatch, tmp_path):
 
 def test_ytdlp_cookie_args_absent_by_default(monkeypatch):
     monkeypatch.delenv("READ_VIDEO_YTDLP_COOKIES", raising=False)
-    assert video._ytdlp_cookie_args() == []
+    assert video._ytdlp_cookie_args("https://example.com/watch") == []
 
 
 def test_ytdlp_cookie_args_missing_file_ignored(monkeypatch, tmp_path):
     monkeypatch.setenv("READ_VIDEO_YTDLP_COOKIES", str(tmp_path / "nope.txt"))
-    assert video._ytdlp_cookie_args() == []
+    assert video._ytdlp_cookie_args("https://example.com/watch") == []
 
 
 def test_ytdlp_cookie_args_present_when_file_exists(monkeypatch, tmp_path):
     cookies = tmp_path / "cookies.txt"
     cookies.write_text("# Netscape HTTP Cookie File\n", encoding="utf-8")
     monkeypatch.setenv("READ_VIDEO_YTDLP_COOKIES", str(cookies))
-    assert video._ytdlp_cookie_args() == ["--cookies", str(cookies)]
+    assert video._ytdlp_cookie_args("https://example.com/watch") == ["--cookies", str(cookies)]
 
 
 def test_ytdlp_meta_passes_cookie_args(monkeypatch, tmp_path):
