@@ -58,7 +58,8 @@ def test_publish_verify_move_and_renamed_duplicate(roots):
     duplicate = recording(root, 'renamed.mp4')
     before = (root / '.processed.json').read_bytes()
     result = execute(root, notes, duplicate, lambda *a: pytest.fail('duplicate must not reprocess'))
-    assert result['status'] == 'skipped' and duplicate.exists()
+    assert result['status'] == 'skipped' and not duplicate.exists()
+    assert (root / 'processed/renamed.mp4').read_bytes() == b'recording'
     assert (root / '.processed.json').read_bytes() == before
 
 
@@ -290,4 +291,27 @@ def test_named_event_routes_note_and_retains_processed_subfolders(roots):
     assert Path(result['processed']) == root / 'processed/Conference 2026/Day 2/talk.mp4'
     duplicate = recording(root, 'Another Event/renamed.mp4')
     result = execute(root, notes, duplicate, lambda *a: pytest.fail('same recording must not be reanalyzed'))
-    assert result['status'] == 'skipped' and duplicate.exists()
+    assert result['status'] == 'skipped' and not duplicate.exists()
+    assert (root / 'processed/Another Event/renamed.mp4').read_bytes() == b'recording'
+
+
+def test_duplicate_does_not_starve_next_bounded_batch(roots):
+    root, notes = roots
+    execute(root, notes, recording(root))
+    duplicate = recording(root, 'duplicate.mp4')
+    os.utime(duplicate, (1, 1))
+    fresh = recording(root, 'new.mp4', b'new recording')
+    assert inbox.discover(root, 1) == [duplicate]
+    assert execute(root, notes, duplicate)['status'] == 'skipped'
+    assert inbox.discover(root, 1) == [fresh]
+
+
+def test_duplicate_destination_collision_preserves_input(roots):
+    root, notes = roots
+    execute(root, notes, recording(root))
+    duplicate = recording(root, 'renamed.mp4')
+    destination = recording(root, 'processed/renamed.mp4', b'other recording')
+    with pytest.raises(ValueError, match='collision'):
+        execute(root, notes, duplicate)
+    assert duplicate.read_bytes() == b'recording'
+    assert destination.read_bytes() == b'other recording'

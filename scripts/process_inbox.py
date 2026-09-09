@@ -144,8 +144,11 @@ def verify_receipt(root, notes_root, path, *, repair=False):
     return record, destination
 
 
-def finish_move(root, notes_root, source, receipt):
+def finish_move(root, notes_root, source, receipt, *, current_name=False):
     record, destination = verify_receipt(root, notes_root, receipt)
+    if current_name:
+        destination = checked(root / 'processed' / source.relative_to(root))
+        destination.relative_to(root / 'processed')
     identity = record['source_sha256']
     if file_digest(source) != identity:
         raise ValueError('recording changed before move')
@@ -267,8 +270,9 @@ def process_one(root, notes_root, source, model, backend, port, producer=prepare
             # A leftover source from a linked-but-not-unlinked move is recoverable.
             if str(relative) == record['original_name']:
                 return finish_move(root, notes_root, source, receipt)
-            mark(root, identity, receipt, 'processed')
-            return {'status': 'skipped', 'reason': 'verified-content-duplicate', 'source_sha256': identity}
+            result = finish_move(root, notes_root, source, receipt, current_name=True)
+            result.update(status='skipped', reason='verified-content-duplicate')
+            return result
         return finish_move(root, notes_root, source, receipt)
     if identity in checkpoint(root)['items']:
         raise ValueError('checkpoint references a missing receipt')

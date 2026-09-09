@@ -69,8 +69,11 @@ def run(command, *, timeout, log, cwd=None):
                                        start_new_session=os.name != 'nt')
             if os.name == 'nt':
                 job = WindowsJob(process)
-            process.stdin.write(b'GO\n')
-            process.stdin.close()
+            try:
+                process.stdin.write(b'GO\n')
+                process.stdin.close()
+            except BrokenPipeError:
+                pass  # Preserve the worker's exit status rather than a flush error.
             try:
                 code = process.wait(timeout=max(0.001, timeout - (time.monotonic() - started)))
             except subprocess.TimeoutExpired:
@@ -90,4 +93,7 @@ def run(command, *, timeout, log, cwd=None):
                     process.kill()  # Assignment failed before the GO handshake.
                 process.wait()
                 if process.stdin and not process.stdin.closed:
-                    process.stdin.close()
+                    try:
+                        process.stdin.close()
+                    except BrokenPipeError:
+                        pass

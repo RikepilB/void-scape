@@ -3,6 +3,7 @@ import time
 
 import pytest
 
+import process_deadline
 from process_deadline import ProcessDeadlineError, run
 
 
@@ -32,6 +33,29 @@ time.sleep(30)
 
 
 def test_nonzero_worker_is_reported(tmp_path):
+    with pytest.raises(ProcessDeadlineError, match='worker failed'):
+        run([sys.executable, '-c', 'import sys; sys.stdin.readline(); sys.exit(6)'],
+            timeout=10, log=tmp_path / 'log')
+
+
+def test_broken_pipe_flush_does_not_mask_worker_exit(tmp_path, monkeypatch):
+    original = process_deadline.subprocess.Popen
+    class BrokenClose:
+        def __init__(self, stream):
+            self.stream = stream
+        @property
+        def closed(self):
+            return False
+        def write(self, data):
+            return self.stream.write(data)
+        def close(self):
+            self.stream.close()
+            raise BrokenPipeError('simulated flush failure')
+    def launch(*args, **kwargs):
+        process = original(*args, **kwargs)
+        process.stdin = BrokenClose(process.stdin)
+        return process
+    monkeypatch.setattr(process_deadline.subprocess, 'Popen', launch)
     with pytest.raises(ProcessDeadlineError, match='worker failed'):
         run([sys.executable, '-c', 'import sys; sys.stdin.readline(); sys.exit(6)'],
             timeout=10, log=tmp_path / 'log')

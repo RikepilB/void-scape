@@ -44,7 +44,8 @@ No service or model is installed, started or downloaded automatically.
   Receipts and retained files are checked again before duplicate reuse or recovery.
 - A verified note precedes the source move to `processed/<original-relative-path>`.
   Existing different destination bytes are never overwritten. A renamed duplicate
-  remains in place and is reported as skipped without transcription or model use.
+  is reported as skipped without transcription or model use, then moved under
+  its own relative name so it no longer occupies future batch slots.
   Sidecar originals remain in place. Interrupted publication/moves are recoverable;
   changed completed artifacts stop processing for local review.
 - Failures before the source move retain the recording and local work, record a
