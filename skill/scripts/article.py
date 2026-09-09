@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import http.client
 import ipaddress
+import json
 import re
 import socket
 import ssl
@@ -327,20 +329,34 @@ def _parse_feed_xml(text: str) -> dict[str, Any]:
         link = ""
         for child in raw:
             name = _local_tag(child.tag)
-            if name == "link" and child.attrib.get("href"):
+            if name == "link" and child.attrib.get("href") and child.attrib.get("rel", "alternate") == "alternate":
                 link = child.attrib["href"]
                 break
             if name == "link" and _text_content(child):
                 link = _text_content(child)
                 break
+        id_element = _first_child(raw, ("guid", "id"))
+        explicit_id = (id_element.text or "") if id_element is not None else ""
+        guid = explicit_id or link
+        identity_kind = "id" if explicit_id else "link" if link else "content"
         link = _sanitize_evidence_link(link)
-        guid = _child_text(raw, ("guid", "id")) or link or title
         published = _child_text(raw, ("pubDate", "published", "updated"))
-        body = _child_text(raw, ("content:encoded", "content", "description", "summary"))
+        # Prefer full content even when a summary appears first in document order.
+        content = next((element for name in ("encoded", "content", "description", "summary")
+                        if (element := _first_child(raw, (name,))) is not None), None)
+        body = _text_content(content)
+        if content is not None and content.attrib.get("type") == "xhtml":
+            body = _html_to_text(ET.tostring(content, encoding="unicode"))
+        if content is not None and (_local_tag(content.tag) in {"encoded", "description"} or
+                                    content.attrib.get("type") == "html"):
+            body = _html_to_text(body)
         if not title and not body:
             skipped.append({"title": guid or "(untitled)", "reason": "empty"})
             continue
-        dedupe_key = guid or link or f"{title}|{published}"
+        if not guid:
+            # Missing IDs cannot make unrelated entries with the same title vanish.
+            guid = hashlib.sha256(json.dumps([title, published, body], ensure_ascii=False).encode()).hexdigest()
+        dedupe_key = guid
         if dedupe_key in seen:
             skipped.append({"title": title or guid, "reason": "duplicate"})
             continue
@@ -350,7 +366,16 @@ def _parse_feed_xml(text: str) -> dict[str, Any]:
             "link": link,
             "published": published,
             "guid": guid,
+            "identity_kind": identity_kind,
             "body": body,
+            "author": _child_text(raw, ("author", "creator")) or None,
+            "content_kind": _local_tag(content.tag) if content is not None else "missing",
+            "enclosures": [
+                {"url": _sanitize_evidence_link(child.attrib.get("url") or child.attrib.get("href", "")),
+                 "type": child.attrib.get("type", "")}
+                for child in raw if _local_tag(child.tag) == "enclosure" or
+                (_local_tag(child.tag) == "link" and child.attrib.get("rel") == "enclosure")
+            ],
             "word_count": _word_count(body or title),
         })
     if not entries and not raw_items:

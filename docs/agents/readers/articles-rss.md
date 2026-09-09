@@ -1,5 +1,9 @@
 # Articles and RSS/Atom
 
+For repeated intake, the repository-only [RSS helper](../../rss-intake.md) adds
+bounded public-feed capture and revalidated entry dedup. It stores untrusted
+evidence, not analyzed notes. Its source skill and note workflow remain pending.
+
 The article reader prepares deterministic text evidence from local documents, feeds, and explicitly
 approved public article fetches.
 
