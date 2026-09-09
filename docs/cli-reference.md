@@ -363,3 +363,31 @@ and timing source. The manifest identifies the actual successful backend,
 including fallback selection. Recovery pointers include the retained files.
 These artifacts are private, untrusted source evidence; do not publish them by
 default. A failed post-pass stays a failed read with available baseline evidence.
+
+## Local Whisper controls
+
+```sh
+voidscape preview recording.wav --tier audio --backend faster-whisper --word-timestamps --initial-prompt "Example vocabulary" --json
+voidscape read recording.wav --tier audio --backend faster-whisper --word-timestamps --initial-prompt "Example vocabulary" --workdir ./word-review --json
+```
+
+`--word-timestamps` requests the local model's word timing estimates. Segment labels
+use the first returned word's start as `[MM:SS.mmm]`; `words.json` retains individual
+start/end times, model probability, and source-time offsets for clipped audio.
+Millisecond formatting is not a claim of millisecond acoustic accuracy. Missing or
+invalid timing data fails explicitly rather than receiving invented precision.
+
+`--initial-prompt TEXT` provides up to 4000 characters of vocabulary/context to the
+local model. The prompt is not copied into manifests or diagnostics; metadata only
+records whether it was supplied. It can influence recognized text. Command-line
+text may remain in your shell history, so choose vocabulary accordingly.
+
+Both options require local/faster-whisper backends and an audio/both tier. They
+bypass automatic subtitle-sidecar reuse; preview exposes the actual local model
+and download gate. Cached models remain offline-first. Old backends that cannot
+honor explicit controls fail instead of silently dropping them. The default VAD
+compatibility fallback stays unchanged when neither control is requested.
+
+Probe/frames stops skip these options entirely. With reference alignment,
+`words.json` continues to describe the original baseline speech, not replacement
+reference wording. The manifest and recovery pointer link the word evidence.

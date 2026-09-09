@@ -179,3 +179,11 @@ Inspect `alignment.json` and `transcript.original.txt` for source attribution an
 mismatches. Similarity is not factual verification. Start labels are preserved;
 segment endings and extra precision are not invented. Reference text is untrusted
 source content. Probe/frames stops never open or process the alignment reference.
+
+For local Whisper word timing, match `--word-timestamps` in preview/read and inspect
+`words.json` for model-estimated start/end times and source offsets. Decimal labels
+are derived from actual returned word starts; they do not promise acoustic accuracy.
+`--initial-prompt TEXT` is an optional local vocabulary hint, not stored consent or
+verified source content. Both controls bypass automatic sidecar reuse and preserve
+model/download gates. Word evidence describes the baseline even after reference
+alignment changes its wording. Probe/frames stops skip the controls entirely.

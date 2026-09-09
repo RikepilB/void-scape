@@ -643,17 +643,32 @@ def _alignment_context(info, tier, backend, stop_at, reference_path, threshold):
     return info, reference
 
 
+def _whisper_control_context(info, tier, backend, stop_at, word_timestamps, initial_prompt):
+    if stop_at is not None or not (word_timestamps or initial_prompt is not None):
+        return info, {}
+    if tier == "visual":
+        raise ValueError("Whisper controls require an audio or both tier")
+    if any(item not in {"local", "faster-whisper"} for item in validate_backend_chain(backend)):
+        raise ValueError("Whisper controls require only local/faster-whisper backends")
+    if initial_prompt is not None and (not isinstance(initial_prompt, str) or len(initial_prompt) > 4000):
+        raise ValueError("Whisper initial prompt must be text of at most 4000 characters")
+    return {**info, "sidecar_transcript": None}, {
+        "word_timestamps": word_timestamps, "initial_prompt": initial_prompt}
+
+
 def estimate(inp: str, frames: int | None = None, backend: str = "captions",
              out_words: int = 600, tier: str = "both",
              pr: dict[str, Any] | None = None,
              transcribe_mode: str = "auto",
              agent_model: str | None = None,
              stop_at: str | None = None, align_reference: str | None = None,
-             alignment_threshold: float = 0.8) -> dict[str, Any]:
+             alignment_threshold: float = 0.8, word_timestamps: bool = False,
+             initial_prompt: str | None = None) -> dict[str, Any]:
     want_frames, want_audio = _stop_scope(tier, stop_at)
     pr = pr or load_pricing()
     info = probe(inp)
     info, reference = _alignment_context(info, tier, backend, stop_at, align_reference, alignment_threshold)
+    info, controls = _whisper_control_context(info, tier, backend, stop_at, word_timestamps, initial_prompt)
     dur = info["duration_s"] or 0.0
     dur_min = dur / 60.0
     chain = validate_backend_chain(backend) if want_audio and backend else []
@@ -719,6 +734,9 @@ def estimate(inp: str, frames: int | None = None, backend: str = "captions",
         "sidecar_transcript": info.get("sidecar_transcript"),
         "captions_available": info.get("captions_available"),
     }
+    if controls:
+        out["whisper_options"] = {"word_timestamps": word_timestamps,
+                                  "initial_prompt_supplied": initial_prompt is not None}
     if reference is not None:
         out["alignment"] = {"reference_sha256": reference["sha256"],
                             "threshold": alignment_threshold, "local_only": True,
@@ -742,20 +760,22 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
         timestamps: str | None = None, dedup: bool = True,
         transcribe_mode: str = "auto", allow_cloud: bool = False,
         allow_model_download: bool = False, stop_at: str | None = None,
-        align_reference: str | None = None, alignment_threshold: float = 0.8) -> dict[str, Any]:
+        align_reference: str | None = None, alignment_threshold: float = 0.8,
+        word_timestamps: bool = False, initial_prompt: str | None = None) -> dict[str, Any]:
     return execute_read(_run, inp, tier, frames, backend, start, end, workdir, pr,
                         timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download, stop_at,
-                        align_reference, alignment_threshold)
+                        align_reference, alignment_threshold, word_timestamps, initial_prompt)
 
 
 def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
          timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download, stop_at,
-         align_reference, alignment_threshold):
+         align_reference, alignment_threshold, word_timestamps, initial_prompt):
     want_frames, want_audio = _stop_scope(tier, stop_at)
     pr = pr or load_pricing()
     info = progress.call("probe", probe, inp)
     progress.begin("validate")
     info, reference = _alignment_context(info, tier, backend, stop_at, align_reference, alignment_threshold)
+    info, controls = _whisper_control_context(info, tier, backend, stop_at, word_timestamps, initial_prompt)
     source_input = resolve_input(inp) if info["source"] == "url" else info["input"]
     dur = info["duration_s"] or 0.0
     chain = validate_backend_chain(backend) if want_audio else []
@@ -845,9 +865,16 @@ def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
         tpath, text = progress.call("transcribe", _transcribe, source_input, info, media, wd, backend, transcribe_mode,
                                   allow_model_download,
                                   start if scoped_audio else None,
-                                  end if scoped_audio else None)
+                                  end if scoped_audio else None, **controls)
         result["transcript"] = tpath
         result["transcript_chars"] = len(text)
+        if controls:
+            result["whisper_options"] = {"word_timestamps": word_timestamps,
+                                          "initial_prompt_supplied": initial_prompt is not None,
+                                          "model": getattr(progress, "whisper_model", None)}
+            if word_timestamps:
+                result["words_file"] = progress.call("word_timing", _write_words, wd,
+                                                       getattr(progress, "whisper_words", None))
         if reference is not None:
             selected = getattr(progress, "transcript_backend", "unknown")
             source = ("whisper" if selected in {"local", "faster-whisper"}
@@ -1073,7 +1100,10 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
                 wd: Path, backend: str, transcribe_mode: str = "auto",
                 allow_model_download: bool = False,
                 window_start: float | None = None,
-                window_end: float | None = None) -> tuple[str, str]:
+                window_end: float | None = None, *, word_timestamps: bool = False,
+                initial_prompt: str | None = None) -> tuple[str, str]:
+    controls = ({"word_timestamps": word_timestamps, "initial_prompt": initial_prompt}
+                if word_timestamps or initial_prompt is not None else {})
     # A sidecar transcript is free and beats any backend, so it short-circuits the whole chain.
     if info.get("sidecar_transcript"):
         progress = _ACTIVE_READ.get()
@@ -1088,7 +1118,7 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
     chain = _backend_chain(backend)
     if len(chain) == 1:
         value = _transcribe_one(orig, info, media, wd, chain[0], transcribe_mode,
-                               allow_model_download, window_start, window_end)
+                               allow_model_download, window_start, window_end, **controls)
         progress = _ACTIVE_READ.get()
         if progress is not None:
             progress.transcript_backend = chain[0]
@@ -1098,7 +1128,7 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
     for b in chain:
         try:
             value = _transcribe_one(orig, info, media, wd, b, transcribe_mode,
-                                    allow_model_download, window_start, window_end)
+                                    allow_model_download, window_start, window_end, **controls)
             progress = _ACTIVE_READ.get()
             if progress is not None:
                 progress.transcript_backend = b
@@ -1116,7 +1146,8 @@ def _transcribe_one(orig: str, info: dict[str, Any], media: str | None,
                     wd: Path, backend: str, transcribe_mode: str = "auto",
                     allow_model_download: bool = False,
                     window_start: float | None = None,
-                    window_end: float | None = None) -> tuple[str, str]:
+                    window_end: float | None = None, *, word_timestamps: bool = False,
+                    initial_prompt: str | None = None) -> tuple[str, str]:
     if backend == "captions" and info["source"] == "url":
         text = _fetch_captions(orig, wd, window_start, window_end)
         if text:
@@ -1133,10 +1164,15 @@ def _transcribe_one(orig: str, info: dict[str, Any], media: str | None,
         duration_s = ((window_end - window_start)
                       if window_start is not None and window_end is not None
                       else info.get("duration_s"))
+        controls = ({"word_timestamps": word_timestamps, "initial_prompt": initial_prompt}
+                    if word_timestamps or initial_prompt is not None else {})
+        if word_timestamps:
+            controls["source_offset_s"] = window_start or 0.0
         text = _faster_whisper(media or orig, duration_s=duration_s,
                                transcribe_mode=transcribe_mode,
-                               allow_model_download=allow_model_download)
-        return _save_transcript(wd, _shift_transcript_timestamps(text, window_start or 0.0))
+                               allow_model_download=allow_model_download, **controls)
+        return _save_transcript(wd, text if word_timestamps else
+                                _shift_transcript_timestamps(text, window_start or 0.0))
     if backend in BACKEND_API:
         text = _api_transcribe(backend, _to_audio(media or orig, wd))
         return _save_transcript(wd, _shift_transcript_timestamps(text, window_start or 0.0))
@@ -1225,7 +1261,7 @@ def _cues_to_text(raw: str, window_start: float | None = None,
     return "\n".join(out)
 
 
-_TRANSCRIPT_TS_RE = re.compile(r"\[(\d+(?::\d{1,2}){1,2})\]")
+_TRANSCRIPT_TS_RE = re.compile(r"\[(\d+(?::\d{1,2}){1,2}(?:\.\d+)?)\]")
 
 
 def _shift_transcript_timestamps(text: str, offset: float) -> str:
@@ -1234,7 +1270,8 @@ def _shift_transcript_timestamps(text: str, offset: float) -> str:
         return text
     if _TRANSCRIPT_TS_RE.search(text):
         return _TRANSCRIPT_TS_RE.sub(
-            lambda match: f"[{_ts(_parse_timestamp(match.group(1)) + offset)}]", text)
+            lambda match: "[" + (_ts_millis if "." in match.group(1) else _ts)(
+                _parse_timestamp(match.group(1)) + offset) + "]", text)
     return "\n".join(
         f"[{_ts(offset)}] {line}" for line in text.splitlines() if line.strip())
 
@@ -1260,6 +1297,13 @@ def _to_audio(src: str, wd: Path, start: float = 0.0,
 
 def _ts(seconds: float) -> str:
     return f"{int(seconds // 60):02d}:{int(seconds % 60):02d}"
+
+
+def _ts_millis(seconds: float) -> str:
+    milliseconds = round(seconds * 1000)
+    minutes, rest = divmod(milliseconds, 60000)
+    whole_seconds, fraction = divmod(rest, 1000)
+    return f"{minutes:02d}:{whole_seconds:02d}.{fraction:03d}"
 
 
 def _parse_timestamp(value: str) -> float:
@@ -1323,10 +1367,15 @@ def _new_whisper(size: str, download_root: str | None, offline: bool):
                         download_root=download_root, local_files_only=offline)
 
 
+class WhisperTimingError(RuntimeError):
+    """Safe validation diagnostic containing no model-supplied text."""
+
+
 def _faster_whisper(audio: str, model_size: str | None = None,
                     download_root: str | None = None, duration_s: float | None = None,
                     transcribe_mode: str = "auto",
-                    allow_model_download: bool = False) -> str:
+                    allow_model_download: bool = False, word_timestamps: bool = False,
+                    initial_prompt: str | None = None, source_offset_s: float = 0.0) -> str:
     profile = _transcribe_profile(duration_s, override=transcribe_mode)
     requested, cfg_root = _requested_whisper_model(profile, model_size)
     download_root = download_root or cfg_root
@@ -1379,6 +1428,10 @@ def _faster_whisper(audio: str, model_size: str | None = None,
     # only background music) it transcribes seconds instead of minutes AND avoids Whisper hallucinating
     # text over silence. The bundled VAD adds no extra dependency.
     kwargs: dict[str, Any] = {"vad_filter": True}
+    if word_timestamps:
+        kwargs["word_timestamps"] = True
+    if initial_prompt is not None:
+        kwargs["initial_prompt"] = initial_prompt
     if profile == "thorough":
         kwargs.update({
             "condition_on_previous_text": False,
@@ -1386,10 +1439,70 @@ def _faster_whisper(audio: str, model_size: str | None = None,
         })
     try:
         segments, _ = model.transcribe(audio, **kwargs)
-        return "\n".join(f"[{_ts(s.start)}] {s.text.strip()}" for s in segments)
-    except (TypeError, ValueError):                # older faster-whisper without VAD/VAD-params support
+        return _render_whisper(segments, word_timestamps, used, source_offset_s)
+    except Exception as ex:
+        if word_timestamps or initial_prompt is not None:
+            if isinstance(ex, WhisperTimingError):
+                raise
+            raise RuntimeError("Whisper failed with the requested controls; no option-free retry was attempted") from None
+        if not isinstance(ex, (TypeError, ValueError)):
+            raise
+        # Preserve the legacy VAD fallback only when no explicit controls were requested.
         segments, _ = model.transcribe(audio)
         return "\n".join(f"[{_ts(s.start)}] {s.text.strip()}" for s in segments)
+
+
+def _render_whisper(segments, word_timestamps, model, source_offset_s=0.0):
+    progress = _ACTIVE_READ.get()
+    if progress is not None:
+        progress.whisper_model = model
+    if not word_timestamps:
+        return "\n".join(f"[{_ts(segment.start)}] {segment.text.strip()}" for segment in segments)
+    if not math.isfinite(source_offset_s) or source_offset_s < 0:
+        raise WhisperTimingError("invalid source offset for word timing")
+    lines, records = [], []
+    previous = -1.0
+    for index, segment in enumerate(segments):
+        words = getattr(segment, "words", None)
+        if not words:
+            if segment.text.strip():
+                raise WhisperTimingError("Whisper returned speech without requested word timestamps")
+            continue
+        first = None
+        for word in words:
+            if not isinstance(word.word, str) or not word.word.strip():
+                raise WhisperTimingError("Whisper returned empty word timing text")
+            start, end = float(word.start), float(word.end)
+            if not math.isfinite(start) or not math.isfinite(end) or start < previous or start < 0 or end < start:
+                raise WhisperTimingError("Whisper returned invalid word timestamps")
+            probability = getattr(word, "probability", None)
+            if probability is not None and (not math.isfinite(probability) or not 0 <= probability <= 1):
+                raise WhisperTimingError("Whisper returned invalid word probability")
+            first = start if first is None else first
+            previous = start
+            records.append({"segment_index": index, "word": word.word,
+                            "start_s": start + source_offset_s, "end_s": end + source_offset_s,
+                            "model_start_s": start, "model_end_s": end,
+                            "source_offset_s": source_offset_s, "probability": probability})
+        lines.append(f"[{_ts_millis(first + source_offset_s)}] {segment.text.strip()}")
+    progress = _ACTIVE_READ.get()
+    if progress is not None:
+        progress.whisper_words = records
+        progress.whisper_model = model
+    return "\n".join(lines)
+
+
+def _write_words(root, records):
+    if records is None:
+        raise RuntimeError("requested word timing evidence was not returned")
+    path = Path(root) / "words.json"
+    with path.open("x", encoding="utf-8") as stream:
+        json.dump({"timeline": "source", "source": "whisper_model_estimates",
+                   "applies_to": "baseline_transcript_before_reference_alignment",
+                   "content_trust": EVIDENCE_TRUST.copy(), "words": records}, stream,
+                  indent=2, ensure_ascii=False)
+        stream.write("\n")
+    return str(path)
 
 
 def _trx(src: str) -> str:
@@ -1600,7 +1713,7 @@ def _cli_manifest() -> dict[str, Any]:
             "estimate": {
                 "description": "price tokens/transcription and surface approval requirements",
                 "flags": [
-                    "--frames", "--backend", "--out-words", "--tier", "--stop-at", "--align-reference", "--alignment-threshold",
+                    "--frames", "--backend", "--out-words", "--tier", "--stop-at", "--align-reference", "--alignment-threshold", "--word-timestamps", "--initial-prompt",
                     "--transcribe-mode", "--agent-model", *common,
                 ],
             },
@@ -1609,7 +1722,7 @@ def _cli_manifest() -> dict[str, Any]:
                 "flags": [
                     "--tier", "--frames", "--backend", "--start", "--end", "--workdir",
                     "--no-dedup", "--timestamps", "--transcribe-mode", "--allow-cloud",
-                    "--allow-model-download", "--stop-at", "--align-reference", "--alignment-threshold", *common,
+                    "--allow-model-download", "--stop-at", "--align-reference", "--alignment-threshold", "--word-timestamps", "--initial-prompt", *common,
                 ],
             },
         },
@@ -1722,6 +1835,9 @@ def _fmt_estimate(o: dict[str, Any]) -> str:
         f"  TOTAL:         ${c['total']:.4f}   (dominant: {o['dominant_cost']})",
         f"  basis: {o['cost_basis']}",
     ]
+    if o.get("whisper_options"):
+        out.append(f"  Whisper: word timestamps={o['whisper_options']['word_timestamps']}; "
+                   f"vocabulary supplied={o['whisper_options']['initial_prompt_supplied']}")
     if o.get("alignment"):
         out.append("  alignment: local reference matching; original transcript and provenance retained")
     if o.get("stop_at"):
@@ -1752,6 +1868,8 @@ def _evidence_paths(result):
     if result.get("alignment"):
         candidates.extend(result["alignment"][key] for key in
                           ("original_file", "reference_file", "segments_file"))
+    if result.get("words_file"):
+        candidates.append(result["words_file"])
     if result.get("transcript"):
         candidates.append(result["transcript"])
     for collection in ("images", "entries"):
@@ -1819,6 +1937,8 @@ def main(argv: list[str] | None = None) -> int:
 
     e = sub.add_parser("estimate", help="price the job before running")
     e.add_argument("input")
+    e.add_argument("--word-timestamps", action="store_true")
+    e.add_argument("--initial-prompt")
     e.add_argument("--align-reference")
     e.add_argument("--alignment-threshold", type=float, default=0.8)
     e.add_argument("--stop-at", choices=["probe", "frames"])
@@ -1835,6 +1955,8 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("run", help="extract frames (+transcript) into a workdir")
     r.add_argument("input")
     r.add_argument("--tier", default="both", choices=["visual", "audio", "both"])
+    r.add_argument("--word-timestamps", action="store_true")
+    r.add_argument("--initial-prompt")
     r.add_argument("--align-reference")
     r.add_argument("--alignment-threshold", type=float, default=0.8)
     r.add_argument("--stop-at", choices=["probe", "frames"])
@@ -1870,13 +1992,15 @@ def main(argv: list[str] | None = None) -> int:
             _emit(estimate(a.input, a.frames, a.backend, a.out_words, a.tier,
                            transcribe_mode=a.transcribe_mode,
                            agent_model=a.agent_model, stop_at=a.stop_at,
-                           align_reference=a.align_reference, alignment_threshold=a.alignment_threshold), a.human, a.envelope, a.compact, a.cmd)
+                           align_reference=a.align_reference, alignment_threshold=a.alignment_threshold,
+                           word_timestamps=a.word_timestamps, initial_prompt=a.initial_prompt), a.human, a.envelope, a.compact, a.cmd)
         elif a.cmd == "run":
             _emit(run(a.input, a.tier, a.frames, a.backend, a.start, a.end, a.workdir,
                        timestamps=a.timestamps, dedup=not a.no_dedup,
                        transcribe_mode=a.transcribe_mode, allow_cloud=a.allow_cloud,
                        allow_model_download=a.allow_model_download, stop_at=a.stop_at,
-                       align_reference=a.align_reference, alignment_threshold=a.alignment_threshold),
+                       align_reference=a.align_reference, alignment_threshold=a.alignment_threshold,
+                           word_timestamps=a.word_timestamps, initial_prompt=a.initial_prompt),
                   a.human, a.envelope, a.compact, a.cmd)
     except Exception as ex:                       # surface as JSON so the agent can react
         exit_code, code, retryable = _classify_error(ex)

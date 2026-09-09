@@ -294,6 +294,8 @@ def _estimate_from_args(args: argparse.Namespace, workspace: dict[str, Any]) -> 
         stop_at=getattr(args, "stop_at", None),
         align_reference=getattr(args, "align_reference", None),
         alignment_threshold=getattr(args, "alignment_threshold", 0.8),
+        word_timestamps=getattr(args, "word_timestamps", False),
+        initial_prompt=getattr(args, "initial_prompt", None),
     )
 
 
@@ -305,6 +307,8 @@ def preview(args: argparse.Namespace) -> int:
             raise ValueError("stop-at is supported only by the video/audio reader")
         if getattr(args, "align_reference", None) and reader != "video":
             raise ValueError("transcript alignment is supported only by the video/audio reader")
+        if (getattr(args, "word_timestamps", False) or getattr(args, "initial_prompt", None) is not None) and reader != "video":
+            raise ValueError("Whisper controls are supported only by the video/audio reader")
         image_source = reader == "image"
         chat_source = reader == "chat"
         article_source = reader == "article"
@@ -364,6 +368,8 @@ def read(args: argparse.Namespace) -> int:
             raise ValueError("stop-at is supported only by the video/audio reader")
         if getattr(args, "align_reference", None) and reader != "video":
             raise ValueError("transcript alignment is supported only by the video/audio reader")
+        if (getattr(args, "word_timestamps", False) or getattr(args, "initial_prompt", None) is not None) and reader != "video":
+            raise ValueError("Whisper controls are supported only by the video/audio reader")
         image_source = reader == "image"
         chat_source = reader == "chat"
         article_source = reader == "article"
@@ -406,6 +412,8 @@ def read(args: argparse.Namespace) -> int:
                 stop_at=getattr(args, "stop_at", None),
                 align_reference=getattr(args, "align_reference", None),
                 alignment_threshold=getattr(args, "alignment_threshold", 0.8),
+                word_timestamps=getattr(args, "word_timestamps", False),
+                initial_prompt=getattr(args, "initial_prompt", None),
             )
     except Exception as ex:
         return _print_error(ex, args.json)
@@ -687,6 +695,8 @@ def _add_analysis_options(parser: argparse.ArgumentParser, include_run: bool = F
     )
     parser.add_argument("--tier", choices=["visual", "audio", "both"])
     parser.add_argument("--backend")
+    parser.add_argument("--word-timestamps", action="store_true")
+    parser.add_argument("--initial-prompt")
     parser.add_argument("--align-reference")
     parser.add_argument("--alignment-threshold", type=float, default=0.8)
     parser.add_argument("--stop-at", choices=["probe", "frames"])
