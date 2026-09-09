@@ -347,3 +347,8 @@ claim that the wording is correct.
 Local Whisper also supports [word timing and vocabulary hints](docs/cli-reference.md#local-whisper-controls).
 Opt-in word evidence preserves model-estimated starts/ends and clipping offsets;
 explicit controls retain the model-download gate and never silently degrade.
+
+[Manual batches](docs/cli-reference.md#manual-batches) preview up to 100 sources
+before processing and keep each result in its own folder. Permissions apply only
+to the current invocation; summaries distinguish complete, stopped, and failed
+reads. This command prepares evidence without moving sources or scheduling work.

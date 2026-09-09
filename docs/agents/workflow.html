@@ -71,7 +71,8 @@
 <a href="#grounded-summaries-executive-scribe-pattern" class="toc-level-2">Grounded summaries (executive-scribe pattern)</a>
 <a href="#deliberate-stage-stops" class="toc-level-2">Deliberate stage stops</a>
 <a href="#reference-aligned-transcripts" class="toc-level-2">Reference-aligned transcripts</a>
-<a href="#word-timing-and-vocabulary" class="toc-level-2">Word timing and vocabulary</a></nav>
+<a href="#word-timing-and-vocabulary" class="toc-level-2">Word timing and vocabulary</a>
+<a href="#manual-multi-source-batches" class="toc-level-2">Manual multi-source batches</a></nav>
       </details>
       <article class="docs-article" id="top">
         <header class="article-header"><span>Operate</span><h1>Workflow and protocol</h1></header>
@@ -142,6 +143,9 @@ Output structure:
 <h2 id="word-timing-and-vocabulary">Word timing and vocabulary<a class="heading-anchor" href="#word-timing-and-vocabulary" aria-label="Link to Word timing and vocabulary">#</a></h2>
 <p>Local Whisper preview/read accept <code>--word-timestamps</code> and <code>--initial-prompt TEXT</code>. Use matching options in both calls and inspect the actual model/download gate; explicit controls bypass automatic sidecar reuse. Deliberate stops skip them. The vocabulary prompt is not copied into result metadata or diagnostics.</p>
 <p>Read <code>words.json</code> for model-estimated word starts/ends and clipping offsets. <code>[MM:SS.mmm]</code> labels come from returned word starts, not padded segment timestamps. Formatting precision does not prove acoustic accuracy. Reference alignment can change transcript wording while word evidence still belongs to the original baseline. Do not assign those word times to replacement words without evidence.</p>
+<h2 id="manual-multi-source-batches">Manual multi-source batches<a class="heading-anchor" href="#manual-multi-source-batches" aria-label="Link to Manual multi-source batches">#</a></h2>
+<p>Use <code>batch-preview manifest.jsonl --json</code>, then <code>batch-read</code> with a fresh output root and only the current invocation&#x27;s explicitly granted permissions. The entire manifest is prevalidated and previewed before execution; rows cannot grant access. Each reader still checks its gates when it runs. Source/reference paths are relative to the manifest, and per-row outputs are confined below the chosen batch root.</p>
+<p>Wait on the process handle. After completion or failure, read <code>batch-summary.json</code> and relevant item manifests. Check completed/stopped/failed counts and each typed result; an exit0 with stopped items does not mean full reads. Failed items may have usable partial evidence. Do not rerun successful items merely to recover terminal output. The summary retains no reusable approval and is not a resume checkpoint. This manual evidence command does not implement scheduled note creation or filing.</p>
         <div class="article-edit"><a href="https://github.com/RikepilB/void-scape/edit/main/docs/agents/workflow.md" target="_blank" rel="noreferrer">Edit this page on GitHub ↗</a></div>
         <nav class="page-navigation" aria-label="Previous and next pages"><a class="previous" href="concepts.html"><span>Previous</span><strong>← Concepts</strong></a><a class="next" href="automation.html"><span>Next</span><strong>Agent automation →</strong></a></nav>
       </article>
@@ -161,7 +165,8 @@ Output structure:
 <a href="#grounded-summaries-executive-scribe-pattern" class="toc-level-2">Grounded summaries (executive-scribe pattern)</a>
 <a href="#deliberate-stage-stops" class="toc-level-2">Deliberate stage stops</a>
 <a href="#reference-aligned-transcripts" class="toc-level-2">Reference-aligned transcripts</a>
-<a href="#word-timing-and-vocabulary" class="toc-level-2">Word timing and vocabulary</a></nav>
+<a href="#word-timing-and-vocabulary" class="toc-level-2">Word timing and vocabulary</a>
+<a href="#manual-multi-source-batches" class="toc-level-2">Manual multi-source batches</a></nav>
     </aside>
   </div>
 
