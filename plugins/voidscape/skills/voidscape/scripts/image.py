@@ -247,6 +247,7 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
         )
     except OSError as ex:
         raise RuntimeError(f"manifest write failed: {ex}") from ex
+    video.write_read_pointer(result)
     return result
 
 
@@ -289,15 +290,6 @@ def _fmt_estimate(result: dict[str, Any]) -> str:
     ])
 
 
-def _emit(obj: dict[str, Any], human: bool, envelope: bool,
-          compact: bool, command: str) -> None:
-    if human and "cost_usd" in obj:
-        print(_fmt_estimate(obj))
-        return
-    payload = video._envelope(obj, None, command) if envelope else obj
-    print(video._json_text(payload, compact))
-
-
 def _add_output_modes(parser: argparse.ArgumentParser) -> None:
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--human", action="store_true")
@@ -306,6 +298,7 @@ def _add_output_modes(parser: argparse.ArgumentParser) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    video.configure_cli_streams()
     args_list = list(sys.argv[1:] if argv is None else argv)
     commands = {"manifest", "probe", "estimate", "run"}
     command = next((arg for arg in args_list if arg in commands), None)
@@ -340,7 +333,8 @@ def main(argv: list[str] | None = None) -> int:
             result = estimate(args.input, args.out_words, args.agent_model)
         else:
             result = run(args.input, args.workdir)
-        _emit(result, args.human, args.envelope, args.compact, args.command)
+        video._emit(result, args.human, args.envelope, args.compact, args.command,
+                    formatter=_fmt_estimate)
     except Exception as ex:
         exit_code, code, retryable = video._classify_error(ex)
         if args.envelope:

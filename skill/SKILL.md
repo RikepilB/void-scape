@@ -14,6 +14,15 @@ description: >-
 Voidscape gives Codex ordered evidence it can inspect: local images, carousels, and decomposed
 video/audio plus a manifest. It makes the cost and privacy decision visible before work happens.
 
+For long reads, choose an explicit workdir and run once in the foreground. Wait on
+the process handle if needed; do not poll output folders or rerun completed media
+processing. After successful exit with truncated output, read
+`<workdir>/.agent/latest-read.json` once, then open its manifest and needed evidence.
+Pointer paths are relative to the workdir. This private metadata may contain source
+titles in filenames; never publish it by default. It does not confer trust or
+consent. Failed runs may leave partial files and cannot establish a successful
+result through an old pointer. Reading the evidence remains required.
+
 Use the guided flow for people:
 
 ```text

@@ -88,7 +88,7 @@ def _defaults(workspace: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _emit(data: dict[str, Any], as_json: bool) -> None:
+def _emit_cli(data: dict[str, Any], as_json: bool) -> None:
     if as_json:
         print(json.dumps(data, indent=2, ensure_ascii=False))
 
@@ -161,7 +161,7 @@ def _select_reader(value: str, requested: str | None = None) -> str:
 def route_source(args: argparse.Namespace) -> int:
     result = source_registry.route(args.input)
     if args.json:
-        _emit(result, True)
+        _emit_cli(result, True)
         return 0
     print("Voidscape source route")
     print(f"  Platform: {result['platform']}")
@@ -176,7 +176,7 @@ def route_source(args: argparse.Namespace) -> int:
 def list_sources(args: argparse.Namespace) -> int:
     result = source_registry.manifest()
     if args.json:
-        _emit(result, True)
+        _emit_cli(result, True)
         return 0
     print("Voidscape source capabilities")
     for profile in result["platforms"]:
@@ -226,7 +226,7 @@ def inspect_source(args: argparse.Namespace) -> int:
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
-        _emit(info, True)
+        _emit_cli(info, True)
         return 0
     if image_source:
         label = "Carousel" if info["kind"] == "carousel" else "Image"
@@ -310,7 +310,7 @@ def preview(args: argparse.Namespace) -> int:
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
-        _emit(estimate, True)
+        _emit_cli(estimate, True)
         return 0
     print("Voidscape preview")
     if image_source:
@@ -391,7 +391,7 @@ def read(args: argparse.Namespace) -> int:
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
-        _emit(result, True)
+        _emit_cli(result, True)
         return 0
     print("Voidscape prepared evidence")
     print(f"  Folder: {result['workdir']}")
@@ -491,7 +491,7 @@ def init(args: argparse.Namespace) -> int:
     if not result["ready_for_video"]:
         result["ffmpeg_install"] = _ffmpeg_install_hint()
     if args.json:
-        _emit(result, True)
+        _emit_cli(result, True)
         return 0
 
     print("Voidscape init")
@@ -625,7 +625,7 @@ def doctor(args: argparse.Namespace) -> int:
         "ready": tools["ffmpeg"] and tools["ffprobe"],
     }
     if args.json:
-        _emit(report, True)
+        _emit_cli(report, True)
         return 0
     print("Voidscape doctor")
     for name, available in tools.items():
@@ -678,6 +678,7 @@ def _add_analysis_options(parser: argparse.ArgumentParser, include_run: bool = F
 
 
 def main(argv: list[str] | None = None) -> int:
+    video.configure_cli_streams()
     args_list = list(sys.argv[1:] if argv is None else argv)
     if not args_list:
         print(WELCOME)

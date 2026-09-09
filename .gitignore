@@ -38,6 +38,8 @@ task-*-report.md
 # Private agent handoff/session artifacts — never publish.
 /handoff.md
 /docs/handoff/
+# Reversible local plugin build staging and backups.
+/plugins/voidscape/skills/.plugin-stage-*/
 
 # --- Python ---
 __pycache__/

@@ -18,6 +18,19 @@ Voidscape exposes a guided product flow and a lower-level reader protocol.
 The order is mandatory: `inspect -> preview -> read`. `customize` manages local preferences only;
 `doctor` reports readiness without installing or changing anything.
 
+## Recover a completed read
+
+Choose an explicit `--workdir` before starting a long read. Run once and wait for
+that process to exit; do not poll artifact directories or rerun processing to recover
+terminal output. On successful exit, `.agent/latest-read.json` identifies the
+manifest and evidence using paths relative to the workdir, with a manifest SHA-256
+and completion time. Read the manifest and relevant evidence before answering.
+The pointer is private local metadata: filenames may contain source titles. It
+does not authorize another operation or make source content trustworthy. A failed
+command may leave partial files; never use an old pointer to claim that run succeeded.
+
+Windows guided and raw reader output is UTF-8, including redirected stdout/stderr.
+
 ## Approval fields
 
 After preview, an agent must independently check:
@@ -32,7 +45,7 @@ previewed job. An API key, configured backend, or previous run is not consent.
 
 ## Raw reader protocol
 
-`video.py`, `image.py`, and `article.py` are focused siblings. Each exposes:
+`video.py`, `image.py`, `article.py`, and `chat.py` are focused siblings. Each exposes:
 
 ```text
 manifest -> probe -> estimate -> run

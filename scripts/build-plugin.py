@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -50,11 +51,37 @@ def check() -> list[str]:
 
 
 def sync() -> None:
-    DESTINATION.mkdir(parents=True, exist_ok=True)
-    for relative, source in _files(SOURCE, source=True).items():
-        target = DESTINATION / relative
+    for root in (SOURCE, DESTINATION):
+        if any(path.is_symlink() for path in (root, *root.parents)):
+            raise RuntimeError("plugin roots cannot traverse symlinks")
+    source_files = _files(SOURCE, source=True)
+    if DESTINATION.exists():
+        _files(DESTINATION, source=False)
+    DESTINATION.parent.mkdir(parents=True, exist_ok=True)
+    # Stage complete content without opening any existing destination file.
+    # Keep the previous tree for reversible recovery instead of deleting it.
+    staging = Path(tempfile.mkdtemp(prefix=".plugin-stage-", dir=DESTINATION.parent))
+    replacement = staging / "replacement"
+    replacement.mkdir()
+    for relative, source in source_files.items():
+        target = replacement / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
+    backup = staging / "previous"
+    had_destination = DESTINATION.exists()
+    if had_destination:
+        _files(DESTINATION, source=False)
+        if DESTINATION.is_symlink():
+            raise RuntimeError("plugin destination cannot be a symlink")
+        DESTINATION.rename(backup)
+    try:
+        replacement.rename(DESTINATION)
+    except OSError:
+        if had_destination and not DESTINATION.exists():
+            backup.rename(DESTINATION)
+        raise
+    if had_destination:
+        print(f"Previous plugin tree preserved at: {backup}")
 
 
 def main(argv: list[str] | None = None) -> int:

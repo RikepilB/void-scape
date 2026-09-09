@@ -22,6 +22,23 @@ PNG_1X1 = base64.b64decode(
     "AScY42YAAAAASUVORK5CYII="
 )
 STANDARD_COMMANDS = frozenset({"manifest", "probe", "estimate", "run"})
+
+
+@pytest.mark.parametrize("human", [False, True])
+@pytest.mark.parametrize("envelope", [False, True])
+@pytest.mark.parametrize("compact", [False, True])
+def test_shared_emitter_preserves_output_modes(human, envelope, compact, capsys):
+    payload = {"cost_usd": {"total": 0}, "label": "日本語"}
+    video._emit(payload, human, envelope, compact, "estimate",
+                formatter=lambda result: "reader-specific estimate")
+    text = capsys.readouterr().out
+    if human:
+        assert text == "reader-specific estimate\n"
+    else:
+        result = json.loads(text)
+        assert (result["data"] if envelope else result) == payload
+        if compact:
+            assert len(text.splitlines()) == 1
 STANDARD_EXIT_CODES = {
     "0": "success",
     "1": "unexpected_error",
