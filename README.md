@@ -36,6 +36,9 @@ international titles and filenames. See the [recovery contract](docs/cli-referen
 Structured failures tell agents whether they need your approval, a model download,
 or a missing environment variable. Keys stay in your local environment; having a
 key never grants permission to use a cloud service.
+When later processing fails, usable artifacts remain explicitly marked as partial
+evidence. The failure stays visible; missing audio is never silently reported as a
+successful full read.
 
 > 🎬 **Watch it work** — a 52-second terminal recording of the real flow:
 > [`doctor` → `inspect` → `preview` → `read` on the key-free demo fixture](docs/assets/cli-demo.mp4)

@@ -31,6 +31,21 @@ command may leave partial files; never use an old pointer to claim that run succ
 
 Windows guided and raw reader output is UTF-8, including redirected stdout/stderr.
 
+## Read failures and partial evidence
+
+Inspect `meta.failed_stage` and `meta.warnings` on failure. If earlier artifacts
+were completed, `data` and the partial manifest identify exactly which ones are
+available. The command still exits nonzero with `ok: false`; a `both` request is
+never silently changed to a visual-only success. Only use listed completed
+artifacts, and state the missing coverage in the answer.
+
+`meta.manifest_written` distinguishes a saved record from a failed write. Partial
+reads have no success recovery pointer. If only pointer creation failed, the
+completed manifest remains usable and the failed stage is `recovery`.
+Successful reads may also contain coverage warnings (for example, a failed audio
+chunk); `status: complete` means processing completed, not that every source word
+was recovered. Permission refusals are hard failures, not degradable warnings.
+
 ## Approval fields
 
 On failure, `error.gate.type` distinguishes `cloud_approval`, `model_download`, and

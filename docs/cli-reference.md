@@ -60,6 +60,31 @@ JSON. Exit codes are `0` success, `1` unexpected error, `2` usage error, `3` inp
 approval required, `5` dependency error, and `6` operation failure. Envelope errors repeat the
 numeric value in `error.exit_code` and include `error.code` plus `error.retryable`.
 
+Read results record `status`, `stages_completed`, and `warnings`. A clean completed
+read has `status: complete` and an empty warnings list. Completed reads may still
+have coverage warnings, such as a failed audio chunk; read those warnings before
+claiming a complete transcript. Envelopes expose the same list as `meta.warnings`.
+
+When a later stage fails after usable artifacts were written, the command keeps
+its original nonzero exit and `ok: false`. Its `data` contains only the completed
+artifact records, with `status: partial`; `meta.failed_stage` names the failed
+operation and `meta.stages_completed` lists successful stages. The partial
+`manifest.json` records the same state. `meta.manifest_written` explicitly says
+whether persistence succeeded. A failure to save diagnostics does not replace the
+original error. Never treat files omitted from that record as completed evidence.
+
+Partial reads never receive a success `.agent/latest-read.json` pointer. If the
+recovery-pointer step fails after the complete manifest was saved, the manifest
+remains complete and the error identifies `failed_stage: recovery`; this is a
+recovery failure, not a failed transcription. Permission refusals remain hard
+failures without partial-result warnings. Existing exit codes are unchanged.
+
+Stages are reader-specific: `probe`, `validate`, `workdir`; video `acquire`, `scope`,
+`frames`, `transcribe`; image `copy`; article `fetch`, `write_entries`; chat
+`write_transcript`; and finally `manifest`, `recovery`. Skipped stages are not
+listed as completed. A failed multi-item copy/write may retain individual
+completed artifacts even though the overall stage did not complete.
+
 Gate failures also include `error.gate`: `type` is `cloud_approval`, `model_download`,
 or `missing_credentials`, and `backend` identifies the selected backend or chain.
 Missing credentials include an `env_var` **name**, never its value. For Gemini,

@@ -111,10 +111,15 @@ def _recommend_tier(info: dict[str, Any]) -> str:
 def _print_error(ex: Exception, as_json: bool) -> int:
     exit_code, code, retryable = video._classify_error(ex)
     if as_json:
-        print(json.dumps({"ok": False, "error": video._error_payload(ex)},
+        print(json.dumps(video.failure_envelope(ex, None),
                          indent=2, ensure_ascii=False))
     else:
         print(f"Voidscape could not continue: {ex}", file=sys.stderr)
+        failure = video.failure_envelope(ex, None)
+        if failure["data"]:
+            print(f"  Available evidence: {failure['data']['workdir']}", file=sys.stderr)
+            print(f"  Failed stage: {failure['meta']['failed_stage']}; "
+                  f"manifest saved: {failure['meta']['manifest_written']}", file=sys.stderr)
     return exit_code
 
 
@@ -394,6 +399,8 @@ def read(args: argparse.Namespace) -> int:
         _emit_cli(result, True)
         return 0
     print("Voidscape prepared evidence")
+    for warning in result.get("warnings", []):
+        print(f"  Warning ({warning['stage']}): {warning['detail']}")
     print(f"  Folder: {result['workdir']}")
     if image_source:
         print(f"  Images: {result['item_count']}")

@@ -197,10 +197,17 @@ def estimate(inp: str, out_words: int = 600,
 
 
 def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
-    info = probe(inp)
+    return video.execute_read(_run, inp, workdir)
+
+
+def _run(progress, inp, workdir):
+    info = progress.call("probe", probe, inp)
+    progress.begin("validate")
     if info["item_count"] > MAX_IMAGES:
         raise ValueError("image input has more than 100 items; choose a narrower folder")
 
+    progress.complete("validate")
+    progress.begin("workdir")
     destination = Path(workdir).expanduser() if workdir else Path(
         tempfile.mkdtemp(prefix="voidscape-images-")
     )
@@ -214,8 +221,17 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
         images_dir.mkdir(parents=True, exist_ok=True)
     except OSError as ex:
         raise RuntimeError(f"workdir creation failed: {ex}") from ex
+    progress.complete("workdir")
 
     copied = []
+    result = {
+        "workdir": str(destination.resolve()),
+        "kind": info["kind"], "source": info["source"], "input": info["input"],
+        "item_count": info["item_count"], "images": copied, "skipped": info["skipped"],
+        "content_trust": video.EVIDENCE_TRUST.copy(),
+    }
+    progress.result = result
+    progress.begin("copy")
     for item in info["images"]:
         target = images_dir / f"{item['index']:03d}-{item['source_name']}"
         try:
@@ -231,25 +247,8 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
             "bytes": item["bytes"],
         })
 
-    result = {
-        "workdir": str(destination.resolve()),
-        "kind": info["kind"],
-        "source": info["source"],
-        "input": info["input"],
-        "item_count": info["item_count"],
-        "images": copied,
-        "skipped": info["skipped"],
-        "content_trust": video.EVIDENCE_TRUST.copy(),
-    }
-    try:
-        (destination / "manifest.json").write_text(
-            json.dumps(result, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-    except OSError as ex:
-        raise RuntimeError(f"manifest write failed: {ex}") from ex
-    video.write_read_pointer(result)
-    return result
+    progress.complete("copy")
+    return progress.finish(result, wrap_manifest_errors=True)
 
 
 def _cli_manifest() -> dict[str, Any]:
@@ -339,8 +338,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as ex:
         exit_code, code, retryable = video._classify_error(ex)
         if args.envelope:
-            error = video._error_payload(ex)
-            print(video._json_text(video._envelope(None, error, args.command), args.compact))
+            print(video._json_text(video.failure_envelope(ex, args.command), args.compact))
         else:
             print(video._json_text({"error": str(ex)}, args.compact))
         return exit_code

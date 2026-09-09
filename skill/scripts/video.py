@@ -33,6 +33,7 @@ import tempfile
 import time
 import urllib.error
 import uuid
+from contextvars import ContextVar
 from pathlib import Path
 from shutil import which
 from typing import Any, Callable
@@ -86,6 +87,7 @@ _EXIT_INPUT = 3
 _EXIT_APPROVAL = 4
 _EXIT_DEPENDENCY = 5
 _EXIT_OPERATION = 6
+_ACTIVE_READ = ContextVar("voidscape_read_progress", default=None)
 
 
 class ApprovalRequired(PermissionError):
@@ -116,6 +118,111 @@ class BackendFailures(RuntimeError):
             for gate in gates:
                 if gate not in self.gates:
                     self.gates.append(gate)
+
+
+class ReadProgress:
+    """Per-invocation state; only completed artifact records become partial evidence."""
+
+    def __init__(self):
+        self.stage = "probe"
+        self.completed = []
+        self.result = None
+        self.warnings = []
+        self.manifest_written = False
+
+    def begin(self, stage):
+        self.stage = stage
+
+    def complete(self, stage):
+        if stage not in self.completed:
+            self.completed.append(stage)
+
+    def call(self, stage, operation, *args, **kwargs):
+        self.begin(stage)
+        value = operation(*args, **kwargs)
+        self.complete(stage)
+        return value
+
+    def finish(self, result, *, wrap_manifest_errors=False):
+        self.result = result
+        self.begin("manifest")
+        result.update(status="complete", stages_completed=[*self.completed, "manifest"],
+                      warnings=list(self.warnings))
+        try:
+            with (Path(result["workdir"]) / "manifest.json").open("x", encoding="utf-8") as stream:
+                json.dump(result, stream, indent=2, ensure_ascii=False)
+                stream.write("\n")
+        except OSError as ex:
+            if wrap_manifest_errors:
+                raise RuntimeError(f"manifest write failed: {ex}") from ex
+            raise
+        self.manifest_written = True
+        self.complete("manifest")
+        self.call("recovery", write_read_pointer, result)
+        return result
+
+    def fail(self, ex):
+        # Permission outcomes are never degraded to warnings or partial success.
+        if isinstance(ex, PermissionError) or (
+            isinstance(ex, BackendGateError) and ex.gate["type"] in {"cloud_approval", "model_download"}
+        ):
+            self.result = None
+            self.warnings = []
+            return
+        if self.result is None:
+            return
+        root = Path(self.result["workdir"]).resolve()
+        try:
+            evidence = _evidence_paths(self.result)
+            if not evidence or not all((root / name).is_file() for name in evidence):
+                self.result = None
+                return
+        except (OSError, ValueError):
+            self.result = None
+            return
+        self.warnings.append({"code": "read_incomplete", "stage": self.stage,
+                              "detail": "The requested read failed; only listed completed artifacts are available."})
+        if self.manifest_written:
+            # A pointer failure must not rewrite or invalidate the completed manifest.
+            return
+        self.result.update(status="partial", failed_stage=self.stage,
+                           stages_completed=list(self.completed), warnings=list(self.warnings))
+        for collection in ("images", "entries"):
+            if collection in self.result:
+                self.result["item_count"] = len(self.result[collection])
+        try:
+            with (root / "manifest.json").open("x", encoding="utf-8") as stream:
+                json.dump(self.result, stream, indent=2, ensure_ascii=False)
+                stream.write("\n")
+            self.manifest_written = True
+        except (OSError, ValueError, TypeError):
+            self.warnings.append({"code": "partial_manifest_unavailable", "stage": "manifest",
+                                  "detail": "Partial artifacts remain, but their manifest could not be saved."})
+
+
+def execute_read(operation, *args, **kwargs):
+    progress = ReadProgress()
+    token = _ACTIVE_READ.set(progress)
+    try:
+        return operation(progress, *args, **kwargs)
+    except Exception as ex:
+        try:
+            progress.fail(ex)
+        except Exception:
+            # Diagnostic persistence must never replace the operation's real failure.
+            progress.result = None
+            progress.warnings.append({"code": "diagnostics_unavailable", "stage": progress.stage,
+                                      "detail": "The failure record could not be prepared."})
+        ex._voidscape_progress = progress
+        raise
+    finally:
+        _ACTIVE_READ.reset(token)
+
+
+def _read_warning(code, stage, detail):
+    progress = _ACTIVE_READ.get()
+    if progress is not None:
+        progress.warnings.append({"code": code, "stage": stage, "detail": detail})
 
 
 DEFAULT_PRICING: dict[str, Any] = {
@@ -562,8 +669,15 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
         timestamps: str | None = None, dedup: bool = True,
         transcribe_mode: str = "auto", allow_cloud: bool = False,
         allow_model_download: bool = False) -> dict[str, Any]:
+    return execute_read(_run, inp, tier, frames, backend, start, end, workdir, pr,
+                        timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download)
+
+
+def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
+         timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download):
     pr = pr or load_pricing()
-    info = probe(inp)
+    info = progress.call("probe", probe, inp)
+    progress.begin("validate")
     source_input = resolve_input(inp) if info["source"] == "url" else info["input"]
     dur = info["duration_s"] or 0.0
     want_frames = tier in ("visual", "both")
@@ -610,25 +724,30 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
                   f"keeping the first {n}", file=sys.stderr)
             pins = pins[:n]
 
+    progress.complete("validate")
+    progress.begin("workdir")
     wd = Path(workdir) if workdir else Path(tempfile.mkdtemp(prefix="readvideo_"))
     if wd.is_symlink():
         raise ValueError(f"workdir cannot be a symlink: {wd}")
     if wd.exists() and any(wd.iterdir()):
         raise ValueError(f"workdir must be empty to avoid mixing stale evidence: {wd}")
     wd.mkdir(parents=True, exist_ok=True)
+    progress.complete("workdir")
 
     # Acquire the media file only when we actually need pixels or non-caption audio.
     media: str | None = None
     need_media = want_frames or (want_audio and backend != "captions"
                                  and not info.get("sidecar_transcript"))
     if need_media:
+        progress.begin("acquire")
         media = (_download(source_input, wd) if info["source"] == "url"
                  else str(Path(source_input).resolve()))
+        progress.complete("acquire")
 
     scoped_audio = start > 0 or end < dur
     if (want_audio and scoped_audio and not info.get("sidecar_transcript")
             and backend != "captions"):
-        media = _to_audio(media or source_input, wd, start=start, duration=window)
+        media = progress.call("scope", _to_audio, media or source_input, wd, start=start, duration=window)
 
     result: dict[str, Any] = {"workdir": str(wd), "tier": tier,
                               "backend": backend if want_audio else "none",
@@ -636,20 +755,19 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
                               "window": {"start_s": start, "end_s": end,
                                          "duration_s": window},
                               "content_trust": EVIDENCE_TRUST.copy()}
+    progress.result = result
     if want_frames:
-        result["frames"], result["frames_deduped"] = _extract_frames(
+        result["frames"], result["frames_deduped"] = progress.call("frames", _extract_frames,
             media, wd, n, start, window,
             int(pr.get("frame", {}).get("target_width", 512)), dedup=dedup, pins=pins)
     if want_audio:
-        tpath, text = _transcribe(source_input, info, media, wd, backend, transcribe_mode,
+        tpath, text = progress.call("transcribe", _transcribe, source_input, info, media, wd, backend, transcribe_mode,
                                   allow_model_download,
                                   start if scoped_audio else None,
                                   end if scoped_audio else None)
         result["transcript"] = tpath
         result["transcript_chars"] = len(text)
-    (wd / "manifest.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
-    write_read_pointer(result)
-    return result
+    return progress.finish(result)
 
 
 def _download(url: str, wd: Path) -> str:
@@ -884,6 +1002,7 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
         except Exception as ex:
             failures.append(ex)
             errors.append(f"{b}: {type(ex).__name__}: {str(ex)[:140]}")
+            _read_warning("backend_fallback", "transcribe", f"Backend {b} failed in the selected fallback chain.")
             print(f"[read-video] backend '{b}' failed -> falling back to next in chain. {errors[-1]}",
                   file=sys.stderr)
     raise BackendFailures("all transcription backends in the chain failed: " + " | ".join(errors), failures)
@@ -1318,6 +1437,9 @@ def _api_transcribe(backend: str, audio: str) -> str:
             print(f"[read-video] {backend} chunk {i}/{len(chunks)} failed: {ex}", file=sys.stderr)
     if len(failures) == len(chunks):
         raise BackendFailures(f"{backend} transcription failed: all {len(chunks)} chunks failed", failures)
+    if failures:
+        _read_warning("transcription_gap", "transcribe",
+                      f"{len(failures)} of {len(chunks)} audio chunks could not be transcribed.")
     return "\n".join(parts)
 
 
@@ -1394,8 +1516,22 @@ def _envelope(data: dict[str, Any] | None, error: dict[str, Any] | None,
         "ok": error is None,
         "data": data,
         "error": error,
-        "meta": {"command": command, "protocol_version": _CLI_PROTOCOL_VERSION},
+        "meta": {"command": command, "protocol_version": _CLI_PROTOCOL_VERSION,
+                 "warnings": data.get("warnings", []) if data else []},
     }
+
+
+def failure_envelope(ex: Exception, command: str | None):
+    output = _envelope(None, _error_payload(ex), command)
+    progress = getattr(ex, "_voidscape_progress", None)
+    if isinstance(progress, ReadProgress):
+        output["data"] = progress.result
+        output["meta"].update(failed_stage=progress.stage, warnings=progress.warnings,
+                              stages_completed=progress.completed,
+                              manifest_written=progress.manifest_written)
+    elif isinstance(ex, (ApprovalRequired, BackendGateError)):
+        output["meta"]["failed_stage"] = "preflight"
+    return output
 
 
 def _classify_error(ex: Exception) -> tuple[int, str, bool]:
@@ -1480,10 +1616,8 @@ def _emit(obj: dict[str, Any], human: bool, envelope: bool = False,
         print(_json_text(payload, compact))
 
 
-def write_read_pointer(result: dict[str, Any]) -> None:
-    """Record only confined output paths; the manifest remains the evidence record."""
+def _evidence_paths(result):
     root = Path(result["workdir"]).resolve()
-    manifest = root / "manifest.json"
     paths = []
     candidates = [frame["file"] for frame in result.get("frames", [])]
     if result.get("transcript"):
@@ -1494,6 +1628,16 @@ def write_read_pointer(result: dict[str, Any]) -> None:
         path = Path(value)
         path = (path if path.is_absolute() else root / path).resolve()
         paths.append(path.relative_to(root).as_posix())
+    return sorted(set(paths))
+
+
+def write_read_pointer(result: dict[str, Any]) -> None:
+    """Record only confined output paths; the manifest remains the evidence record."""
+    if result.get("status", "complete") != "complete":
+        raise ValueError("success recovery requires a completed read")
+    root = Path(result["workdir"]).resolve()
+    manifest = root / "manifest.json"
+    paths = _evidence_paths(result)
     pointer = {
         "schema_version": 1,
         "status": "success",
@@ -1595,8 +1739,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as ex:                       # surface as JSON so the agent can react
         exit_code, code, retryable = _classify_error(ex)
         if a.envelope:
-            error = _error_payload(ex)
-            print(_json_text(_envelope(None, error, a.cmd), a.compact))
+            print(_json_text(failure_envelope(ex, a.cmd), a.compact))
         else:
             print(_json_text({"error": str(ex)}, a.compact))
         return exit_code
