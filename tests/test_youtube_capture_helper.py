@@ -144,6 +144,20 @@ def test_process_skips_append_for_duplicate_but_still_deletes(tmp_path):
     assert urls_md.read_text(encoding="utf-8").strip() == canonical_url("vid001abc")
 
 
+@pytest.mark.parametrize("existing", [False, True])
+def test_sync_failure_prevents_playlist_delete(tmp_path, monkeypatch, existing):
+    queue = tmp_path / "urls.md"
+    if existing:
+        queue.write_text(canonical_url("vid001abc") + "\n", encoding="utf-8")
+    client = _client_with_responses([{"items": [ITEM_ONE]}])
+    monkeypatch.setattr(client, "delete_playlist_item", lambda *args: pytest.fail("delete after failed sync"))
+    def fail_sync(fd):
+        raise OSError("synthetic sync failure")
+    monkeypatch.setattr("capture_adapter.os.fsync", fail_sync)
+    with pytest.raises(OSError, match="synthetic sync failure"):
+        process_capture(client, queue, playlist_id=PLAYLIST_ID)
+
+
 def test_process_aborts_on_delete_failure_after_append(tmp_path, monkeypatch):
     urls_md = tmp_path / "urls.md"
 

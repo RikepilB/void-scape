@@ -4,6 +4,10 @@ Capture adapters move bookmarked/saved media from a platform into Voidscape's
 `urls.md` queue. Each platform ships a helper script under `scripts/` that
 implements the shared contract in `scripts/capture_adapter.py`.
 
+For note authoring, checkpoints, harness parity and source-skill acceptance, use
+the [source triage contract](source-triage-contract.md). This page describes the
+lower-level queue operation; queue readiness does not prove completed analysis.
+
 ## Shared vs platform-specific
 
 | Concern | Shared (`capture_adapter.py`) | Platform-specific |
@@ -22,7 +26,8 @@ implements the shared contract in `scripts/capture_adapter.py`.
   only implements the queue-write half for one reel at a time.
 - **Platform-specific:** shortcode extraction, reel canonical URL, host allowlist.
 - **Completion marking:** `safe_to_unsave` — true when the URL is already in
-  the vault or was durably appended (browser unsave is a separate approved step).
+  the queue or was confirmed appended (browser unsave is a separate approved step).
+  It does not check the vault or establish that a note was written.
 
 ### YouTube (`youtube_capture_helper.py`)
 
@@ -118,4 +123,4 @@ tests under `tests/test_examplesocial_capture_helper.py` plus contract coverage
 via `tests/test_capture_adapter.py`.
 
 See also [`docs/youtube-queue-capture.md`](youtube-queue-capture.md) for a
-production adapter walkthrough.
+development adapter walkthrough.

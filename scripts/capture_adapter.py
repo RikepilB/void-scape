@@ -16,6 +16,7 @@ Contract (inspect → preview → process):
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
@@ -59,9 +60,13 @@ def is_duplicate(url: str, urls_md_path: Path) -> bool:
 
 def append_and_confirm(url: str, urls_md_path: Path) -> bool:
     """Append ``url`` to urls.md and confirm it is present after the write."""
+    if not url or url != url.strip() or any(character in url for character in "\r\n\x00"):
+        raise ValueError("queue entries must be nonempty single-line canonical URLs")
     urls_md_path.parent.mkdir(parents=True, exist_ok=True)
     with urls_md_path.open("a", encoding="utf-8") as f:
         f.write(url + "\n")
+        f.flush()
+        os.fsync(f.fileno())
     lines = urls_md_path.read_text(encoding="utf-8").splitlines()
     return url in (line.strip() for line in lines)
 
@@ -73,6 +78,13 @@ def preview_action_for_url(url: str, urls_md_path: Path) -> tuple[bool, str]:
     return duplicate, action
 
 
+def confirm_existing_entry(url: str, urls_md_path: Path) -> bool:
+    """Sync and revalidate duplicates, including entries left by a failed sync."""
+    with urls_md_path.open("r+", encoding="utf-8") as stream:
+        os.fsync(stream.fileno())
+    return is_duplicate(url, urls_md_path)
+
+
 def queue_append_result(url: str, urls_md_path: Path) -> dict[str, bool]:
     """Dedup-check and durable-append a single canonical URL.
 
@@ -81,6 +93,8 @@ def queue_append_result(url: str, urls_md_path: Path) -> dict[str, bool]:
     """
     duplicate = is_duplicate(url, urls_md_path)
     if duplicate:
+        if not confirm_existing_entry(url, urls_md_path):
+            raise CapturePartialWriteError("queued entry disappeared before confirmation")
         return {"duplicate": True, "appended": False}
     appended = append_and_confirm(url, urls_md_path)
     return {"duplicate": False, "appended": appended}
