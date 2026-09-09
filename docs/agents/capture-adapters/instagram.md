@@ -29,6 +29,12 @@ The helper does not log in, enumerate collections, read browser state, or contro
 may perform a user-approved, read-only collection workflow and pass a confirmed URL to the helper.
 The helper validates only the queue operation; it does not prove media access.
 
+For analyzed notes, the controller uses the repository-only
+[verified note publisher](../../triage-store.md). Workers return drafts; the
+publisher verifies source fields and evidence hashes before completing the receipt
+and index. `lookup` distinguishes analyzed items from skips and pending attempts.
+These mechanics do not establish an installed skill or live harness verification.
+
 Reading the captured URL remains a separate Voidscape `inspect -> preview -> read` job. A URL visible
 in an authenticated tab may still fail in an anonymous CLI. Voidscape never extracts cookies from
 the browser; see [authenticated sources](../../authenticated-sources.md).

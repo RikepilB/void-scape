@@ -118,8 +118,10 @@ entry; a failed sync must stop the action, even if some bytes are visible on dis
 This is an OS sync request, not proof of filesystem/power-loss guarantees.
 
 The Codex capture agent contains dry-run and layout-abort rules. The repository
-does not yet ship matching Claude/Agents source workflows, an installed Instagram
-triage skill, verified note/category/index handling, a checkpoint implementation,
-or a current source-skill benchmark. These are remaining retrofit requirements;
+[note publisher](triage-store.md) provides verified note/category/index handling
+and immutable publication receipts; the analysis agent returns drafts to its
+controller. The repository does not yet ship matching Claude/Agents source workflows,
+an installed Instagram triage skill, or a current source-skill benchmark.
+These are remaining retrofit requirements;
 issue #54 stays open until they are implemented and verified. Existing media-reader
 benchmarks do not establish capture-skill compliance.
