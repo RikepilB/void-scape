@@ -381,7 +381,7 @@ def sanitize_error(error: Exception | str) -> str:
         (?:"[^"]*"|'[^']*'|[^\s,;}\]]+)''',
         r"\1[REDACTED_SECRET]", text,
     )
-    text = re.sub(r"(?i)\b(Bearer|Basic)\s+[a-z0-9+/=_.-]+", r"\1 [REDACTED_SECRET]", text)
+    text = re.sub(r"(?i)\b(Bearer|Basic)\s+[a-z0-9+/=_.~-]+", r"\1 [REDACTED_SECRET]", text)
     return re.sub(r"\b(?:sk-[a-zA-Z0-9_-]{8,}|gsk_[a-zA-Z0-9_-]{8,}|hf_[a-zA-Z0-9]{8,})",
                   "[REDACTED_SECRET]", text)
 

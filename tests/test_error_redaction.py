@@ -55,6 +55,14 @@ def test_recognizable_credential_forms_are_redacted(message):
     assert result != message
 
 
+@pytest.mark.parametrize("scheme", ["Bearer", "Basic"])
+def test_tilde_token_is_redacted_completely(scheme):
+    result = video.sanitize_error(f"{scheme} abc~def")
+    assert result == f"{scheme} [REDACTED_SECRET]"
+    assert "abc" not in result
+    assert "def" not in result
+
+
 def test_safe_diagnostics_and_environment_names_survive():
     message = "GROQ_API_KEY not set; HTTP 429 rate limit; https://example.com/api"
     assert video.sanitize_error(message) == message
