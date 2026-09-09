@@ -182,3 +182,15 @@ pushback") to aim the model; use a 16k-32k context model (for example llama3.1:8
 qwen2.5:14b) because Whisper transcripts run long; instruct the model to ignore Whisper's filler
 repetition in silence; and keep every heading outcome-focused - it should answer what decision or
 next action it enables.
+
+## Deliberate stage stops
+
+Video/audio preview and read accept matching `--stop-at probe|frames` selections.
+Choose an extent only when it serves the user's request. Probe stops contain source
+metadata, not watched content; frames stops contain no transcript. Requested scope
+is retained, and manifests use `status: stopped` with `stopped_by: user`.
+A zero exit means that selected extent finished. Inspect pointer status: deliberate
+stops use `stopped`, complete reads use `success`, and failed partial reads get no
+success pointer. Never infer full coverage from exit zero or from a stopped pointer.
+Later stages do not run; operations actually executed still require their normal
+permissions. Use the same stop selection in preview and read.

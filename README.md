@@ -331,3 +331,9 @@ consumed.
 ## License
 
 [MIT](LICENSE) © Richard Pillaca.
+
+For staged video review, match `--stop-at probe|frames` in preview and read.
+Stopped manifests and recovery pointers explicitly distinguish a deliberate stop
+from a complete read. Frames can be reviewed before choosing transcription; the
+later transcription still needs its own matching preview and any required consent.
+See [stage stopping](docs/cli-reference.md#deliberately-stop-a-video-read).

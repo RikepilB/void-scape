@@ -165,3 +165,9 @@ For mixed or unfamiliar web sources, run `voidscape route <input> --json` before
 status is not proof that saved-account capture or every post shape works. Use `--reader video` or
 `--reader article` only when the source shape is known; never use an override to bypass a failed
 privacy, authentication, or network-safety check.
+
+For an explicitly limited video read, match `--stop-at probe|frames` in preview
+and read. A zero exit and `status: stopped` mean only that extent finished. The
+recovery pointer says `stopped`, not `success`; probe metadata is not video content,
+and frame-only evidence has no transcript. No skipped backend is executed or
+implicitly approved. Every executed operation retains its existing permission gates.
