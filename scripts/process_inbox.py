@@ -28,12 +28,16 @@ def retain(path):
     return {'path': str(path), 'sha256': file_digest(path)}
 
 
-def json_file(path, limit=4 * 1024 * 1024):
+def metadata_bytes(path, limit=4 * 1024 * 1024):
     with checked(path).open('rb') as stream:
         raw = stream.read(limit + 1)
     if len(raw) > limit:
         raise ValueError('inbox metadata exceeds limit')
-    value = json.loads(raw)
+    return raw
+
+
+def json_file(path, limit=4 * 1024 * 1024):
+    value = json.loads(metadata_bytes(path, limit))
     if not isinstance(value, dict):
         raise ValueError('inbox metadata must be an object')
     return value
@@ -46,13 +50,13 @@ def discover(root, limit):
         raise ValueError('existing inbox and limit 1..100 required')
     found, scanned = [], 0
     for directory, folders, files in os.walk(root, followlinks=False):
+        scanned += len(folders) + len(files)
+        if scanned > 10000:
+            raise ValueError('inbox discovery exceeds 10000 entries')
         folders[:] = [name for name in folders if not name.startswith('.') and name != 'processed']
         for name in folders:
             checked(Path(directory) / name)
         for name in files:
-            scanned += 1
-            if scanned > 10000:
-                raise ValueError('inbox discovery exceeds 10000 files')
             path = checked(Path(directory) / name)
             if not name.startswith('.') and path.suffix.lower() in MEDIA and path.is_file():
                 found.append((path.stat().st_mtime_ns, str(path.relative_to(root)), path))
@@ -70,10 +74,21 @@ def checkpoint(root):
     return value
 
 
+def note_path(notes_root, original, identity):
+    relative = Path(original)
+    if (relative.is_absolute() or not relative.name or
+            any(part.startswith('.') or part == 'processed' for part in relative.parts)):
+        raise ValueError('invalid original recording path')
+    folder = notes_root / 'Conference' / relative.parts[0] if len(relative.parts) > 1 else notes_root / '03_Media/Transcripts'
+    path = checked(folder / f'{identity}.md')
+    path.relative_to(notes_root)
+    return path
+
+
 def mark(root, identity, receipt, status):
     """Replace only our validated index; immutable receipts remain authoritative."""
     path = checked(root / '.processed.json')
-    before = path.read_bytes() if path.exists() else None
+    before = metadata_bytes(path) if path.exists() else None
     value = checkpoint(root)
     value['items'][identity] = {'receipt_sha256': file_digest(receipt), 'status': status}
     raw = encoded(value)
@@ -83,7 +98,7 @@ def mark(root, identity, receipt, status):
         raise ValueError('checkpoint capacity exceeded')
     stage = checked(root / f'.inbox-index-{uuid.uuid4().hex}.tmp')
     exclusive(stage, raw)
-    if (path.read_bytes() if path.exists() else None) != before:
+    if (metadata_bytes(path) if path.exists() else None) != before:
         raise ValueError('checkpoint changed during processing')
     os.replace(stage, path)
 
@@ -97,7 +112,7 @@ def verify_receipt(root, notes_root, path, *, repair=False):
     prior = checkpoint(root)['items'].get(identity)
     if prior and prior['receipt_sha256'] != file_digest(path):
         raise ValueError('inbox receipt changed')
-    expected_note = checked(notes_root / '03_Media/Transcripts' / f'{identity}.md')
+    expected_note = note_path(notes_root, record['original_name'], identity)
     if record['note']['path'] != str(expected_note):
         raise ValueError('published inbox note path changed')
     if not isinstance(record['evidence'], list) or not 1 <= len(record['evidence']) <= 512:
@@ -271,7 +286,7 @@ def process_one(root, notes_root, source, model, backend, port, producer=prepare
     text = raw.decode('utf-8')
     if any(text.splitlines().count(title) != 1 for title in ('## Synopsis', '## Action Items', '## Key moments', '## Full Transcript')):
         raise ValueError('recording note lacks required sections')
-    note = checked(notes_root / '03_Media/Transcripts' / f'{identity}.md')
+    note = note_path(notes_root, relative, identity)
     artifacts = [retain(path) for path in evidence]
     for artifact in artifacts:
         Path(artifact['path']).relative_to(work)
@@ -310,9 +325,9 @@ def process(root, notes_root, model, *, backend='auto', port=11434, limit=10, ti
             not re.fullmatch(r'[A-Za-z0-9_.:/-]{1,160}', model)):
         raise ValueError('invalid inbox processing settings')
     root, notes_root = checked(root), checked(notes_root)
-    destination = notes_root / '03_Media/Transcripts'
-    if destination == root or root in destination.parents or destination in root.parents:
-        raise ValueError('inbox and note destination must be separate trees')
+    for destination in (notes_root / '03_Media/Transcripts', notes_root / 'Conference'):
+        if destination == root or root in destination.parents or destination in root.parents:
+            raise ValueError('inbox and note destination must be separate trees')
     selected = discover(root, limit)
     if not apply:
         return {'mode': 'preview', 'selected': [str(path) for path in selected],

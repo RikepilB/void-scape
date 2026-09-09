@@ -263,3 +263,31 @@ def test_evidence_sync_failure_prevents_publication_and_move(roots, monkeypatch)
     with pytest.raises(OSError):
         execute(root, notes, source)
     assert source.exists() and not notes.exists()
+
+
+def test_oversized_checkpoint_is_rejected_before_index_writes(roots):
+    root, _ = roots
+    path = root / '.processed.json'
+    with path.open('wb') as stream:
+        stream.truncate(4 * 1024 * 1024 + 1)
+    with pytest.raises(ValueError, match='metadata exceeds'):
+        inbox.mark(root, 'a' * 64, root / 'unread-receipt.json', 'processed')
+    assert not list(root.glob('.inbox-index-*'))
+
+
+def test_discovery_bounds_empty_directories_too(roots, monkeypatch):
+    root, _ = roots
+    monkeypatch.setattr(inbox.os, 'walk', lambda *a, **kw: iter([(str(root), ['unused'] * 10001, [])]))
+    with pytest.raises(ValueError, match='10000 entries'):
+        inbox.discover(root, 10)
+
+
+def test_named_event_routes_note_and_retains_processed_subfolders(roots):
+    root, notes = roots
+    source = recording(root, 'Conference 2026/Day 2/talk.mp4')
+    result = execute(root, notes, source)
+    assert Path(result['note']).parent == notes / 'Conference/Conference 2026'
+    assert Path(result['processed']) == root / 'processed/Conference 2026/Day 2/talk.mp4'
+    duplicate = recording(root, 'Another Event/renamed.mp4')
+    result = execute(root, notes, duplicate, lambda *a: pytest.fail('same recording must not be reanalyzed'))
+    assert result['status'] == 'skipped' and duplicate.exists()

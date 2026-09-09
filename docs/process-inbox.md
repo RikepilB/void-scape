@@ -20,13 +20,14 @@ python scripts/process_inbox.py --root "C:/Recordings/Inbox" --notes-root "C:/Kn
 
 Omitting `--root` uses configured `inbox_dir`, then `~/Documents/Voidscape/Inbox`.
 `--notes-root` and the cached model name are explicit. Notes go beneath
-`03_Media/Transcripts/` in that destination, named by source SHA256. A model service
+`03_Media/Transcripts/` for files directly in the inbox; a named subfolder routes
+to `Conference/<first-subfolder>/`. Notes are named by source SHA256. A model service
 must already be running with cloud disabled; see [local note drafts](local-note-drafts.md).
 No service or model is installed, started or downloaded automatically.
 
 ## Processing and recovery
 
-- Discover up to 100 recordings oldest-first, with at most 10,000 files scanned.
+- Discover up to 100 recordings oldest-first, with at most 10,000 directory entries scanned.
   Managed, hidden and `processed/` folders are excluded. Links/reparse points fail
   closed. Video files use both modalities; audio files use audio. Notes currently
   analyze transcripts only, even when frame evidence is retained.
@@ -72,7 +73,7 @@ verified note -> processed file. An unreadable preceding file stayed intact whil
 the valid file completed. With the model server stopped, an empty rerun and a
 renamed duplicate succeeded without changing the checkpoint.
 
-Still pending: real user-recording acceptance, configured conference/event routing,
+Still pending: real user-recording acceptance,
 installed process-inbox skill with harness/evaluation evidence, scheduled laptop
 execution, and suite release packaging. These commands do not establish those
 requirements as complete.
