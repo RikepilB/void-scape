@@ -135,7 +135,7 @@ def test_skip_does_not_prevent_later_analysis(tmp_path):
     assert result['pending'] == []
 
 
-@pytest.mark.parametrize('change', ['source', 'url', 'category', 'duplicate', 'section', 'frontmatter'])
+@pytest.mark.parametrize('change', ['source', 'url', 'category', 'duplicate', 'section', 'frontmatter', 'quote', 'mapping'])
 def test_invalid_provenance_has_no_output(tmp_path, change):
     args = fixture(tmp_path)
     text = args['note'].read_text()
@@ -144,7 +144,9 @@ def test_invalid_provenance_has_no_output(tmp_path, change):
                     'category': ('category: Tools_Utilities', 'category: Security_Privacy'),
                     'duplicate': ('Source: instagram:Example123', 'Source: instagram:Example123\nSource: another'),
                     'section': ('## Synopsis', '## Missing'),
-                    'frontmatter': ('author: null', 'author: !include secret')}
+                    'frontmatter': ('author: null', 'author: !include secret'),
+                    'quote': ('author: null', "author: 'unterminated"),
+                    'mapping': ('author: null', 'author: nested: value')}
     args['note'].write_text(text.replace(*replacements[change]))
     with pytest.raises(ValueError):
         store.publish(**args)

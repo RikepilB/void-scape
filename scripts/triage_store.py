@@ -38,9 +38,11 @@ def note_metadata(text):
             parsed = json.loads(value)
             if not isinstance(parsed, str):
                 raise ValueError('frontmatter must contain scalars')
-        elif value.startswith("'") and value.endswith("'"):
+        elif value.startswith("'"):
+            if len(value) < 2 or not value.endswith("'"):
+                raise ValueError('unterminated quoted frontmatter')
             parsed = value[1:-1].replace("''", "'")
-        elif value and value[0] not in '!&*[{>|':
+        elif value and value[0] not in '!&*[{>|' and ': ' not in value:
             parsed = value
         else:
             raise ValueError('unsupported frontmatter value')
