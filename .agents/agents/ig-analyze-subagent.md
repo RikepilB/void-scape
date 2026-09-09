@@ -45,7 +45,7 @@ folders.
 - **Respect the per-video cost gate even though the batch was pre-approved.** The batch-level
   approval covers the expected case (local, free transcription). The commands below use
   `--backend faster-whisper` as the default; honor an explicitly chosen backend and scope,
-  keeping preview/read options identical. Check the preview envelope's `data`
+  keeping preview/read options identical. Check the flat preview object's
   `free`/`needs_install`/`needs_model_download` flags before calling
   `read`. If `needs_install: true` (dependency not installed) or `needs_model_download: true` (the
   duration-routed whisper model — e.g. `thorough` mode's `medium` — isn't cached locally for this
@@ -73,7 +73,8 @@ folders.
    Apply the exact-source artifact verification above; only then return `already_processed`.
 2. Run:
    `python -m skill.scripts.voidscape inspect "<url>" --json`.
-   - Check the process exit status before consuming output. A nonzero exit or `ok: false`
+   - Guided `--json` success is a flat object; it does not have `ok` or `data`.
+     Check the process exit status before consuming output. A nonzero exit or `error`
      is a failure: use the sanitized `error.message` for a skip marker, then stop.
      Missing or malformed JSON is an `invalid_cli_output` skip, never permission to continue.
 3. Run `python -m skill.scripts.voidscape preview "<url>" --tier both --backend faster-whisper --json`. Parse the JSON.
@@ -86,8 +87,9 @@ folders.
      and `requires_cloud_approval: false` are explicitly present. Missing or unexpected flags
      require a skip and controller review, not a paid fallback or inferred approval.
 4. Run `python -m skill.scripts.voidscape read "<url>" --tier both --backend faster-whisper --workdir
-   "<evidence_dir>" --json`. Check the exit status and envelope again. A nonzero exit,
-   `ok: false`, partial result, or deliberate stop cannot become a complete analysis. This writes `frames/*.jpg`,
+   "<evidence_dir>" --json`. Check exit status and the flat result again. Require
+   `status: complete` and the expected artifact paths. A nonzero exit,
+   `error`, partial result, or deliberate stop cannot become a complete analysis. This writes `frames/*.jpg`,
    `transcript.txt`, and `manifest.json` (frame→timestamp map) into that workdir.
 5. `Read` the frames (in filename order) and `transcript.txt`.
 6. Classify **priority** against the user's stated interests. If none were supplied, use
