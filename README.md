@@ -225,10 +225,11 @@ It defaults to dry-run and keeps saved items. Its Claude/Codex role files share
 one source; packaging tests do not establish live browser or harness compatibility.
 See [source skill development](docs/instagram-triage-skill.md) for checks and limits.
 
-For the upcoming recording inbox, the repository-only
-[local note draft helper](docs/local-note-drafts.md) can author transcript notes
-through a cached model on a cloud-disabled local service. It currently handles
-short transcripts; scheduled processing and source movement remain unfinished.
+The repository-only [recording inbox controller](docs/process-inbox.md) previews
+local files, prepares evidence, drafts notes through a cached cloud-disabled model,
+and verifies artifacts before moving successful recordings. Long transcripts use
+resumable [local note drafting](docs/local-note-drafts.md). Scheduling, installed
+skill support and real recording acceptance remain unfinished.
 
 Controllers can publish an Instagram analysis draft through the repository-only
 [note store](docs/triage-store.md). It verifies source fields and retained evidence,

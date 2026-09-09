@@ -52,5 +52,9 @@ Never auto-retry exit 4 with approval flags.
 - Exit 6: surface the sanitized operation error and whether a narrower/public/local path exists.
 - Exit 1: preserve the error and investigate; do not assume the run is safe to repeat.
 
-Voidscape ships no scheduler, background worker, or production MCP host. A calling system remains
-responsible for queue durability, concurrency, cancellation, and human approval presentation.
+The repository-only [recording inbox controller](../process-inbox.md) provides
+bounded local workers, verified notes, content dedup and recoverable source moves.
+It defaults to a read-only preview and refuses cloud/download gates. It is not
+installed with the skill and has not established scheduled or harness acceptance.
+Voidscape installs no scheduler or production MCP host. Other calling systems
+remain responsible for queue durability, cancellation and approval presentation.
