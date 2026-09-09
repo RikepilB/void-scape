@@ -391,3 +391,48 @@ compatibility fallback stays unchanged when neither control is requested.
 Probe/frames stops skip these options entirely. With reference alignment,
 `words.json` continues to describe the original baseline speech, not replacement
 reference wording. The manifest and recovery pointer link the word evidence.
+
+## Manual batches
+
+Create a UTF-8 JSONL manifest, with one source per line:
+
+```jsonl
+{"id":"talk","input":"talk.mp4","reader":"video","tier":"both","backend":"captions"}
+{"id":"notes","input":"notes.md","reader":"article"}
+{"id":"slides","input":"slides","reader":"image"}
+```
+
+```sh
+voidscape batch-preview batch.jsonl --json
+voidscape batch-read batch.jsonl --workdir ./batch-output --json
+```
+
+The manifest is limited to 100 rows and 1 MiB. Relative local inputs and alignment
+references resolve against its directory. IDs are unique ASCII letters/digits,
+underscores or hyphens; output folders receive numeric prefixes. Per-reader options
+use snake_case (`stop_at`, `align_reference`, `word_timestamps`, `initial_prompt`,
+`no_dedup`, etc.). Video-only options are rejected for other readers. Omit unused
+options; JSON null, unknown fields, duplicate keys, and invalid types are rejected.
+
+Every row is validated and previewed before any media processing. Preview aggregates
+cost and required permissions. Remote video probing can still use the network.
+If any row needs cloud/model permission or an unavailable dependency, batch read
+stops before creating outputs. After reviewing the whole preview, grant any required
+permission on that one command with `--allow-cloud` or `--allow-model-download`.
+Rows cannot contain permissions, config paths, workdirs, or arbitrary commands.
+Individual readers still recheck their run-time gates.
+
+Use a new output root. Items run sequentially, without retries. Each has its own
+evidence folder; `batch-summary.json` records typed outcomes and is updated after
+each item. An execution-time failure retains available partial evidence while
+independent items continue. Complete, stopped, and failed counts stay separate.
+Both commands emit the standard JSON envelope. A batch with any failed item exits 6;
+invalid preflight exits 3 and missing permission exits 4. Successful deliberate stops
+exit 0 but never count as complete reads. Such batches use `completed_with_stops`;
+each stopped item's result identifies its own stop stage.
+
+The summary is private and records the source manifest hash, not a duplicate raw
+manifest or approval store. Wait for the process handle; do not poll output folders.
+After termination, inspect the summary and the relevant per-item manifests/evidence.
+A running summary left by interruption is not proof of completion or a resume token.
+No source files are moved, notes published, accounts changed, or jobs scheduled.

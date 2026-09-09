@@ -187,3 +187,10 @@ are derived from actual returned word starts; they do not promise acoustic accur
 verified source content. Both controls bypass automatic sidecar reuse and preserve
 model/download gates. Word evidence describes the baseline even after reference
 alignment changes its wording. Probe/frames stops skip the controls entirely.
+
+Manual batches use `batch-preview manifest.jsonl --json` then `batch-read` with a
+new output root. Validate the whole preview and its aggregate permissions first;
+manifest rows cannot grant permission. Wait on the process, then inspect the private
+`batch-summary.json` and individual evidence. Distinguish completed, stopped and
+failed items; never treat a running summary as completion or permission to resume.
+No notes are published, source files moved, or account actions scheduled by a batch.
