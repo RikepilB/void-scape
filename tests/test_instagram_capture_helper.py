@@ -42,6 +42,17 @@ def test_extract_shortcode_invalid_raises():
         extract_shortcode("https://example.com/not-instagram")
 
 
+@pytest.mark.parametrize('url', [
+    'https://www.instagram.com:private-value/reel/Cx1AbC2DeFg/',
+    'https://[broken/reel/Cx1AbC2DeFg/',
+])
+def test_direct_parser_failures_are_normalized(url):
+    with pytest.raises(ValueError) as error:
+        extract_shortcode(url)
+    assert str(error.value) == 'not a recognizable Instagram reel/post URL or shortcode'
+    assert error.value.__suppress_context__ is True
+
+
 def test_extract_shortcode_rejects_lookalike_domain_no_separator():
     with pytest.raises(ValueError):
         extract_shortcode("https://notinstagram.com/reel/Cx1AbC2DeFg/")

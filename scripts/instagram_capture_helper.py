@@ -29,10 +29,14 @@ def extract_shortcode(url_or_code: str) -> str:
     s = url_or_code.strip()
     if _SHORTCODE_RE.match(s):
         return s
-    parsed = urlparse(s)
+    try:
+        parsed = urlparse(s)
+        port = parsed.port
+    except ValueError:
+        raise ValueError("not a recognizable Instagram reel/post URL or shortcode") from None
     if (parsed.scheme in {'http', 'https'} and parsed.hostname and
             parsed.hostname.lower() in _ALLOWED_HOSTS and parsed.username is None and
-            parsed.password is None and parsed.port is None):
+            parsed.password is None and port is None):
         m = _PATH_RE.match(parsed.path)
         if m:
             return m.group(1)
