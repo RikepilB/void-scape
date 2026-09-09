@@ -38,7 +38,7 @@ def test_probe_supports_compact_standard_envelope(static_clip):
     assert payload["ok"] is True
     assert payload["data"]["source"] == "local"
     assert payload["error"] is None
-    assert payload["meta"] == {"command": "probe", "protocol_version": "1.0"}
+    assert payload["meta"] == {"command": "probe", "protocol_version": "1.0", "warnings": []}
 
 
 def test_cloud_approval_error_has_deterministic_envelope_and_exit_code(static_clip, tmp_path):

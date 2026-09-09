@@ -342,7 +342,7 @@ def test_raw_manifest_and_compact_envelope_contract(carousel):
     payload = json.loads(probe.stdout)
     assert payload["ok"] is True
     assert payload["data"]["kind"] == "carousel"
-    assert payload["meta"] == {"command": "probe", "protocol_version": "1.0"}
+    assert payload["meta"] == {"command": "probe", "protocol_version": "1.0", "warnings": []}
 
 
 def test_raw_cli_errors_have_protocol_exit_codes(tmp_path):

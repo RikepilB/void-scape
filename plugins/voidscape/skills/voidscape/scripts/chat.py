@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
 import tempfile
@@ -266,6 +265,10 @@ def estimate(inp: str, out_words: int = 600,
 
 
 def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
+    return video.execute_read(_run, inp, workdir)
+
+
+def _run(progress, inp, workdir):
     resolved = video.resolve_input(inp)
     if video.is_url(resolved):
         raise ValueError("chat exports are local files; a URL is not a chat export")
@@ -276,12 +279,15 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
         raise ValueError(f"chat input cannot be a symlink: {resolved}")
     if not path.is_file():
         raise ValueError(f"chat input is not a file: {resolved}")
-    info = _parse_export(path)
+    info = progress.call("probe", _parse_export, path)
+    progress.begin("validate")
     if info["truncated"]:
         raise ValueError(
             f"chat export has more than {MAX_MESSAGES} messages; export a narrower window"
         )
 
+    progress.complete("validate")
+    progress.begin("workdir")
     destination = Path(workdir).expanduser() if workdir else Path(
         tempfile.mkdtemp(prefix="voidscape-chat-")
     )
@@ -294,6 +300,8 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
         destination.mkdir(parents=True, exist_ok=True)
     except OSError as ex:
         raise RuntimeError(f"workdir creation failed: {ex}") from ex
+    progress.complete("workdir")
+    progress.begin("write_transcript")
 
     transcript_lines = [
         f"chat: {info['chat_title']}",
@@ -319,6 +327,7 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
         )
     except OSError as ex:
         raise RuntimeError(f"transcript write failed: {ex}") from ex
+    progress.complete("write_transcript")
 
     result = {
         "workdir": str(destination.resolve()),
@@ -344,15 +353,7 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
         "content_trust": video.EVIDENCE_TRUST.copy(),
         "citation_guide": "cite each excerpt with message N, e.g. [message 1]",
     }
-    try:
-        (destination / "manifest.json").write_text(
-            json.dumps(result, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-    except OSError as ex:
-        raise RuntimeError(f"manifest write failed: {ex}") from ex
-    video.write_read_pointer(result)
-    return result
+    return progress.finish(result, wrap_manifest_errors=True)
 
 
 def _cli_manifest() -> dict[str, Any]:
@@ -445,8 +446,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as ex:
         exit_code, code, retryable = video._classify_error(ex)
         if args.envelope:
-            error = video._error_payload(ex)
-            print(video._json_text(video._envelope(None, error, args.command), args.compact))
+            print(video._json_text(video.failure_envelope(ex, args.command), args.compact))
         else:
             print(video._json_text({"error": str(ex)}, args.compact))
         return exit_code
