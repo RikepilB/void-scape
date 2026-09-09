@@ -87,6 +87,37 @@ _EXIT_APPROVAL = 4
 _EXIT_DEPENDENCY = 5
 _EXIT_OPERATION = 6
 
+
+class ApprovalRequired(PermissionError):
+    def __init__(self, message: str, gate_type: str, backend: str):
+        super().__init__(message)
+        self.gate = {"type": gate_type, "backend": backend}
+
+
+class BackendGateError(RuntimeError):
+    def __init__(self, message: str, gate_type: str, backend: str, env_var: str | None = None):
+        super().__init__(message)
+        self.gate = {"type": gate_type, "backend": backend}
+        if env_var:
+            self.gate["env_var"] = env_var
+
+
+class BackendFailures(RuntimeError):
+    def __init__(self, message: str, failures: list[Exception]):
+        super().__init__(message)
+        self.gates = []
+        for failure in failures:
+            if isinstance(failure, (ApprovalRequired, BackendGateError)):
+                gates = [failure.gate]
+            elif isinstance(failure, BackendFailures):
+                gates = failure.gates
+            else:
+                gates = []
+            for gate in gates:
+                if gate not in self.gates:
+                    self.gates.append(gate)
+
+
 DEFAULT_PRICING: dict[str, Any] = {
     "transcription_per_min": {
         "captions": 0.0, "sidecar": 0.0, "local": 0.0, "trx": 0.0, "faster-whisper": 0.0,
@@ -517,6 +548,10 @@ def estimate(inp: str, frames: int | None = None, backend: str = "captions",
     if want_frames:
         # The gate prices the full budget (worst case); dedup can only shrink the real count.
         out["note"] = "frame dedup may reduce actual frames below this count"
+    out["gate"] = (
+        {"type": "cloud_approval", "backend": backend} if out["requires_cloud_approval"] else
+        {"type": "model_download", "backend": backend} if out["needs_model_download"] else None
+    )
     return out
 
 
@@ -538,17 +573,17 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
     # cloud backend named in the chain is never actually called -- don't demand consent for it.
     if (not info.get("sidecar_transcript") and any(b in CLOUD_BACKENDS for b in chain)
             and not allow_cloud):
-        raise PermissionError(
+        raise ApprovalRequired(
             "transcription backend chain contains a cloud service; review `estimate`, obtain "
-            "explicit user consent, then rerun with --allow-cloud")
+            "explicit user consent, then rerun with --allow-cloud", "cloud_approval", backend)
     if want_audio and any(b in ("faster-whisper", "local") for b in chain):
         profile = _transcribe_profile(dur, override=transcribe_mode)
         download = _model_download_info(True, chain, info.get("sidecar_transcript"), profile)
         if download["status"] == "required" and not allow_model_download:
-            raise PermissionError(
+            raise ApprovalRequired(
                 f"faster-whisper model '{download['model']}' requires a one-time download; "
                 "obtain explicit user consent, then rerun with --allow-model-download, or use "
-                "--transcribe-mode fast")
+                "--transcribe-mode fast", "model_download", backend)
     end = end if end is not None else dur
     if start < 0 or end <= start or (dur and end > dur):
         raise ValueError(f"invalid time window: start={start:g}, end={end:g}, duration={dur:g}")
@@ -841,15 +876,17 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
         return _transcribe_one(orig, info, media, wd, chain[0], transcribe_mode,
                                allow_model_download, window_start, window_end)
     errors: list[str] = []
+    failures: list[Exception] = []
     for b in chain:
         try:
             return _transcribe_one(orig, info, media, wd, b, transcribe_mode,
                                    allow_model_download, window_start, window_end)
         except Exception as ex:
+            failures.append(ex)
             errors.append(f"{b}: {type(ex).__name__}: {str(ex)[:140]}")
             print(f"[read-video] backend '{b}' failed -> falling back to next in chain. {errors[-1]}",
                   file=sys.stderr)
-    raise RuntimeError("all transcription backends in the chain failed: " + " | ".join(errors))
+    raise BackendFailures("all transcription backends in the chain failed: " + " | ".join(errors), failures)
 
 
 def _transcribe_one(orig: str, info: dict[str, Any], media: str | None,
@@ -1086,9 +1123,9 @@ def _faster_whisper(audio: str, model_size: str | None = None,
     # download is required. Only the *requested* size is ever downloaded, never a fallback.
     if model is None and not is_path:
         if not allow_model_download:
-            raise RuntimeError(
+            raise BackendGateError(
                 f"faster-whisper model '{requested}' is not cached; review `estimate`, obtain "
-                "explicit user consent, then rerun with --allow-model-download")
+                "explicit user consent, then rerun with --allow-model-download", "model_download", "faster-whisper")
         for attempt in range(3):
             try:
                 model, used = _new_whisper(requested, download_root, False), requested
@@ -1227,8 +1264,9 @@ def _api_request(backend: str, audio: str) -> dict[str, Any]:
     key_env, endpoint, model, verbose = BACKEND_API[backend]
     key = os.environ.get(key_env)
     if not key:
-        raise RuntimeError(f"{key_env} not set (needed for backend '{backend}'). "
-                           f"PowerShell: $env:{key_env}=\"...\"")
+        raise BackendGateError(f"{key_env} not set (needed for backend '{backend}'). "
+                               "Set it in the local environment; never paste its value into chat.",
+                               "missing_credentials", backend, key_env)
     fields = {"model": model, "temperature": "0",
               "response_format": "verbose_json" if verbose else "json"}
     body, boundary = _build_multipart(fields, audio)
@@ -1270,23 +1308,24 @@ def _api_transcribe(backend: str, audio: str) -> str:
     if len(chunks) == 1:
         return _resp_to_text(_api_request(backend, audio))
     parts: list[str] = []
-    failures = 0
+    failures: list[Exception] = []
     for i, (path, offset) in enumerate(chunks, start=1):
         try:
             parts.append(_resp_to_text(_api_request(backend, path), offset))
         except Exception as ex:
-            failures += 1
+            failures.append(ex)
             parts.append(f"[transcription gap: chunk {i} of {len(chunks)} failed: {str(ex)[:120]}]")
             print(f"[read-video] {backend} chunk {i}/{len(chunks)} failed: {ex}", file=sys.stderr)
-    if failures == len(chunks):
-        raise RuntimeError(f"{backend} transcription failed: all {len(chunks)} chunks failed")
+    if len(failures) == len(chunks):
+        raise BackendFailures(f"{backend} transcription failed: all {len(chunks)} chunks failed", failures)
     return "\n".join(parts)
 
 
 def _gemini(wav: str) -> str:
     key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not key:
-        raise RuntimeError("GEMINI_API_KEY not set (needed for backend 'gemini')")
+        raise BackendGateError("GEMINI_API_KEY not set (needed for backend 'gemini'; GOOGLE_API_KEY also accepted)",
+                               "missing_credentials", "gemini", "GEMINI_API_KEY")
     try:
         from google import genai
     except ImportError:
@@ -1378,6 +1417,16 @@ def _classify_error(ex: Exception) -> tuple[int, str, bool]:
         return (_EXIT_OPERATION, "operation_failed",
                 any(marker in message for marker in transient_markers))
     return _EXIT_UNEXPECTED, "unexpected_error", False
+
+
+def _error_payload(ex: Exception) -> dict[str, Any]:
+    exit_code, code, retryable = _classify_error(ex)
+    error = {"code": code, "message": str(ex), "retryable": retryable, "exit_code": exit_code}
+    if isinstance(ex, (ApprovalRequired, BackendGateError)):
+        error["gate"] = ex.gate
+    elif isinstance(ex, BackendFailures) and ex.gates:
+        error["gates"] = ex.gates
+    return error
 
 
 class _AgentArgumentParser(argparse.ArgumentParser):
@@ -1546,8 +1595,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as ex:                       # surface as JSON so the agent can react
         exit_code, code, retryable = _classify_error(ex)
         if a.envelope:
-            error = {"code": code, "message": str(ex),
-                     "retryable": retryable, "exit_code": exit_code}
+            error = _error_payload(ex)
             print(_json_text(_envelope(None, error, a.cmd), a.compact))
         else:
             print(_json_text({"error": str(ex)}, a.compact))

@@ -17,6 +17,8 @@ does not authorize install, publication, or roadmap expansion.
 | Connectors contract page | `shipped` | this tree: `connectors.md` |
 | Harness skill kit (copy-and-adapt templates) | `shipped` | `harness/skills/`; template tests |
 | Shared reader protocol and envelope | `shipped` | reader manifests; protocol tests |
+| Private recovery pointers and Windows UTF-8 output | `shipped` | merged PR #65; recovery and Unicode subprocess tests |
+| Bounded article responses and direct loopback health | `shipped` | merged PR #66; network boundary tests |
 | Source capability registry and reader override | `release-candidate` | `voidscape route`, `voidscape sources`; source tests |
 | Instagram URL queue helper | `dev-only` | repository script; not installed with the skill |
 | Instagram follow-relationship audit (read-only) | `dev-only` | repository script; local exports only; never unfollows |

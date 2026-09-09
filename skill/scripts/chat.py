@@ -445,10 +445,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as ex:
         exit_code, code, retryable = video._classify_error(ex)
         if args.envelope:
-            error = {
-                "code": code, "message": str(ex),
-                "retryable": retryable, "exit_code": exit_code,
-            }
+            error = video._error_payload(ex)
             print(video._json_text(video._envelope(None, error, args.command), args.compact))
         else:
             print(video._json_text({"error": str(ex)}, args.compact))
