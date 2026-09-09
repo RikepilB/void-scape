@@ -17,6 +17,19 @@ import voidscape
 SECRET = "SYNTHETIC_PRIVATE_VALUE"
 
 
+def _fake_credentials(monkeypatch):
+    original_get = video.os.environ.get
+
+    def get(name, default=None):
+        if name in {"GROQ_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"}:
+            return "synthetic-configured-key"
+        if name == "SSLKEYLOGFILE":
+            return None
+        return original_get(name, default)
+
+    monkeypatch.setattr(video.os.environ, "get", get)
+
+
 @pytest.mark.parametrize("message", [
     f"request https://user:{SECRET}@example.com/api?key={SECRET}#fragment-{SECRET}",
     f"request https://example.com/api?opaque={SECRET}",
@@ -104,7 +117,7 @@ def test_http_rejection_body_is_not_read_or_echoed(monkeypatch):
     def reject(*args, **kwargs):
         raise HTTPError("https://example.com", 401, "Unauthorized", {}, Body(SECRET.encode()))
 
-    monkeypatch.setattr(video.os.environ, "get", lambda *args: "synthetic-configured-key")
+    _fake_credentials(monkeypatch)
     monkeypatch.setattr(video, "_build_multipart", lambda *args: (b"", "boundary"))
     monkeypatch.setattr(video, "urlopen", reject)
     with pytest.raises(RuntimeError) as caught:
@@ -118,7 +131,7 @@ def test_transport_reason_cannot_echo_an_opaque_secret(monkeypatch, capsys):
     def fail(*args, **kwargs):
         raise URLError(SECRET)
 
-    monkeypatch.setattr(video.os.environ, "get", lambda *args: "synthetic-configured-key")
+    _fake_credentials(monkeypatch)
     monkeypatch.setattr(video, "_build_multipart", lambda *args: (b"", "boundary"))
     monkeypatch.setattr(video, "urlopen", fail)
     monkeypatch.setattr(video, "_MAX_ATTEMPTS", 1)
@@ -133,7 +146,7 @@ def test_gemini_omits_provider_detail_preserving_classification(monkeypatch, ori
     def client(**kwargs):
         raise original
 
-    monkeypatch.setattr(video.os.environ, "get", lambda *args: "synthetic-configured-key")
+    _fake_credentials(monkeypatch)
     monkeypatch.setitem(sys.modules, "google", SimpleNamespace(genai=SimpleNamespace(Client=client)))
     with pytest.raises(video.ProviderFailure) as caught:
         video._gemini("unused.wav")
@@ -158,7 +171,7 @@ def test_gemini_response_property_errors_are_also_private(monkeypatch):
 
     client = SimpleNamespace(files=SimpleNamespace(upload=lambda **kwargs: object()),
                              models=SimpleNamespace(generate_content=lambda **kwargs: Response()))
-    monkeypatch.setattr(video.os.environ, "get", lambda *args: "synthetic-configured-key")
+    _fake_credentials(monkeypatch)
     monkeypatch.setitem(sys.modules, "google", SimpleNamespace(genai=SimpleNamespace(Client=lambda **kwargs: client)))
     with pytest.raises(video.ProviderFailure) as caught:
         video._gemini("unused.wav")
