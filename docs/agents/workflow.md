@@ -221,3 +221,18 @@ Read `words.json` for model-estimated word starts/ends and clipping offsets.
 Formatting precision does not prove acoustic accuracy. Reference alignment can
 change transcript wording while word evidence still belongs to the original
 baseline. Do not assign those word times to replacement words without evidence.
+
+## Manual multi-source batches
+
+Use `batch-preview manifest.jsonl --json`, then `batch-read` with a fresh output
+root and only the current invocation's explicitly granted permissions. The entire
+manifest is prevalidated and previewed before execution; rows cannot grant access.
+Each reader still checks its gates when it runs. Source/reference paths are relative
+to the manifest, and per-row outputs are confined below the chosen batch root.
+
+Wait on the process handle. After completion or failure, read `batch-summary.json`
+and relevant item manifests. Check completed/stopped/failed counts and each typed
+result; an exit0 with stopped items does not mean full reads. Failed items may have
+usable partial evidence. Do not rerun successful items merely to recover terminal
+output. The summary retains no reusable approval and is not a resume checkpoint.
+This manual evidence command does not implement scheduled note creation or filing.

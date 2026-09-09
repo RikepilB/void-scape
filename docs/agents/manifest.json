@@ -48,6 +48,8 @@
         "inspect",
         "preview",
         "read",
+        "batch-preview",
+        "batch-read",
         "route",
         "sources",
         "customize",

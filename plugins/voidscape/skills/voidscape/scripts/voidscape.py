@@ -41,6 +41,8 @@ Your private media, made legible.
   inspect <file-or-url>   See what is there and choose a scope.
   preview <file-or-url>   See cost, privacy, and dependencies.
   read <file-or-url>      Create approved frames, transcript, and manifest.
+  batch-preview <jsonl>   Preview every item and aggregate permissions.
+  batch-read <jsonl>      Read a manual batch into a fresh output root.
   route <file-or-url>     Explain reader choice and source boundaries.
   sources                 List platform capabilities without overclaiming.
 
@@ -299,28 +301,36 @@ def _estimate_from_args(args: argparse.Namespace, workspace: dict[str, Any]) -> 
     )
 
 
+def _preview_data(args: argparse.Namespace, workspace: dict[str, Any]):
+    reader = _select_reader(args.input, args.reader)
+    if getattr(args, "stop_at", None) and reader != "video":
+        raise ValueError("stop-at is supported only by the video/audio reader")
+    if getattr(args, "align_reference", None) and reader != "video":
+        raise ValueError("transcript alignment is supported only by the video/audio reader")
+    if (getattr(args, "word_timestamps", False) or getattr(args, "initial_prompt", None) is not None) and reader != "video":
+        raise ValueError("Whisper controls are supported only by the video/audio reader")
+    image_source = reader == "image"
+    chat_source = reader == "chat"
+    article_source = reader == "article"
+    agent_model = args.agent_model or _defaults(workspace)["agent_model"]
+    if image_source:
+        estimate = image_engine.estimate(args.input, args.out_words, agent_model)
+    elif chat_source:
+        estimate = chat_engine.estimate(args.input, args.out_words, agent_model)
+    elif article_source:
+        estimate = article_engine.estimate(args.input, args.out_words, agent_model)
+    else:
+        estimate = _estimate_from_args(args, workspace)
+    return reader, estimate
+
+
 def preview(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
-        reader = _select_reader(args.input, args.reader)
-        if getattr(args, "stop_at", None) and reader != "video":
-            raise ValueError("stop-at is supported only by the video/audio reader")
-        if getattr(args, "align_reference", None) and reader != "video":
-            raise ValueError("transcript alignment is supported only by the video/audio reader")
-        if (getattr(args, "word_timestamps", False) or getattr(args, "initial_prompt", None) is not None) and reader != "video":
-            raise ValueError("Whisper controls are supported only by the video/audio reader")
+        reader, estimate = _preview_data(args, workspace)
         image_source = reader == "image"
         chat_source = reader == "chat"
         article_source = reader == "article"
-        agent_model = args.agent_model or _defaults(workspace)["agent_model"]
-        if image_source:
-            estimate = image_engine.estimate(args.input, args.out_words, agent_model)
-        elif chat_source:
-            estimate = chat_engine.estimate(args.input, args.out_words, agent_model)
-        elif article_source:
-            estimate = article_engine.estimate(args.input, args.out_words, agent_model)
-        else:
-            estimate = _estimate_from_args(args, workspace)
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
@@ -360,61 +370,69 @@ def preview(args: argparse.Namespace) -> int:
     return 0
 
 
+def _read_data(args: argparse.Namespace, workspace: dict[str, Any]):
+    reader = _select_reader(args.input, args.reader)
+    if getattr(args, "stop_at", None) and reader != "video":
+        raise ValueError("stop-at is supported only by the video/audio reader")
+    if getattr(args, "align_reference", None) and reader != "video":
+        raise ValueError("transcript alignment is supported only by the video/audio reader")
+    if (getattr(args, "word_timestamps", False) or getattr(args, "initial_prompt", None) is not None) and reader != "video":
+        raise ValueError("Whisper controls are supported only by the video/audio reader")
+    image_source = reader == "image"
+    chat_source = reader == "chat"
+    article_source = reader == "article"
+    if image_source:
+        result = image_engine.run(args.input, args.workdir)
+    elif chat_source:
+        result = chat_engine.run(args.input, args.workdir)
+    elif article_source:
+        estimate = article_engine.estimate(
+            args.input, args.out_words,
+            args.agent_model or _defaults(workspace)["agent_model"],
+        )
+        if estimate["requires_cloud_approval"] and not args.allow_cloud:
+            raise video.ApprovalRequired(
+                "remote article fetch needs explicit consent; review preview, "
+                "then rerun with --allow-cloud", "cloud_approval", "article_fetch"
+            )
+        result = article_engine.run(
+            args.input, args.workdir, allow_fetch=args.allow_cloud,
+        )
+    else:
+        image_source = False
+        article_source = False
+        estimate = _estimate_from_args(args, workspace)
+        if estimate["requires_cloud_approval"] and not args.allow_cloud:
+            raise video.ApprovalRequired("cloud audio processing needs explicit consent; review preview, then rerun with --allow-cloud",
+                                         "cloud_approval", estimate["backend"])
+        if estimate["needs_model_download"] and not args.allow_model_download:
+            raise video.ApprovalRequired("a local model download needs explicit consent; review preview, then rerun with --allow-model-download",
+                                         "model_download", estimate["backend"])
+        if estimate["needs_install"]:
+            raise RuntimeError("the selected local backend is not installed; choose captions or install the backend before reading")
+        result = video.run(
+            args.input,
+            tier=estimate["tier"], frames=args.frames,
+            backend=estimate.get("requested_backend", estimate["backend"]), start=args.start, end=args.end,
+            workdir=args.workdir, timestamps=args.timestamps, dedup=not args.no_dedup,
+            transcribe_mode=args.transcribe_mode, allow_cloud=args.allow_cloud,
+            allow_model_download=args.allow_model_download,
+            stop_at=getattr(args, "stop_at", None),
+            align_reference=getattr(args, "align_reference", None),
+            alignment_threshold=getattr(args, "alignment_threshold", 0.8),
+            word_timestamps=getattr(args, "word_timestamps", False),
+            initial_prompt=getattr(args, "initial_prompt", None),
+        )
+    return reader, result
+
+
 def read(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
-        reader = _select_reader(args.input, args.reader)
-        if getattr(args, "stop_at", None) and reader != "video":
-            raise ValueError("stop-at is supported only by the video/audio reader")
-        if getattr(args, "align_reference", None) and reader != "video":
-            raise ValueError("transcript alignment is supported only by the video/audio reader")
-        if (getattr(args, "word_timestamps", False) or getattr(args, "initial_prompt", None) is not None) and reader != "video":
-            raise ValueError("Whisper controls are supported only by the video/audio reader")
+        reader, result = _read_data(args, workspace)
         image_source = reader == "image"
         chat_source = reader == "chat"
         article_source = reader == "article"
-        if image_source:
-            result = image_engine.run(args.input, args.workdir)
-        elif chat_source:
-            result = chat_engine.run(args.input, args.workdir)
-        elif article_source:
-            estimate = article_engine.estimate(
-                args.input, args.out_words,
-                args.agent_model or _defaults(workspace)["agent_model"],
-            )
-            if estimate["requires_cloud_approval"] and not args.allow_cloud:
-                raise video.ApprovalRequired(
-                    "remote article fetch needs explicit consent; review preview, "
-                    "then rerun with --allow-cloud", "cloud_approval", "article_fetch"
-                )
-            result = article_engine.run(
-                args.input, args.workdir, allow_fetch=args.allow_cloud,
-            )
-        else:
-            image_source = False
-            article_source = False
-            estimate = _estimate_from_args(args, workspace)
-            if estimate["requires_cloud_approval"] and not args.allow_cloud:
-                raise video.ApprovalRequired("cloud audio processing needs explicit consent; review preview, then rerun with --allow-cloud",
-                                             "cloud_approval", estimate["backend"])
-            if estimate["needs_model_download"] and not args.allow_model_download:
-                raise video.ApprovalRequired("a local model download needs explicit consent; review preview, then rerun with --allow-model-download",
-                                             "model_download", estimate["backend"])
-            if estimate["needs_install"]:
-                raise RuntimeError("the selected local backend is not installed; choose captions or install the backend before reading")
-            result = video.run(
-                args.input,
-                tier=estimate["tier"], frames=args.frames,
-                backend=estimate.get("requested_backend", estimate["backend"]), start=args.start, end=args.end,
-                workdir=args.workdir, timestamps=args.timestamps, dedup=not args.no_dedup,
-                transcribe_mode=args.transcribe_mode, allow_cloud=args.allow_cloud,
-                allow_model_download=args.allow_model_download,
-                stop_at=getattr(args, "stop_at", None),
-                align_reference=getattr(args, "align_reference", None),
-                alignment_threshold=getattr(args, "alignment_threshold", 0.8),
-                word_timestamps=getattr(args, "word_timestamps", False),
-                initial_prompt=getattr(args, "initial_prompt", None),
-            )
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
@@ -445,6 +463,44 @@ def read(args: argparse.Namespace) -> int:
     print(f"  Transcript: {result['transcript'] or 'not created'}")
     print("Next: ask your agent to read manifest.json, transcript.txt, and frames/ with [MM:SS] citations.")
     return 0
+
+
+def batch_command(args: argparse.Namespace) -> int:
+    if __package__:
+        from . import batch_reader
+    else:
+        import batch_reader
+    try:
+        workspace = _load_workspace(_workspace_path(args.config))
+        cli = sys.modules[__name__]
+        if args.command == "batch-preview":
+            result = batch_reader.preview_result(batch_reader.prepare(args.input, workspace, cli))
+            error = None
+        else:
+            result = batch_reader.read(args.input, args.workdir, workspace, cli,
+                                       allow_cloud=args.allow_cloud,
+                                       allow_model_download=args.allow_model_download)
+            error = ({"code": "batch_failed", "message": "one or more batch items failed; inspect individual results",
+                      "retryable": False, "exit_code": 6} if result["failed"] else None)
+        output = video._envelope(result, error, args.command)
+    except Exception as ex:
+        output = video.failure_envelope(ex, args.command)
+    if args.json:
+        _emit_cli(output, True)
+    elif output["data"] is not None:
+        data = output["data"]
+        if args.command == "batch-preview":
+            print(f"Batch preview: {data['total']} items; estimated ${data['cost_usd']['total']:.4f}")
+            for item in data["items"]:
+                print(f"  {item['id']}: {item['reader']}")
+            for gate in data["gates"]:
+                print(f"  Permission needed: {gate['id']} — {gate['type']}")
+        else:
+            print(f"Batch: {data['completed']} complete, {data['stopped']} stopped, {data['failed']} failed")
+            print(f"  Summary: {Path(data['workdir']) / 'batch-summary.json'}")
+    else:
+        print(f"Voidscape could not continue: {output['error']['message']}", file=sys.stderr)
+    return output["error"]["exit_code"] if output["error"] else 0
 
 
 def _legacy_workspace() -> Path:
@@ -748,6 +804,16 @@ def main(argv: list[str] | None = None) -> int:
     read_parser = commands.add_parser("read", help="prepare approved frames and transcript")
     _add_analysis_options(read_parser, include_run=True)
     read_parser.set_defaults(handler=read)
+    for name in ("batch-preview", "batch-read"):
+        batch_parser = commands.add_parser(name, help="preview or read a manual JSONL batch")
+        batch_parser.add_argument("input", help="local JSONL manifest")
+        batch_parser.add_argument("--config")
+        batch_parser.add_argument("--json", action="store_true")
+        if name == "batch-read":
+            batch_parser.add_argument("--workdir", required=True, help="new batch output root")
+            batch_parser.add_argument("--allow-cloud", action="store_true")
+            batch_parser.add_argument("--allow-model-download", action="store_true")
+        batch_parser.set_defaults(handler=batch_command)
     customize_parser = commands.add_parser("customize", help="preview or save local preferences")
     customize_parser.add_argument("--inbox")
     customize_parser.add_argument("--library")
