@@ -1,0 +1,22 @@
+{
+  "skill": "instagram-triage",
+  "status": "evaluation cases; no benchmark result implied",
+  "cases": [
+    {
+      "id": "dry-run",
+      "prompt": "Dry-run these supplied Instagram URLs for my notes at {workspace}/notes: https://www.instagram.com/reel/Example123/?igsh=one and https://www.instagram.com/p/Example123/?igsh=two. Report what would happen. Do not fetch media or write anything."
+    },
+    {
+      "id": "local-export",
+      "prompt": "Read and file my synthetic local export at {workspace}/input/demo.mp4, using its adjacent caption sidecar and the captions backend. For this test only, I associate the export with https://www.instagram.com/reel/Example123/. Save the analysis under {workspace}/notes and retain evidence under {workspace}/evidence. State that this is a user-provided synthetic export, not something fetched from Instagram. Keep any saved item."
+    },
+    {
+      "id": "queue-is-not-analysis",
+      "prompt": "The URL https://www.instagram.com/reel/Example123/ is already in {workspace}/urls.md. Check whether I already have verified analysis in {workspace}/notes. Report the status without processing media, creating records, or changing an account."
+    },
+    {
+      "id": "missing-collection",
+      "prompt": "Dry-run three saved Instagram items for me. Tell me what scope is still needed before you start."
+    }
+  ]
+}

@@ -32,6 +32,55 @@ def test_publish_verify_and_duplicate(tmp_path):
     assert store.inspect(args['root'], result['id'])['status'] == 'analyzed'
 
 
+@pytest.mark.parametrize('field,value', [
+    ('source', '../instagram'), ('source', 'unsupported'),
+    ('key', ''), ('key', 'instagram:Example123\nextra'),
+    ('category', '../Tools'), ('category', 'Unregistered'),
+    ('category', '_Skipped'),
+])
+def test_invalid_request_never_creates_store(tmp_path, field, value):
+    args = fixture(tmp_path)
+    args[field] = value
+    with pytest.raises(ValueError):
+        store.publish(**args)
+    assert not args['root'].exists()
+
+
+@pytest.mark.parametrize('old,new', [
+    ('author: null', 'author: null\nauthor: repeated'),
+    ('author: null', 'author: !custom tagged'),
+    ('author: null', 'unknown: null'),
+    ('url: https://www.instagram.com/reel/Example123/', 'url: null'),
+    ('Source: instagram:Example123', 'Source: instagram:Other123'),
+    ('## Synopsis', '## Wrong'),
+    ('# Synthetic\n', '# One\n# Two\n'),
+    ('Priority: **Medium** — Example.', 'Priority: unknown'),
+])
+def test_invalid_draft_is_preserved_without_publication(tmp_path, old, new):
+    args = fixture(tmp_path)
+    text = args['note'].read_text(encoding='utf-8').replace(old, new)
+    args['note'].write_text(text, encoding='utf-8')
+    with pytest.raises(ValueError):
+        store.publish(**args)
+    assert args['note'].read_text(encoding='utf-8') == text
+    assert not args['root'].exists()
+
+
+def test_unrelated_receipt_is_not_a_duplicate(tmp_path):
+    args = fixture(tmp_path)
+    store.publish(**args)
+    assert store.lookup(args['root'], 'instagram', 'instagram:Other123') == {
+        'analyzed': [], 'skipped': [], 'pending': []}
+
+
+def test_missing_evidence_stops_before_publication(tmp_path):
+    args = fixture(tmp_path)
+    args['evidence'] = [tmp_path / 'absent.txt']
+    with pytest.raises(ValueError, match='regular file'):
+        store.publish(**args)
+    assert not args['root'].exists()
+
+
 @pytest.mark.parametrize('target', ['note', 'evidence'])
 def test_changed_artifact_revokes_verified_state(tmp_path, target):
     args = fixture(tmp_path)

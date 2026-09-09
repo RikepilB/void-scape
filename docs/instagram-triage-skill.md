@@ -38,9 +38,15 @@ second competing skill under `.codex/skills`.
 
 Helper execution and generated-file equality are deterministic tests. They are
 not a behavioral evaluation of an AI agent, signed-in browser discovery, or proof
-of equivalent operation in Codex, Claude and OpenCode. Those runtime evaluations,
-skill-library registration, and separately approved live mutation proof remain
+of equivalent operation in Codex, Claude and OpenCode. Those runtime evaluations
+and separately approved live mutation proof remain
 required before declaring the source workflow complete under issue #54.
 
 Keep synthetic fixtures distinct from fetched source evidence. Never present a
 fixture note as a real Instagram analysis or use it to authorize an account change.
+
+The [evaluation workspace](https://github.com/RikepilB/void-scape/tree/main/evals/instagram-triage) contains scoped
+cases and separate grading criteria. The first real local CLI exercise exposed
+and corrected a success-schema mismatch: guided `voidscape --json` commands return
+flat success objects, while `triage_store` returns an `ok`/`data` envelope. See
+[observed results and remaining limits](https://github.com/RikepilB/void-scape/blob/main/evals/instagram-triage/RESULTS.md).

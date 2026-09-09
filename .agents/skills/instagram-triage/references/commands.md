@@ -28,8 +28,13 @@ python -m skill.scripts.voidscape read "<input>" --tier both --backend faster-wh
 These examples use local transcription. Match preview/read options to the chosen
 backend and requested scope. A supplied local caption sidecar may use `captions`
 when appropriate; inspect and preview it first. Never run read after a failed or
-malformed preview or with missing permission flags. Inspect `data` only after exit
-zero and `ok: true`. Required approval flags are not shown above intentionally:
+malformed preview or with missing permission flags. These guided commands return
+flat success objects, not `ok`/`data` envelopes. Require exit zero and a JSON object
+with the command's expected fields: source inspection, explicit preview gate flags,
+and read `status: complete` plus actual artifact paths. A nonzero exit or structured
+`error` is a failure; preserve its sanitized `error.message`. The separate raw
+reader `--envelope` interface and `triage_store` use envelopes; do not mix contracts.
+Required approval flags are not shown above intentionally:
 add one only when the user granted that exact current gate.
 
 For a retained completed bundle, inspect the actual manifest and referenced files.
