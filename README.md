@@ -219,6 +219,12 @@ Confirmed public Reel URLs can also be queued through a repository-only helper
 (`scripts/instagram_capture_helper.py`) — it is not an installed command, and browser capture
 remains a user-observed development workflow.
 
+The project-local [Instagram triage skill](.agents/skills/instagram-triage/SKILL.md)
+coordinates bounded discovery, read-only previews, gated reads, and verified notes.
+It defaults to dry-run and keeps saved items. Its Claude/Codex role files share
+one source; packaging tests do not establish live browser or harness compatibility.
+See [source skill development](docs/instagram-triage-skill.md) for checks and limits.
+
 Controllers can publish an Instagram analysis draft through the repository-only
 [note store](docs/triage-store.md). It verifies source fields and retained evidence,
 keeps an index and receipts, and distinguishes analyzed notes from skipped attempts.

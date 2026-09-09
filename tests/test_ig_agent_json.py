@@ -37,5 +37,7 @@ def test_capture_scope_and_readiness_are_explicit():
     assert "do not pick a default" in prompt
     assert 'named "Cursos"' not in prompt
     assert "malformed JSON" in prompt
-    assert "queue readiness only" in prompt
-    assert "verified note artifact" in prompt
+    assert "Discovery is strictly read-only" in prompt
+    assert "belong to the controller, never this worker" in prompt
+    assert "instagram_capture_helper.py inspect" in prompt
+    assert "instagram_capture_helper.py process" not in prompt
