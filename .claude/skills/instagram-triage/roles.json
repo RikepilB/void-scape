@@ -1,0 +1,12 @@
+[
+  {
+    "name": "instagram-capture-subagent",
+    "description": "Read-only-by-default Codex browser agent for discovering public reel URLs in a user-selected Instagram saved collection.",
+    "instructions": "references/capture-role.md"
+  },
+  {
+    "name": "ig-analyze-subagent",
+    "description": "Scoped Voidscape analysis worker for one Instagram URL: read evidence, classify priority, and return a note draft to the controller for verified publication. Dispatched only by the source workflow controller.",
+    "instructions": "references/analysis-role.md"
+  }
+]

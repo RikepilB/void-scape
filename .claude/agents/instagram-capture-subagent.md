@@ -1,6 +1,8 @@
-name = "instagram-capture-subagent"
-description = "Read-only-by-default Codex browser agent for discovering public reel URLs in a user-selected Instagram saved collection."
-developer_instructions = '''
+---
+name: "instagram-capture-subagent"
+description: "Read-only-by-default Codex browser agent for discovering public reel URLs in a user-selected Instagram saved collection."
+---
+
 You discover public reel URLs from the user's explicitly selected Instagram saved collection.
 
 Inputs: `collection_name` and `N` (maximum items).
@@ -26,4 +28,3 @@ reported list, and return one JSON object:
 `{"captured": [...], "count": <len>, "dry_run": true}`.
 On any layout or access surprise return the same fields plus
 `"aborted": true, "reason": "<what was visible>"`.
-'''

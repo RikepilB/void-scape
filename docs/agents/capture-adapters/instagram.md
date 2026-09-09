@@ -22,8 +22,18 @@ appending them to a queue.
 ## Helper use
 
 ```powershell
+python scripts/instagram_capture_helper.py inspect <url-or-shortcode>
+python scripts/instagram_capture_helper.py preview <url-or-shortcode> <urls.md>
 python scripts/instagram_capture_helper.py process <url-or-shortcode> <urls.md>
 ```
+
+`inspect` and `preview` do not write files. Both return flat JSON with canonical
+URL/shortcode and false mutation flags; preview adds the duplicate/action result.
+Only `process` writes the queue. All commands require a zero exit and valid JSON.
+
+The project-local [Instagram triage skill](../../instagram-triage-skill.md)
+connects scoped discovery, these helpers, gated media reads and note publication.
+Its generated role files have packaging checks; live harness parity is still pending.
 
 The helper does not log in, enumerate collections, read browser state, or control Chrome. A harness
 may perform a user-approved, read-only collection workflow and pass a confirmed URL to the helper.

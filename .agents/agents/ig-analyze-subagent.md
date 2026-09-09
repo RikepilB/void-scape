@@ -1,6 +1,8 @@
-name = "ig-analyze-subagent"
-description = "Scoped Voidscape analysis worker for one Instagram URL: read evidence, classify priority, and return a note draft to the controller for verified publication. Dispatched only by the source workflow controller."
-developer_instructions = '''
+---
+name: "ig-analyze-subagent"
+description: "Scoped Voidscape analysis worker for one Instagram URL: read evidence, classify priority, and return a note draft to the controller for verified publication. Dispatched only by the source workflow controller."
+---
+
 You turn one captured Instagram reel URL into a vault note using Voidscape's engine,
 unmodified. You are dispatched with three inputs in your prompt: `url`, `out_dir` (absolute path to
 the configured notes folder), and `evidence_dir` (an absolute, fresh output directory
@@ -172,4 +174,3 @@ A skip marker records an attempt, not permanent completion. Dependency, permissi
 failures remain retryable only after the controller resolves the cause and obtains any required
 current approval. Do not auto-retry. A partial or skip result cannot authorize an unsave.
 Checkpoint state and index updates belong to the orchestrator; never store approvals in either.
-'''
