@@ -33,7 +33,8 @@ does not authorize install, publication, or roadmap expansion.
 | Browser extension spike | `dev-only` | [spike report](../superpowers/specs/2026-09-08-browser-extension-spike-report.md): isolated Chrome three-command proof; real harnesses and signed-in profiles unverified |
 | Codex plugin bundle | `dev-only` | validates locally; SkillSpector `CRITICAL/DO_NOT_INSTALL` gate remains open |
 | Production universal browser extension | `parked` | separate security/repository decision required |
-| Unattended orchestration | `parked` | explicit product/privacy design required |
+| Local recording inbox controller | `dev-only` | [repository helper](../process-inbox.md); synthetic end-to-end and deadline tests; installed skill/scheduler/real recording acceptance pending |
+| Unattended orchestration | `parked` | general orchestration beyond the bounded local inbox work in issue #56 needs separate product/privacy design |
 | Hosted SaaS | `parked` | product, billing, connector, and legal gates required |
 
 ## Interpretation rules
