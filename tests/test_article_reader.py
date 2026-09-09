@@ -261,6 +261,9 @@ def test_run_fetches_url_with_approval(tmp_path):
         headers = {"Content-Type": "text/html; charset=utf-8"}
 
         def read(self, _size=-1):
+            if getattr(self, "consumed", False):
+                return b""
+            self.consumed = True
             return remote_html.encode("utf-8")
 
         def __enter__(self):
@@ -312,10 +315,11 @@ def test_run_maps_network_failures_to_operation_error():
 
 
 def _resolver(*addresses: str):
-    def resolve(_host, port, *, type):
-        assert type == socket.SOCK_STREAM
+    def resolve(_host, port, **options):
+        assert options["type"] == socket.SOCK_STREAM
         return [
-            (socket.AF_INET6 if ":" in address else socket.AF_INET, type, 6, "", (address, port))
+            (socket.AF_INET6 if ":" in address else socket.AF_INET,
+             options["type"], 6, "", (address, port))
             for address in addresses
         ]
 
@@ -381,9 +385,9 @@ def test_remote_fetch_revalidates_and_rejects_redirect_target():
         mock.patch("article._open_url", side_effect=redirect),
         mock.patch(
             "article.socket.getaddrinfo",
-            side_effect=lambda host, port, *, type: _resolver(
+            side_effect=lambda host, port, **options: _resolver(
                 "93.184.216.34" if host == "example.com" else "127.0.0.1"
-            )(host, port, type=type),
+            )(host, port, **options),
         ),
     ):
         with pytest.raises(ValueError, match="non-public network address"):
@@ -397,6 +401,9 @@ def test_remote_fetch_pins_connection_to_revalidated_public_address():
         headers = {"Content-Type": "text/html"}
 
         def read(self, _size=-1):
+            if getattr(self, "consumed", False):
+                return b""
+            self.consumed = True
             return b"<p>safe</p>"
 
         def close(self):

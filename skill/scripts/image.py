@@ -234,7 +234,8 @@ def run(inp: str, workdir: str | None = None) -> dict[str, Any]:
     result = {
         "workdir": str(destination.resolve()),
         "kind": info["kind"],
-        "source": info["input"],
+        "source": info["source"],
+        "input": info["input"],
         "item_count": info["item_count"],
         "images": copied,
         "skipped": info["skipped"],

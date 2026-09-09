@@ -510,11 +510,16 @@ def _fetch_url(url: str, timeout_s: float = 20.0) -> str:
                     content_type.casefold().split("charset=", 1)[1].split(";", 1)[0]
                     .strip().strip("\"'")
                 )
-            payload = response.read(MAX_REMOTE_BYTES + 1)
-            if len(payload) > MAX_REMOTE_BYTES:
-                raise ValueError(
-                    f"remote article exceeds the {MAX_REMOTE_BYTES}-byte response limit"
-                )
+            payload = bytearray()
+            while True:
+                chunk = response.read(min(65536, MAX_REMOTE_BYTES + 1 - len(payload)))
+                if not chunk:
+                    break
+                payload.extend(chunk)
+                if len(payload) > MAX_REMOTE_BYTES:
+                    raise ValueError(
+                        f"remote article exceeds the {MAX_REMOTE_BYTES}-byte response limit"
+                    )
             try:
                 return payload.decode(charset, errors="replace")
             except LookupError as ex:

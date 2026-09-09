@@ -1,5 +1,18 @@
 # CLI / API reference — `scripts/video.py`
 
+Reader polish: image manifests use `source: "local"` and `input` for the source
+path, matching image probe/estimate and the article reader. Consumers that used
+the former image `source` path must read `input` instead. Guided URL commands trim
+surrounding whitespace consistently before routing and dispatch.
+
+The pricing snapshot was reviewed on 2026-09-08 against
+[OpenAI standard short-context pricing](https://developers.openai.com/api/docs/pricing)
+and [Groq speech pricing](https://console.groq.com/docs/speech-to-text).
+Groq selects `whisper-large-v3`, so its estimate uses $0.111/hour rather than the
+turbo model's rate. Minimum request billing, retries, long context, caching, and
+service tiers can change actual charges. Gemini and OpenRouter minute rates remain
+explicitly labeled legacy estimates. The bundled snapshot and fallback rates agree.
+
 For the guided human path, start with [Voidscape's guide](voidscape-guide.md):
 `voidscape.py inspect → preview → read`. This page documents the stable lower-level engine used by
 existing scripts, subagents, and non-interactive automation.

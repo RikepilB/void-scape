@@ -90,13 +90,13 @@ _EXIT_OPERATION = 6
 DEFAULT_PRICING: dict[str, Any] = {
     "transcription_per_min": {
         "captions": 0.0, "sidecar": 0.0, "local": 0.0, "trx": 0.0, "faster-whisper": 0.0,
-        "groq": 0.0007, "openai-mini": 0.003, "openai": 0.006, "openrouter": 0.006, "gemini": 0.037,
+        "groq": 0.00185, "openai-mini": 0.003, "openai": 0.006, "openrouter": 0.006, "gemini": 0.037,
     },
     "model_per_mtok": {
         "_active": "gpt-5.6-terra",
-        "gpt-5.6-sol": {"input": 5.0, "output": 30.0, "vision_estimator": "openai_patch32"},
-        "gpt-5.6-terra": {"input": 2.5, "output": 15.0, "vision_estimator": "openai_patch32"},
-        "gpt-5.6-luna": {"input": 1.0, "output": 6.0, "vision_estimator": "openai_patch32"},
+        "gpt-5.6-sol": {"input": 4.0, "output": 20.0, "vision_estimator": "openai_patch32"},
+        "gpt-5.6-terra": {"input": 2.0, "output": 12.0, "vision_estimator": "openai_patch32"},
+        "gpt-5.6-luna": {"input": 0.2, "output": 1.2, "vision_estimator": "openai_patch32"},
     },
     "frame": {"target_width": 512},
 }
