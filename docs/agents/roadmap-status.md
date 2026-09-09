@@ -28,7 +28,7 @@ does not authorize install, publication, or roadmap expansion.
 | Browser bridge implementation contract | `dev-only` | design only; issues #14 and #25 |
 | MCP host spike / decision | `shipped` | no-go report; issue #26 |
 | Production MCP host | `parked` | revisit gates in the #26 spike report |
-| Browser extension spike | `dev-only` | sibling `agent-bridge` fake protocol proof; real Chrome/OpenCode unverified |
+| Browser extension spike | `dev-only` | [spike report](../superpowers/specs/2026-09-08-browser-extension-spike-report.md): isolated Chrome three-command proof; real harnesses and signed-in profiles unverified |
 | Codex plugin bundle | `dev-only` | validates locally; SkillSpector `CRITICAL/DO_NOT_INSTALL` gate remains open |
 | Production universal browser extension | `parked` | separate security/repository decision required |
 | Unattended orchestration | `parked` | explicit product/privacy design required |
@@ -38,7 +38,7 @@ does not authorize install, publication, or roadmap expansion.
 
 `shipped` requires merged implementation and tests on `main`. `release-candidate` means the local
 upgrade is implemented and verified but is not merged, installed, or published. Repository capture
-adapters and the fake browser spike are `dev-only` because no supported installer exposes them.
+adapters and the browser spike are `dev-only` because no supported installer exposes them.
 A design spec or fake spike never upgrades a capability to `shipped`.
 
 For phase-level history and deferred platform ideas, read the canonical roadmap. The open issue
