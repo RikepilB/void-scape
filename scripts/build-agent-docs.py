@@ -444,7 +444,9 @@ def _plain_text(source: Path) -> str:
     value = source.read_text(encoding="utf-8")
     value = re.sub(r"```.*?```", " ", value, flags=re.DOTALL)
     value = LINK_RE.sub(r"\1", value)
-    value = re.sub(r"[#>*_`|\[\]-]+", " ", value)
+    # Strip block/list markers without corrupting filenames and CLI identifiers.
+    value = re.sub(r"(?m)^\s*(?:#{1,6}\s+|[-*+]\s+|>\s*)", " ", value)
+    value = re.sub(r"[*`|\[\]]+", " ", value)
     return re.sub(r"\s+", " ", value).strip()
 
 
