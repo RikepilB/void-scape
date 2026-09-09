@@ -302,3 +302,30 @@ Voidscape does not extract browser cookies. Keep cookie files outside the reposi
 
 - **`pricing.json`** — `transcription_per_min[backend]`, model rates and vision estimator, `frame.target_width`.
 - **`workspace.json`** (gitignored; copy from `workspace.example.json`) — `inbox_dir`, `out_dir`, `whisper_model`.
+
+## Deliberately stop a video read
+
+Use the same extent in preview and read:
+
+```sh
+voidscape preview clip.mp4 --tier both --stop-at frames --json
+voidscape read clip.mp4 --tier both --stop-at frames --workdir ./frames-review --json
+```
+
+`--stop-at probe` writes source metadata and a manifest without downloading media,
+extracting frames, or transcribing. Remote source probing retains its normal network
+behavior. `--stop-at frames` acquires media and extracts frames without transcription.
+It requires a visual or both tier. Other readers reject the option. Raw `video.py
+estimate` and `run` support the same selector; the default full read is unchanged.
+
+A deliberate stop has `status: stopped`, `stopped_by: user`, `stop_at`, and
+`stages_completed`. Requested tier/backend remain explicit; an unexecuted backend
+is `none`. Exit zero means the selected extent completed, not the requested full
+read. Raw envelopes add `meta.stopped_at`. The recovery pointer also says
+`status: stopped`, never `success`. This is not a resume facility.
+
+Preview prices only the selected extent. Skipped transcription performs no cloud
+request or model acquisition and needs no transcription consent. Every operation
+that actually runs retains its existing gates. Selecting a stop never grants
+permission. Inspect the listed artifacts before answering; a probe-only result
+cannot support claims about unseen video content.

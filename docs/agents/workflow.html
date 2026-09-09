@@ -68,7 +68,8 @@
 <a href="#evidence-contracts" class="toc-level-2">Evidence contracts</a>
 <a href="#step-by-step-collection-runs" class="toc-level-2">Step-by-step collection runs</a>
 <a href="#formatted-deliverables" class="toc-level-2">Formatted deliverables</a>
-<a href="#grounded-summaries-executive-scribe-pattern" class="toc-level-2">Grounded summaries (executive-scribe pattern)</a></nav>
+<a href="#grounded-summaries-executive-scribe-pattern" class="toc-level-2">Grounded summaries (executive-scribe pattern)</a>
+<a href="#deliberate-stage-stops" class="toc-level-2">Deliberate stage stops</a></nav>
       </details>
       <article class="docs-article" id="top">
         <header class="article-header"><span>Operate</span><h1>Workflow and protocol</h1></header>
@@ -131,6 +132,8 @@ Output structure:
 <p>Run targeted recipe prompts across the generated notes, not the raw transcript:</p>
 <ul><li><strong>Follow-up email</strong> - thank-you opener, <code>Agreed Decisions</code> and <code>Next Steps</code> with owners, under 200 words, no small talk.</li><li><strong>Pain-point extractor</strong> (user interviews) - table of Observed Problem (the user&#x27;s raw words), Current Workaround, Underlying Need; discard feature ideas without an explicit pain point.</li><li><strong>Alignment risk audit</strong> - flag every commitment with no clear owner, no timeline, or conflicting statements between participants.</li></ul>
 <p>Practices that keep local stacks honest: jot three-word anchors during the call (&quot;budget cut pushback&quot;) to aim the model; use a 16k-32k context model (for example llama3.1:8b-instruct or qwen2.5:14b) because Whisper transcripts run long; instruct the model to ignore Whisper&#x27;s filler repetition in silence; and keep every heading outcome-focused - it should answer what decision or next action it enables.</p>
+<h2 id="deliberate-stage-stops">Deliberate stage stops<a class="heading-anchor" href="#deliberate-stage-stops" aria-label="Link to Deliberate stage stops">#</a></h2>
+<p>Video/audio preview and read accept matching <code>--stop-at probe|frames</code> selections. Choose an extent only when it serves the user&#x27;s request. Probe stops contain source metadata, not watched content; frames stops contain no transcript. Requested scope is retained, and manifests use <code>status: stopped</code> with <code>stopped_by: user</code>. A zero exit means that selected extent finished. Inspect pointer status: deliberate stops use <code>stopped</code>, complete reads use <code>success</code>, and failed partial reads get no success pointer. Never infer full coverage from exit zero or from a stopped pointer. Later stages do not run; operations actually executed still require their normal permissions. Use the same stop selection in preview and read.</p>
         <div class="article-edit"><a href="https://github.com/RikepilB/void-scape/edit/main/docs/agents/workflow.md" target="_blank" rel="noreferrer">Edit this page on GitHub ↗</a></div>
         <nav class="page-navigation" aria-label="Previous and next pages"><a class="previous" href="concepts.html"><span>Previous</span><strong>← Concepts</strong></a><a class="next" href="automation.html"><span>Next</span><strong>Agent automation →</strong></a></nav>
       </article>
@@ -147,7 +150,8 @@ Output structure:
 <a href="#evidence-contracts" class="toc-level-2">Evidence contracts</a>
 <a href="#step-by-step-collection-runs" class="toc-level-2">Step-by-step collection runs</a>
 <a href="#formatted-deliverables" class="toc-level-2">Formatted deliverables</a>
-<a href="#grounded-summaries-executive-scribe-pattern" class="toc-level-2">Grounded summaries (executive-scribe pattern)</a></nav>
+<a href="#grounded-summaries-executive-scribe-pattern" class="toc-level-2">Grounded summaries (executive-scribe pattern)</a>
+<a href="#deliberate-stage-stops" class="toc-level-2">Deliberate stage stops</a></nav>
     </aside>
   </div>
 

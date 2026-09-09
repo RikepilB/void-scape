@@ -291,6 +291,7 @@ def _estimate_from_args(args: argparse.Namespace, workspace: dict[str, Any]) -> 
         getattr(args, "tier", None) or defaults["tier"],
         transcribe_mode=getattr(args, "transcribe_mode", "auto"),
         agent_model=getattr(args, "agent_model", None) or defaults["agent_model"],
+        stop_at=getattr(args, "stop_at", None),
     )
 
 
@@ -298,6 +299,8 @@ def preview(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
         reader = _select_reader(args.input, args.reader)
+        if getattr(args, "stop_at", None) and reader != "video":
+            raise ValueError("stop-at is supported only by the video/audio reader")
         image_source = reader == "image"
         chat_source = reader == "chat"
         article_source = reader == "article"
@@ -353,6 +356,8 @@ def read(args: argparse.Namespace) -> int:
     workspace = _load_workspace(_workspace_path(args.config))
     try:
         reader = _select_reader(args.input, args.reader)
+        if getattr(args, "stop_at", None) and reader != "video":
+            raise ValueError("stop-at is supported only by the video/audio reader")
         image_source = reader == "image"
         chat_source = reader == "chat"
         article_source = reader == "article"
@@ -388,15 +393,21 @@ def read(args: argparse.Namespace) -> int:
             result = video.run(
                 args.input,
                 tier=estimate["tier"], frames=args.frames,
-                backend=estimate["backend"], start=args.start, end=args.end,
+                backend=estimate.get("requested_backend", estimate["backend"]), start=args.start, end=args.end,
                 workdir=args.workdir, timestamps=args.timestamps, dedup=not args.no_dedup,
                 transcribe_mode=args.transcribe_mode, allow_cloud=args.allow_cloud,
                 allow_model_download=args.allow_model_download,
+                stop_at=getattr(args, "stop_at", None),
             )
     except Exception as ex:
         return _print_error(ex, args.json)
     if args.json:
         _emit_cli(result, True)
+        return 0
+    if result.get("status") == "stopped":
+        print(f"Voidscape stopped after {result['stop_at']}; requested read is incomplete")
+        print(f"  Folder: {result['workdir']}")
+        print("Next: inspect manifest.json for the available evidence and completed stages.")
         return 0
     print("Voidscape prepared evidence")
     for warning in result.get("warnings", []):
@@ -668,6 +679,7 @@ def _add_analysis_options(parser: argparse.ArgumentParser, include_run: bool = F
     )
     parser.add_argument("--tier", choices=["visual", "audio", "both"])
     parser.add_argument("--backend")
+    parser.add_argument("--stop-at", choices=["probe", "frames"])
     parser.add_argument("--frames", type=int)
     parser.add_argument("--out-words", type=int, default=600)
     parser.add_argument("--transcribe-mode", choices=["auto", "fast", "thorough"], default="auto")

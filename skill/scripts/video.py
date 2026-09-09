@@ -159,10 +159,12 @@ class ReadProgress:
         self.complete(stage)
         return value
 
-    def finish(self, result, *, wrap_manifest_errors=False):
+    def finish(self, result, *, wrap_manifest_errors=False, stop_at=None):
         self.result = result
         self.begin("manifest")
-        result.update(status="complete", stages_completed=[*self.completed, "manifest"],
+        if stop_at is not None:
+            result.update(stopped_by="user", stop_at=stop_at)
+        result.update(status="stopped" if stop_at else "complete", stages_completed=[*self.completed, "manifest"],
                       warnings=list(self.warnings))
         try:
             with (Path(result["workdir"]) / "manifest.json").open("x", encoding="utf-8") as stream:
@@ -611,18 +613,26 @@ def _model_download_info(want_audio: bool, chain: list[str], sidecar: str | None
     return {"status": "cached" if cached else "required", "model": requested}
 
 
+def _stop_scope(tier, stop_at):
+    if stop_at not in (None, "probe", "frames"):
+        raise ValueError("stop_at must be probe or frames")
+    if stop_at == "frames" and tier == "audio":
+        raise ValueError("stop-at frames requires a visual or both tier")
+    return tier in ("visual", "both") and stop_at != "probe", tier in ("audio", "both") and stop_at is None
+
+
 def estimate(inp: str, frames: int | None = None, backend: str = "captions",
              out_words: int = 600, tier: str = "both",
              pr: dict[str, Any] | None = None,
              transcribe_mode: str = "auto",
-             agent_model: str | None = None) -> dict[str, Any]:
+             agent_model: str | None = None,
+             stop_at: str | None = None) -> dict[str, Any]:
+    want_frames, want_audio = _stop_scope(tier, stop_at)
     pr = pr or load_pricing()
     info = probe(inp)
     dur = info["duration_s"] or 0.0
     dur_min = dur / 60.0
-    want_frames = tier in ("visual", "both")
-    want_audio = tier in ("audio", "both")
-    chain = validate_backend_chain(backend) if backend else [backend]
+    chain = validate_backend_chain(backend) if want_audio and backend else []
 
     n = frames if frames else adaptive_frames(dur)
     target_w = int(pr.get("frame", {}).get("target_width", 512))
@@ -685,6 +695,8 @@ def estimate(inp: str, frames: int | None = None, backend: str = "captions",
         "sidecar_transcript": info.get("sidecar_transcript"),
         "captions_available": info.get("captions_available"),
     }
+    if stop_at is not None:
+        out.update(stop_at=stop_at, requested_backend=backend, requested_tier=tier)
     if want_frames:
         # The gate prices the full budget (worst case); dedup can only shrink the real count.
         out["note"] = "frame dedup may reduce actual frames below this count"
@@ -701,20 +713,19 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
         workdir: str | None = None, pr: dict[str, Any] | None = None,
         timestamps: str | None = None, dedup: bool = True,
         transcribe_mode: str = "auto", allow_cloud: bool = False,
-        allow_model_download: bool = False) -> dict[str, Any]:
+        allow_model_download: bool = False, stop_at: str | None = None) -> dict[str, Any]:
     return execute_read(_run, inp, tier, frames, backend, start, end, workdir, pr,
-                        timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download)
+                        timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download, stop_at)
 
 
 def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
-         timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download):
+         timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download, stop_at):
+    want_frames, want_audio = _stop_scope(tier, stop_at)
     pr = pr or load_pricing()
     info = progress.call("probe", probe, inp)
     progress.begin("validate")
     source_input = resolve_input(inp) if info["source"] == "url" else info["input"]
     dur = info["duration_s"] or 0.0
-    want_frames = tier in ("visual", "both")
-    want_audio = tier in ("audio", "both")
     chain = validate_backend_chain(backend) if want_audio else []
     # A sidecar transcript short-circuits _transcribe() before the chain is ever consulted, so a
     # cloud backend named in the chain is never actually called -- don't demand consent for it.
@@ -732,7 +743,7 @@ def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
                 "obtain explicit user consent, then rerun with --allow-model-download, or use "
                 "--transcribe-mode fast", "model_download", backend)
     end = end if end is not None else dur
-    if start < 0 or end <= start or (dur and end > dur):
+    if stop_at != "probe" and (start < 0 or end <= start or (dur and end > dur)):
         raise ValueError(f"invalid time window: start={start:g}, end={end:g}, duration={dur:g}")
     window = max(0.1, end - start)
     n = frames if frames else adaptive_frames(window)
@@ -788,6 +799,10 @@ def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
                               "window": {"start_s": start, "end_s": end,
                                          "duration_s": window},
                               "content_trust": EVIDENCE_TRUST.copy()}
+    if stop_at is not None:
+        result.update(requested_tier=tier, requested_backend=backend, source_info=info)
+    if stop_at == "probe":
+        result["window"] = None
     progress.result = result
     if want_frames:
         result["frames"], result["frames_deduped"] = progress.call("frames", _extract_frames,
@@ -800,7 +815,7 @@ def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
                                   end if scoped_audio else None)
         result["transcript"] = tpath
         result["transcript_chars"] = len(text)
-    return progress.finish(result)
+    return progress.finish(result, stop_at=stop_at)
 
 
 def _download(url: str, wd: Path) -> str:
@@ -1529,7 +1544,7 @@ def _cli_manifest() -> dict[str, Any]:
             "estimate": {
                 "description": "price tokens/transcription and surface approval requirements",
                 "flags": [
-                    "--frames", "--backend", "--out-words", "--tier",
+                    "--frames", "--backend", "--out-words", "--tier", "--stop-at",
                     "--transcribe-mode", "--agent-model", *common,
                 ],
             },
@@ -1538,7 +1553,7 @@ def _cli_manifest() -> dict[str, Any]:
                 "flags": [
                     "--tier", "--frames", "--backend", "--start", "--end", "--workdir",
                     "--no-dedup", "--timestamps", "--transcribe-mode", "--allow-cloud",
-                    "--allow-model-download", *common,
+                    "--allow-model-download", "--stop-at", *common,
                 ],
             },
         },
@@ -1566,7 +1581,8 @@ def _envelope(data: dict[str, Any] | None, error: dict[str, Any] | None,
         "data": data,
         "error": error,
         "meta": {"command": command, "protocol_version": _CLI_PROTOCOL_VERSION,
-                 "warnings": data.get("warnings", []) if data else []},
+                 "warnings": data.get("warnings", []) if data else [],
+                 **({"stopped_at": data["stop_at"]} if data and data.get("status") == "stopped" else {})},
     }
 
 
@@ -1650,6 +1666,8 @@ def _fmt_estimate(o: dict[str, Any]) -> str:
         f"  TOTAL:         ${c['total']:.4f}   (dominant: {o['dominant_cost']})",
         f"  basis: {o['cost_basis']}",
     ]
+    if o.get("stop_at"):
+        out.append(f"  extent: stop after {o['stop_at']}; downstream stages are not priced or authorized")
     if o.get("needs_install"):
         out.append("  NOTE: chosen backend needs a one-time install before it can run")
     if o.get("needs_model_download"):
@@ -1686,19 +1704,21 @@ def _evidence_paths(result):
 
 def write_read_pointer(result: dict[str, Any]) -> None:
     """Record only confined output paths; the manifest remains the evidence record."""
-    if result.get("status", "complete") != "complete":
+    if result.get("status", "complete") not in {"complete", "stopped"}:
         raise ValueError("success recovery requires a completed read")
     root = Path(result["workdir"]).resolve()
     manifest = root / "manifest.json"
     paths = _evidence_paths(result)
     pointer = {
         "schema_version": 1,
-        "status": "success",
+        "status": "stopped" if result.get("status") == "stopped" else "success",
         "manifest": "manifest.json",
         "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
         "evidence": sorted(set(paths)),
         "completed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
+    if result.get("status") == "stopped":
+        pointer.update(stop_at=result["stop_at"], stopped_by="user")
     directory = root / ".agent"
     directory.mkdir(exist_ok=False)
     with (directory / "latest-read.json").open("x", encoding="utf-8") as output:
@@ -1738,6 +1758,7 @@ def main(argv: list[str] | None = None) -> int:
 
     e = sub.add_parser("estimate", help="price the job before running")
     e.add_argument("input")
+    e.add_argument("--stop-at", choices=["probe", "frames"])
     e.add_argument("--frames", type=int)
     e.add_argument("--backend", default="captions")
     e.add_argument("--out-words", type=int, default=600)
@@ -1751,6 +1772,7 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("run", help="extract frames (+transcript) into a workdir")
     r.add_argument("input")
     r.add_argument("--tier", default="both", choices=["visual", "audio", "both"])
+    r.add_argument("--stop-at", choices=["probe", "frames"])
     r.add_argument("--frames", type=int)
     r.add_argument("--backend", default="captions")
     r.add_argument("--start", type=float, default=0.0)
@@ -1782,12 +1804,12 @@ def main(argv: list[str] | None = None) -> int:
         elif a.cmd == "estimate":
             _emit(estimate(a.input, a.frames, a.backend, a.out_words, a.tier,
                            transcribe_mode=a.transcribe_mode,
-                           agent_model=a.agent_model), a.human, a.envelope, a.compact, a.cmd)
+                           agent_model=a.agent_model, stop_at=a.stop_at), a.human, a.envelope, a.compact, a.cmd)
         elif a.cmd == "run":
             _emit(run(a.input, a.tier, a.frames, a.backend, a.start, a.end, a.workdir,
                        timestamps=a.timestamps, dedup=not a.no_dedup,
                        transcribe_mode=a.transcribe_mode, allow_cloud=a.allow_cloud,
-                       allow_model_download=a.allow_model_download),
+                       allow_model_download=a.allow_model_download, stop_at=a.stop_at),
                   a.human, a.envelope, a.compact, a.cmd)
     except Exception as ex:                       # surface as JSON so the agent can react
         exit_code, code, retryable = _classify_error(ex)
