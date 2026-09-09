@@ -262,3 +262,11 @@ def test_cli_entrypoint_preview(tmp_path, monkeypatch, capsys):
     assert error.value.code == 0
     assert json.loads(capsys.readouterr().out)['data']['mode'] == 'preview'
     assert not root.exists()
+
+
+def test_skipped_entry_output_is_bounded(tmp_path):
+    path = feed(tmp_path, '<item><title>First</title><guid>1</guid></item>' +
+                '<item><title>Duplicate</title><guid>1</guid></item>' * 4)
+    result = invoke(path, tmp_path / 'notes', limit=1)
+    assert len(result['feed_skipped']) == 1
+    assert result['feed_skipped_total'] == 4

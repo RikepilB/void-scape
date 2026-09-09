@@ -44,7 +44,8 @@ serialize through an OS lock. Duplicates are re-read and verified; changed or
 missing evidence stops the run. Interrupted captures can finish publishing
 identical bytes, but never overwrite existing artifacts. Changed feed content
 under an existing ID is reported as `changed`, preserving the retained version
-for review. Duplicate/empty feed entries appear in `feed_skipped`.
+for review. Duplicate/empty feed entries appear in `feed_skipped`, truncated to
+the requested limit; `feed_skipped_total` retains the full count.
 
 The envelope is `{ok,data,error,meta}`. Exit 4 means explicit fetch approval is
 missing; exit 6 reports failure without echoing source URLs or exception data.
@@ -65,6 +66,6 @@ entries. No linked articles, enclosures, models or account actions were invoked.
 This proves public sample-feed intake, not live Substack subscriber access or
 an end-to-end analyzed-note workflow.
 
-The helper's 35 regression tests measured 100% statement and branch coverage
+The helper's 36 regression tests measured 100% statement and branch coverage
 with `coverage.py --branch`. Coverage is scoped to `rss_capture_helper.py`;
 the shared article fetcher's existing tests cover its network boundary.

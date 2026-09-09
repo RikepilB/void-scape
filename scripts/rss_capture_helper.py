@@ -156,7 +156,8 @@ def capture(source, root, *, identity_url=None, allow_fetch=False, since=None, l
             if len(results) >= limit:
                 break
         return {'mode': 'capture' if apply else 'preview', 'results': results,
-                'duplicates': duplicates, 'feed_skipped': feed['skipped'],
+                'duplicates': duplicates, 'feed_skipped': feed['skipped'][:limit],
+                'feed_skipped_total': len(feed['skipped']),
                 'mutates_source': False, 'analyzed': 0, 'content_trust': 'untrusted'}
 
     if not apply:
