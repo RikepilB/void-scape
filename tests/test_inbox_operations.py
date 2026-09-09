@@ -24,6 +24,14 @@ def test_recent_recording_or_sidecar_waits(tmp_path):
     assert inbox.settled(source, 60, now=1110)
 
 
+def test_zero_quiet_period_disables_future_timestamp_deferral(tmp_path):
+    source = tmp_path / 'clip.mp4'
+    source.write_bytes(b'complete selected fixture')
+    os.utime(source, (5000, 5000))
+    assert inbox.settled(source, 0, now=1000)
+    assert not inbox.settled(source, 60, now=1000)
+
+
 def test_worker_rechecks_changed_file_before_hashing_or_generation(tmp_path):
     source = tmp_path / 'clip.mp4'
     source.write_bytes(b'fixture')

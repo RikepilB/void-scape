@@ -54,7 +54,8 @@ def settled(source, min_age, *, now=None):
         sidecar = checked(source.with_suffix(suffix))
         if sidecar.exists():
             paths.append(sidecar)
-    return all(path.stat().st_mtime <= cutoff for path in paths)
+    # Zero explicitly disables age filtering, including filesystem clock skew.
+    return min_age == 0 or all(path.stat().st_mtime <= cutoff for path in paths)
 
 
 def discover(root, limit, *, min_age=0):
