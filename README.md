@@ -219,6 +219,10 @@ Confirmed public Reel URLs can also be queued through a repository-only helper
 (`scripts/instagram_capture_helper.py`) — it is not an installed command, and browser capture
 remains a user-observed development workflow.
 
+Controllers can publish an Instagram analysis draft through the repository-only
+[note store](docs/triage-store.md). It verifies source fields and retained evidence,
+keeps an index and receipts, and distinguishes analyzed notes from skipped attempts.
+
 ## Typical questions
 
 <details>
