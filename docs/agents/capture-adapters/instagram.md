@@ -22,7 +22,7 @@ appending them to a queue.
 ## Helper use
 
 ```powershell
-python scripts/instagram_capture_helper.py process <url-or-shortcode> --queue <urls.md>
+python scripts/instagram_capture_helper.py process <url-or-shortcode> <urls.md>
 ```
 
 The helper does not log in, enumerate collections, read browser state, or control Chrome. A harness

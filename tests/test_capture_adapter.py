@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -70,6 +71,47 @@ def test_preview_action_for_url(tmp_path):
     assert preview_action_for_url(url, urls_md) == (False, ACTION_APPEND)
     append_and_confirm(url, urls_md)
     assert preview_action_for_url(url, urls_md) == (True, ACTION_SKIP_DUPLICATE)
+
+
+def test_append_flushes_and_syncs_before_confirmation(tmp_path, monkeypatch):
+    queue = tmp_path / "urls.md"
+    url = "https://example.com/item"
+    events = []
+    real_sync = os.fsync
+    real_read = Path.read_text
+
+    def sync(fd):
+        assert queue.read_bytes() == (url + os.linesep).encode()
+        events.append("sync")
+        real_sync(fd)
+
+    def read(path, *args, **kwargs):
+        events.append("confirm")
+        return real_read(path, *args, **kwargs)
+
+    monkeypatch.setattr("capture_adapter.os.fsync", sync)
+    monkeypatch.setattr(Path, "read_text", read)
+    assert append_and_confirm(url, queue)
+    assert events == ["sync", "confirm"]
+
+
+def test_sync_failure_never_reports_success(tmp_path, monkeypatch):
+    def fail_sync(fd):
+        raise OSError("synthetic sync failure")
+    monkeypatch.setattr("capture_adapter.os.fsync", fail_sync)
+    with pytest.raises(OSError, match="synthetic sync failure"):
+        queue_append_result("https://example.com/item", tmp_path / "urls.md")
+    # Visible bytes from the failed attempt cannot make its retry safe.
+    with pytest.raises(OSError, match="synthetic sync failure"):
+        queue_append_result("https://example.com/item", tmp_path / "urls.md")
+
+
+@pytest.mark.parametrize("url", ["", " https://example.com", "https://example.com\nother", "a\rb", "a\x00b"])
+def test_invalid_entry_never_creates_queue(tmp_path, url):
+    queue = tmp_path / "urls.md"
+    with pytest.raises(ValueError, match="single-line"):
+        append_and_confirm(url, queue)
+    assert not queue.exists()
 
 
 def test_queue_append_result_skips_duplicate(tmp_path):

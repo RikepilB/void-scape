@@ -16,6 +16,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from capture_adapter import (
+    confirm_existing_entry,
     CaptureError,
     append_and_confirm as append_and_confirm,
     durable_append_or_raise,
@@ -311,7 +312,8 @@ def process_capture(
         duplicate = item["duplicate"]
         appended = False
         if duplicate:
-            appended = False
+            if not confirm_existing_entry(url, urls_md_path):
+                raise YouTubePartialWriteError("queued entry disappeared before confirmation")
         else:
             appended = durable_append_or_raise(
                 url,
