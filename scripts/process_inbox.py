@@ -9,11 +9,12 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 import uuid
 
 import local_notes
 from process_deadline import run as bounded_worker, ProcessDeadlineError
-from triage_store import checked, digest, encoded, exclusive, file_digest, locked
+from triage_store import checked, digest, encoded, exclusive, file_digest, locked, TriageBusyError
 
 REPO = Path(__file__).resolve().parents[1]
 MEDIA = {'.mp4', '.mkv', '.mov', '.webm', '.avi', '.m4v', '.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.opus'}
@@ -43,7 +44,21 @@ def json_file(path, limit=4 * 1024 * 1024):
     return value
 
 
-def discover(root, limit):
+def settled(source, min_age, *, now=None):
+    """A quiet period reduces partial-copy reads; subsequent hashes still matter."""
+    if not 0 <= min_age <= 86400:
+        raise ValueError('quiet period must be between zero and one day')
+    cutoff = (time.time() if now is None else now) - min_age
+    paths = [checked(source)]
+    for suffix in ('.srt', '.vtt', '.txt'):
+        sidecar = checked(source.with_suffix(suffix))
+        if sidecar.exists():
+            paths.append(sidecar)
+    # Zero explicitly disables age filtering, including filesystem clock skew.
+    return min_age == 0 or all(path.stat().st_mtime <= cutoff for path in paths)
+
+
+def discover(root, limit, *, min_age=0):
     """Bound the directory walk as well as the number of selected recordings."""
     root = checked(root)
     if not root.is_dir() or not 1 <= limit <= 100:
@@ -58,7 +73,8 @@ def discover(root, limit):
             checked(Path(directory) / name)
         for name in files:
             path = checked(Path(directory) / name)
-            if not name.startswith('.') and path.suffix.lower() in MEDIA and path.is_file():
+            if (not name.startswith('.') and path.suffix.lower() in MEDIA and path.is_file()
+                    and settled(path, min_age)):
                 found.append((path.stat().st_mtime_ns, str(path.relative_to(root)), path))
     return [item[2] for item in sorted(found)[:limit]]
 
@@ -255,11 +271,13 @@ def reusable_work(root, identity, source, backend):
     return None
 
 
-def process_one(root, notes_root, source, model, backend, port, producer=prepare):
+def process_one(root, notes_root, source, model, backend, port, producer=prepare, *, min_age=0):
     root, notes_root, source = checked(root), checked(notes_root), checked(source)
     relative = source.relative_to(root)
     if any(part.startswith('.') or part == 'processed' for part in relative.parts) or source.suffix.lower() not in MEDIA:
         raise ValueError('recording outside selected input scope')
+    if not settled(source, min_age):
+        return {'status': 'deferred', 'source': str(source), 'reason': 'recording or sidecar is still changing'}
     identity = file_digest(source)
     receipt = checked(root / '.inbox/receipts' / f'{identity}.json')
     if receipt.exists():
@@ -323,21 +341,25 @@ def recover(root, notes_root):
                 mark(root, record['source_sha256'], receipt, 'processed')
 
 
-def process(root, notes_root, model, *, backend='auto', port=11434, limit=10, timeout=1800, apply=False):
+def _process(root, notes_root, model, *, backend='auto', port=11434, limit=10, timeout=1800, min_age=60, apply=False):
     if (backend not in LOCAL | {'auto'} or type(port) is not int or not 1 <= port <= 65535 or
-            not 0 < timeout <= 86400 or not isinstance(model, str) or
+            type(limit) is not int or not 1 <= limit <= 100 or
+            not 0 < timeout <= 86400 or not 0 <= min_age <= 86400 or not isinstance(model, str) or
             not re.fullmatch(r'[A-Za-z0-9_.:/-]{1,160}', model)):
         raise ValueError('invalid inbox processing settings')
     root, notes_root = checked(root), checked(notes_root)
     for destination in (notes_root / '03_Media/Transcripts', notes_root / 'Conference'):
         if destination == root or root in destination.parents or destination in root.parents:
             raise ValueError('inbox and note destination must be separate trees')
-    selected = discover(root, limit)
     if not apply:
+        selected = discover(root, limit, min_age=min_age)
         return {'mode': 'preview', 'selected': [str(path) for path in selected],
-                'notes_root': str(notes_root), 'changes': False}
+                'notes_root': str(notes_root), 'min_age': min_age, 'changes': False}
+    if not root.is_dir():
+        raise ValueError('existing inbox required')
     results = []
     with locked(root / '.inbox'):
+        selected = discover(root, limit, min_age=min_age)
         # Recovery also runs under the deadline; rehashing large retained files
         # must not stall the foreground controller indefinitely.
         jobs = ([None] if (root / '.inbox/receipts').exists() else []) + selected
@@ -347,7 +369,7 @@ def process(root, notes_root, model, *, backend='auto', port=11434, limit=10, ti
             result_path = run_root / 'result.json'
             command = [sys.executable, str(Path(__file__).resolve()), '--worker', '--root', str(root),
                        '--notes-root', str(notes_root), '--model', model,
-                       '--backend', backend, '--port', str(port), '--result', str(result_path)]
+                       '--backend', backend, '--port', str(port), '--min-age', str(min_age), '--result', str(result_path)]
             command += ['--recover'] if source is None else ['--source', str(source)]
             try:
                 bounded_worker(command, timeout=timeout, log=run_root / 'worker.log', cwd=REPO)
@@ -359,7 +381,16 @@ def process(root, notes_root, model, *, backend='auto', port=11434, limit=10, ti
             results.append(result)
     return {'mode': 'apply', 'processed': sum(item['status'] == 'processed' for item in results),
             'skipped': sum(item['status'] == 'skipped' for item in results),
-            'failed': sum(item['status'] == 'failed' for item in results), 'results': results}
+            'failed': sum(item['status'] == 'failed' for item in results),
+            'deferred': sum(item['status'] == 'deferred' for item in results), 'results': results}
+
+
+def process(root, notes_root, model, **options):
+    try:
+        return _process(root, notes_root, model, **options)
+    except TriageBusyError:
+        return {'mode': 'apply', 'status': 'busy', 'processed': 0, 'skipped': 0,
+                'failed': 0, 'deferred': 0, 'results': []}
 
 
 def main(argv=None):
@@ -371,6 +402,7 @@ def main(argv=None):
     parser.add_argument('--port', type=int, default=11434)
     parser.add_argument('--limit', type=int, default=10)
     parser.add_argument('--timeout', type=float, default=1800)
+    parser.add_argument('--min-age', type=float, default=60)
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--worker', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--recover', action='store_true', help=argparse.SUPPRESS)
@@ -390,11 +422,12 @@ def main(argv=None):
                 result = {'status': 'recovered'}
             else:
                 result = process_one(Path(args.root), Path(args.notes_root), Path(args.source),
-                                     args.model, args.backend, args.port)
+                                     args.model, args.backend, args.port, min_age=args.min_age)
             exclusive(checked(args.result), encoded(result))
         else:
             result = process(args.root, args.notes_root, args.model, backend=args.backend,
-                             port=args.port, limit=args.limit, timeout=args.timeout, apply=args.apply)
+                             port=args.port, limit=args.limit, timeout=args.timeout,
+                             min_age=args.min_age, apply=args.apply)
         print(json.dumps({'ok': True, 'data': result, 'error': None}))
         return 0 if not result.get('failed') else 6
     except (OSError, ValueError, KeyError, TypeError, ProcessDeadlineError):
