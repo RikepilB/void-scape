@@ -21,4 +21,5 @@ if LEGACY_WORKSPACE.exists():
 entrypoint = CANONICAL_VOIDSCAPE if len(sys.argv) == 1 else CANONICAL
 if not entrypoint.exists():
     raise SystemExit("Voidscape is not installed next to this read-video compatibility skill. Re-run install-skill.")
+sys.path.insert(0, str(entrypoint.parent))
 runpy.run_path(str(entrypoint), run_name="__main__")

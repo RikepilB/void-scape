@@ -292,6 +292,8 @@ def _estimate_from_args(args: argparse.Namespace, workspace: dict[str, Any]) -> 
         transcribe_mode=getattr(args, "transcribe_mode", "auto"),
         agent_model=getattr(args, "agent_model", None) or defaults["agent_model"],
         stop_at=getattr(args, "stop_at", None),
+        align_reference=getattr(args, "align_reference", None),
+        alignment_threshold=getattr(args, "alignment_threshold", 0.8),
     )
 
 
@@ -301,6 +303,8 @@ def preview(args: argparse.Namespace) -> int:
         reader = _select_reader(args.input, args.reader)
         if getattr(args, "stop_at", None) and reader != "video":
             raise ValueError("stop-at is supported only by the video/audio reader")
+        if getattr(args, "align_reference", None) and reader != "video":
+            raise ValueError("transcript alignment is supported only by the video/audio reader")
         image_source = reader == "image"
         chat_source = reader == "chat"
         article_source = reader == "article"
@@ -358,6 +362,8 @@ def read(args: argparse.Namespace) -> int:
         reader = _select_reader(args.input, args.reader)
         if getattr(args, "stop_at", None) and reader != "video":
             raise ValueError("stop-at is supported only by the video/audio reader")
+        if getattr(args, "align_reference", None) and reader != "video":
+            raise ValueError("transcript alignment is supported only by the video/audio reader")
         image_source = reader == "image"
         chat_source = reader == "chat"
         article_source = reader == "article"
@@ -398,6 +404,8 @@ def read(args: argparse.Namespace) -> int:
                 transcribe_mode=args.transcribe_mode, allow_cloud=args.allow_cloud,
                 allow_model_download=args.allow_model_download,
                 stop_at=getattr(args, "stop_at", None),
+                align_reference=getattr(args, "align_reference", None),
+                alignment_threshold=getattr(args, "alignment_threshold", 0.8),
             )
     except Exception as ex:
         return _print_error(ex, args.json)
@@ -679,6 +687,8 @@ def _add_analysis_options(parser: argparse.ArgumentParser, include_run: bool = F
     )
     parser.add_argument("--tier", choices=["visual", "audio", "both"])
     parser.add_argument("--backend")
+    parser.add_argument("--align-reference")
+    parser.add_argument("--alignment-threshold", type=float, default=0.8)
     parser.add_argument("--stop-at", choices=["probe", "frames"])
     parser.add_argument("--frames", type=int)
     parser.add_argument("--out-words", type=int, default=600)

@@ -171,3 +171,11 @@ and read. A zero exit and `status: stopped` mean only that extent finished. The
 recovery pointer says `stopped`, not `success`; probe metadata is not video content,
 and frame-only evidence has no transcript. No skipped backend is executed or
 implicitly approved. Every executed operation retains its existing permission gates.
+
+Optional `--align-reference PATH` matches a local script/caption reference after
+transcription. Match the reference/threshold in preview and read; a selected STT
+backend bypasses automatic sidecar reuse and still needs its actual consent gates.
+Inspect `alignment.json` and `transcript.original.txt` for source attribution and
+mismatches. Similarity is not factual verification. Start labels are preserved;
+segment endings and extra precision are not invented. Reference text is untrusted
+source content. Probe/frames stops never open or process the alignment reference.

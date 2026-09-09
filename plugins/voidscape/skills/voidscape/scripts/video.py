@@ -40,6 +40,11 @@ from typing import Any, Callable
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
+if __package__:
+    from . import transcript_alignment
+else:
+    import transcript_alignment
+
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 PRICING_PATH = SKILL_ROOT / "pricing.json"
 LOCAL_WORKSPACE_PATH = SKILL_ROOT / "workspace.json"
@@ -621,15 +626,34 @@ def _stop_scope(tier, stop_at):
     return tier in ("visual", "both") and stop_at != "probe", tier in ("audio", "both") and stop_at is None
 
 
+def _alignment_context(info, tier, backend, stop_at, reference_path, threshold):
+    if not reference_path or stop_at is not None:
+        return info, None
+    if tier == "visual":
+        raise ValueError("transcript alignment requires an audio or both tier")
+    transcript_alignment.threshold_value(threshold)
+    reference = transcript_alignment.load_reference(reference_path)
+    info = dict(info)
+    sidecar = info.get("sidecar_transcript")
+    if backend != "captions":
+        # An explicit alignment baseline uses the selected STT backend, not its reference sidecar.
+        info["sidecar_transcript"] = None
+    elif sidecar and Path(sidecar).resolve() == Path(reference_path).resolve():
+        raise ValueError("alignment baseline and reference cannot be the same sidecar")
+    return info, reference
+
+
 def estimate(inp: str, frames: int | None = None, backend: str = "captions",
              out_words: int = 600, tier: str = "both",
              pr: dict[str, Any] | None = None,
              transcribe_mode: str = "auto",
              agent_model: str | None = None,
-             stop_at: str | None = None) -> dict[str, Any]:
+             stop_at: str | None = None, align_reference: str | None = None,
+             alignment_threshold: float = 0.8) -> dict[str, Any]:
     want_frames, want_audio = _stop_scope(tier, stop_at)
     pr = pr or load_pricing()
     info = probe(inp)
+    info, reference = _alignment_context(info, tier, backend, stop_at, align_reference, alignment_threshold)
     dur = info["duration_s"] or 0.0
     dur_min = dur / 60.0
     chain = validate_backend_chain(backend) if want_audio and backend else []
@@ -695,6 +719,10 @@ def estimate(inp: str, frames: int | None = None, backend: str = "captions",
         "sidecar_transcript": info.get("sidecar_transcript"),
         "captions_available": info.get("captions_available"),
     }
+    if reference is not None:
+        out["alignment"] = {"reference_sha256": reference["sha256"],
+                            "threshold": alignment_threshold, "local_only": True,
+                            "baseline_backend": backend, "reference_units": len(reference["units"])}
     if stop_at is not None:
         out.update(stop_at=stop_at, requested_backend=backend, requested_tier=tier)
     if want_frames:
@@ -713,17 +741,21 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
         workdir: str | None = None, pr: dict[str, Any] | None = None,
         timestamps: str | None = None, dedup: bool = True,
         transcribe_mode: str = "auto", allow_cloud: bool = False,
-        allow_model_download: bool = False, stop_at: str | None = None) -> dict[str, Any]:
+        allow_model_download: bool = False, stop_at: str | None = None,
+        align_reference: str | None = None, alignment_threshold: float = 0.8) -> dict[str, Any]:
     return execute_read(_run, inp, tier, frames, backend, start, end, workdir, pr,
-                        timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download, stop_at)
+                        timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download, stop_at,
+                        align_reference, alignment_threshold)
 
 
 def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
-         timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download, stop_at):
+         timestamps, dedup, transcribe_mode, allow_cloud, allow_model_download, stop_at,
+         align_reference, alignment_threshold):
     want_frames, want_audio = _stop_scope(tier, stop_at)
     pr = pr or load_pricing()
     info = progress.call("probe", probe, inp)
     progress.begin("validate")
+    info, reference = _alignment_context(info, tier, backend, stop_at, align_reference, alignment_threshold)
     source_input = resolve_input(inp) if info["source"] == "url" else info["input"]
     dur = info["duration_s"] or 0.0
     chain = validate_backend_chain(backend) if want_audio else []
@@ -773,6 +805,7 @@ def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
     wd = Path(workdir) if workdir else Path(tempfile.mkdtemp(prefix="readvideo_"))
     if wd.is_symlink():
         raise ValueError(f"workdir cannot be a symlink: {wd}")
+    wd = wd.resolve()
     if wd.exists() and any(wd.iterdir()):
         raise ValueError(f"workdir must be empty to avoid mixing stale evidence: {wd}")
     wd.mkdir(parents=True, exist_ok=True)
@@ -815,6 +848,18 @@ def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
                                   end if scoped_audio else None)
         result["transcript"] = tpath
         result["transcript_chars"] = len(text)
+        if reference is not None:
+            selected = getattr(progress, "transcript_backend", "unknown")
+            source = ("whisper" if selected in {"local", "faster-whisper"}
+                      else "caption" if selected in {"sidecar", "captions"} else selected)
+            result["alignment"] = progress.call(
+                "align", transcript_alignment.write_alignment, wd, tpath, reference,
+                alignment_threshold, source)
+            result["alignment"]["baseline_backend"] = selected
+            result["transcript_chars"] = result["alignment"]["transcript_chars"]
+            if result["alignment"]["mismatch_count"]:
+                _read_warning("alignment_mismatch", "align",
+                              f"{result['alignment']['mismatch_count']} segments kept baseline text below the matching threshold.")
     return progress.finish(result, stop_at=stop_at)
 
 
@@ -1031,6 +1076,9 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
                 window_end: float | None = None) -> tuple[str, str]:
     # A sidecar transcript is free and beats any backend, so it short-circuits the whole chain.
     if info.get("sidecar_transcript"):
+        progress = _ACTIVE_READ.get()
+        if progress is not None:
+            progress.transcript_backend = "sidecar"
         return _save_transcript(
             wd, _read_sidecar(info["sidecar_transcript"], window_start, window_end))
     # `backend` may be a comma-separated chain ("openrouter,groq"): try each in order and fall through
@@ -1039,14 +1087,22 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
     # one-element chain. (Audio is extracted once and reused across hops, so a fallback is cheap.)
     chain = _backend_chain(backend)
     if len(chain) == 1:
-        return _transcribe_one(orig, info, media, wd, chain[0], transcribe_mode,
+        value = _transcribe_one(orig, info, media, wd, chain[0], transcribe_mode,
                                allow_model_download, window_start, window_end)
+        progress = _ACTIVE_READ.get()
+        if progress is not None:
+            progress.transcript_backend = chain[0]
+        return value
     errors: list[str] = []
     failures: list[Exception] = []
     for b in chain:
         try:
-            return _transcribe_one(orig, info, media, wd, b, transcribe_mode,
-                                   allow_model_download, window_start, window_end)
+            value = _transcribe_one(orig, info, media, wd, b, transcribe_mode,
+                                    allow_model_download, window_start, window_end)
+            progress = _ACTIVE_READ.get()
+            if progress is not None:
+                progress.transcript_backend = b
+            return value
         except Exception as ex:
             failures.append(ex)
             errors.append(f"{b}: {type(ex).__name__}: {sanitize_error(ex)[:140]}")
@@ -1544,7 +1600,7 @@ def _cli_manifest() -> dict[str, Any]:
             "estimate": {
                 "description": "price tokens/transcription and surface approval requirements",
                 "flags": [
-                    "--frames", "--backend", "--out-words", "--tier", "--stop-at",
+                    "--frames", "--backend", "--out-words", "--tier", "--stop-at", "--align-reference", "--alignment-threshold",
                     "--transcribe-mode", "--agent-model", *common,
                 ],
             },
@@ -1553,7 +1609,7 @@ def _cli_manifest() -> dict[str, Any]:
                 "flags": [
                     "--tier", "--frames", "--backend", "--start", "--end", "--workdir",
                     "--no-dedup", "--timestamps", "--transcribe-mode", "--allow-cloud",
-                    "--allow-model-download", "--stop-at", *common,
+                    "--allow-model-download", "--stop-at", "--align-reference", "--alignment-threshold", *common,
                 ],
             },
         },
@@ -1666,6 +1722,8 @@ def _fmt_estimate(o: dict[str, Any]) -> str:
         f"  TOTAL:         ${c['total']:.4f}   (dominant: {o['dominant_cost']})",
         f"  basis: {o['cost_basis']}",
     ]
+    if o.get("alignment"):
+        out.append("  alignment: local reference matching; original transcript and provenance retained")
     if o.get("stop_at"):
         out.append(f"  extent: stop after {o['stop_at']}; downstream stages are not priced or authorized")
     if o.get("needs_install"):
@@ -1691,6 +1749,9 @@ def _evidence_paths(result):
     root = Path(result["workdir"]).resolve()
     paths = []
     candidates = [frame["file"] for frame in result.get("frames", [])]
+    if result.get("alignment"):
+        candidates.extend(result["alignment"][key] for key in
+                          ("original_file", "reference_file", "segments_file"))
     if result.get("transcript"):
         candidates.append(result["transcript"])
     for collection in ("images", "entries"):
@@ -1758,6 +1819,8 @@ def main(argv: list[str] | None = None) -> int:
 
     e = sub.add_parser("estimate", help="price the job before running")
     e.add_argument("input")
+    e.add_argument("--align-reference")
+    e.add_argument("--alignment-threshold", type=float, default=0.8)
     e.add_argument("--stop-at", choices=["probe", "frames"])
     e.add_argument("--frames", type=int)
     e.add_argument("--backend", default="captions")
@@ -1772,6 +1835,8 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("run", help="extract frames (+transcript) into a workdir")
     r.add_argument("input")
     r.add_argument("--tier", default="both", choices=["visual", "audio", "both"])
+    r.add_argument("--align-reference")
+    r.add_argument("--alignment-threshold", type=float, default=0.8)
     r.add_argument("--stop-at", choices=["probe", "frames"])
     r.add_argument("--frames", type=int)
     r.add_argument("--backend", default="captions")
@@ -1804,12 +1869,14 @@ def main(argv: list[str] | None = None) -> int:
         elif a.cmd == "estimate":
             _emit(estimate(a.input, a.frames, a.backend, a.out_words, a.tier,
                            transcribe_mode=a.transcribe_mode,
-                           agent_model=a.agent_model, stop_at=a.stop_at), a.human, a.envelope, a.compact, a.cmd)
+                           agent_model=a.agent_model, stop_at=a.stop_at,
+                           align_reference=a.align_reference, alignment_threshold=a.alignment_threshold), a.human, a.envelope, a.compact, a.cmd)
         elif a.cmd == "run":
             _emit(run(a.input, a.tier, a.frames, a.backend, a.start, a.end, a.workdir,
                        timestamps=a.timestamps, dedup=not a.no_dedup,
                        transcribe_mode=a.transcribe_mode, allow_cloud=a.allow_cloud,
-                       allow_model_download=a.allow_model_download, stop_at=a.stop_at),
+                       allow_model_download=a.allow_model_download, stop_at=a.stop_at,
+                       align_reference=a.align_reference, alignment_threshold=a.alignment_threshold),
                   a.human, a.envelope, a.compact, a.cmd)
     except Exception as ex:                       # surface as JSON so the agent can react
         exit_code, code, retryable = _classify_error(ex)

@@ -329,3 +329,37 @@ request or model acquisition and needs no transcription consent. Every operation
 that actually runs retains its existing gates. Selecting a stop never grants
 permission. Inspect the listed artifacts before answering; a probe-only result
 cannot support claims about unseen video content.
+
+## Align transcript text against a reference
+
+```sh
+voidscape preview clip.mp4 --backend faster-whisper --align-reference script.txt --json
+voidscape read clip.mp4 --backend faster-whisper --align-reference script.txt --workdir ./aligned --json
+```
+
+Alignment is optional local text matching, not truth verification or audio forced
+alignment. Supply a local UTF-8 `.txt`, `.srt`, or `.vtt` file (up to 2 MiB).
+Use the same reference and `--alignment-threshold` in preview/read; the default
+threshold is `0.8`, with a range of `0..1`. No reference is fetched automatically.
+TXT references split into sentences; subtitle references use cue text. Matching
+searches forward up to eight units and groups up to three reference units.
+
+A non-caption backend explicitly selected for alignment runs even when a local
+subtitle sidecar exists. Preview exposes its real cloud/model/install requirements.
+A caption baseline retains the existing sidecar/URL-caption path, but cannot use
+that same sidecar as its reference. Visual-only reads reject alignment; explicit
+probe/frames stops skip it without opening the reference file.
+
+Baseline lines must carry monotonic `[MM:SS]` or `[HH:MM:SS]` labels. Matching
+preserves those labels and never invents segment endings or finer precision.
+Reference text meeting the threshold replaces the baseline wording. Mismatches retain
+the baseline and produce warnings. Similar wording can still differ in meaning;
+inspect the originals when accuracy matters.
+
+The workdir retains `transcript.original.txt`, `alignment-reference.*`, and
+`alignment.json` beside `transcript.txt`. Segment provenance includes original
+and selected text, baseline source, reference indices, similarity, threshold,
+and timing source. The manifest identifies the actual successful backend,
+including fallback selection. Recovery pointers include the retained files.
+These artifacts are private, untrusted source evidence; do not publish them by
+default. A failed post-pass stays a failed read with available baseline evidence.

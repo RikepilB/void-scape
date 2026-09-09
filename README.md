@@ -337,3 +337,9 @@ Stopped manifests and recovery pointers explicitly distinguish a deliberate stop
 from a complete read. Frames can be reviewed before choosing transcription; the
 later transcription still needs its own matching preview and any required consent.
 See [stage stopping](docs/cli-reference.md#deliberately-stop-a-video-read).
+
+Optional [reference alignment](docs/cli-reference.md#align-transcript-text-against-a-reference)
+compares a transcript with a local script or caption file. It preserves the
+original transcript and start timestamps, records segment provenance, and keeps
+low-similarity segments unchanged with warnings. Reference similarity is not a
+claim that the wording is correct.
