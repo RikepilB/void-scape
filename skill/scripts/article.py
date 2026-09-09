@@ -336,9 +336,12 @@ def _parse_feed_xml(text: str) -> dict[str, Any]:
                 link = _text_content(child)
                 break
         id_element = _first_child(raw, ("guid", "id"))
-        explicit_id = (id_element.text or "") if id_element is not None else ""
+        explicit_id = (id_element.text or "").strip() if id_element is not None else ""
         guid = explicit_id or link
         identity_kind = "id" if explicit_id else "link" if link else "content"
+        # Retain distinct query-based identities without persisting URL secrets.
+        if guid and _sanitize_evidence_link(guid) != guid:
+            guid = "url-sha256:" + hashlib.sha256(guid.encode('utf-8')).hexdigest()
         link = _sanitize_evidence_link(link)
         published = _child_text(raw, ("pubDate", "published", "updated"))
         # Prefer full content even when a summary appears first in document order.

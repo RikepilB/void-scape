@@ -27,8 +27,11 @@ Remote `--allow-fetch` is separate from local `--apply`.
 timezone-free publication dates remain eligible with `date_filter_uncertain`.
 Inputs are limited to 4 MiB and 10,000 parsed entries including skipped entries.
 
-RSS GUIDs and Atom IDs remain opaque. Keys hash the feed URL and entry ID.
-Without an ID, the reader uses the original link; without either, it hashes
+RSS GUIDs and Atom IDs preserve internal text, with surrounding whitespace
+trimmed and blank IDs treated as missing. URL-shaped IDs with redacted components
+are retained as hashes so secrets are not stored and distinct query identities
+do not collapse. Keys hash the feed URL and retained entry ID.
+Without an ID, the reader uses the link identity under the same rule; without either, it hashes
 title, date and body. Content-derived keys change when content changes and cannot
 prove publisher identity. See the [RSS specification](https://www.rssboard.org/rss-specification)
 and [Atom specification](https://www.rfc-editor.org/rfc/rfc4287).
@@ -68,6 +71,6 @@ entries. No linked articles, enclosures, models or account actions were invoked.
 This proves public sample-feed intake, not live Substack subscriber access or
 an end-to-end analyzed-note workflow.
 
-The helper's 36 regression tests measured 100% statement and branch coverage
+The helper's regression tests measured 100% statement and branch coverage
 with `coverage.py --branch`. Coverage is scoped to `rss_capture_helper.py`;
 the shared article fetcher's existing tests cover its network boundary.

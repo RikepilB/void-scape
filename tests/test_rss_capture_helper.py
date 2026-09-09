@@ -163,6 +163,26 @@ def test_opaque_id_whitespace_is_not_normalized():
     assert [entry['guid'] for entry in parsed['entries']] == ['opaque  id', 'opaque id']
 
 
+def test_blank_ids_fall_back_and_outer_whitespace_is_trimmed():
+    parsed = article._parse_feed_xml('<rss><channel><item><guid> </guid><title>One</title></item>'
+             '<item><guid>\n </guid><title>Two</title></item><item><guid> abc </guid><title>Three</title></item>'
+             '<item><guid>abc</guid><title>Duplicate</title></item></channel></rss>')
+    assert len(parsed['entries']) == 3
+    assert [entry['identity_kind'] for entry in parsed['entries']] == ['content', 'content', 'id']
+    assert parsed['entries'][2]['guid'] == 'abc'
+
+
+@pytest.mark.parametrize('tag', ['link', 'guid'])
+def test_sensitive_url_ids_are_hashed_without_collapsing_queries(tag):
+    parsed = article._parse_feed_xml('<rss><channel>' + ''.join(
+        f'<item><title>Item</title><{tag}>https://example.com/post?id={i}&amp;token=SECRET</{tag}></item>'
+        for i in range(2)) + '</channel></rss>')
+    assert len(parsed['entries']) == 2
+    assert len({entry['guid'] for entry in parsed['entries']}) == 2
+    assert all(entry['guid'].startswith('url-sha256:') for entry in parsed['entries'])
+    assert 'SECRET' not in json.dumps(parsed)
+
+
 def test_xhtml_paragraphs_keep_word_boundaries():
     parsed = article._parse_feed_xml('<feed xmlns="http://www.w3.org/2005/Atom"><entry><id>one</id>'
              '<content type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml"><p>First</p><p>Second</p>'
