@@ -33,6 +33,13 @@ Windows guided and raw reader output is UTF-8, including redirected stdout/stder
 
 ## Approval fields
 
+On failure, `error.gate.type` distinguishes `cloud_approval`, `model_download`, and
+`missing_credentials`. The last includes an environment-variable name, never its
+value. Ask once for the required action; credentials belong in the user's local
+environment, not in chat or workspace configuration. Failed fallback chains may
+carry several entries in `error.gates` alongside other failures. Do not repeatedly
+ask for cloud approval to fix a missing key, or infer approval from a configured key.
+
 After preview, an agent must independently check:
 
 - `requires_cloud_approval`

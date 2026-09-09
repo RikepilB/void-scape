@@ -33,6 +33,10 @@ If terminal output is truncated, your agent can recover the manifest and evidenc
 paths without processing the source again. Windows CLI output uses UTF-8 for
 international titles and filenames. See the [recovery contract](docs/cli-reference.md).
 
+Structured failures tell agents whether they need your approval, a model download,
+or a missing environment variable. Keys stay in your local environment; having a
+key never grants permission to use a cloud service.
+
 > 🎬 **Watch it work** — a 52-second terminal recording of the real flow:
 > [`doctor` → `inspect` → `preview` → `read` on the key-free demo fixture](docs/assets/cli-demo.mp4)
 > (recorded live, no account, no API key, no edits). Also embedded in the

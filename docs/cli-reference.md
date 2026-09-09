@@ -60,6 +60,26 @@ JSON. Exit codes are `0` success, `1` unexpected error, `2` usage error, `3` inp
 approval required, `5` dependency error, and `6` operation failure. Envelope errors repeat the
 numeric value in `error.exit_code` and include `error.code` plus `error.retryable`.
 
+Gate failures also include `error.gate`: `type` is `cloud_approval`, `model_download`,
+or `missing_credentials`, and `backend` identifies the selected backend or chain.
+Missing credentials include an `env_var` **name**, never its value. For Gemini,
+`GOOGLE_API_KEY` is also accepted when the primary `GEMINI_API_KEY` is unset.
+Failed backend chains or fully failed chunked requests preserve individual gates
+in `error.gates`; other failures may coexist, so this list is not the sole diagnosis.
+
+Video/article preview includes `gate` for the first approval requirement, or `null`.
+The existing `requires_cloud_approval` and `needs_model_download` flags remain
+authoritative when both approvals are needed. Preview never checks API keys.
+Credentials are checked only when an approved cloud backend is actually attempted;
+free sidecars and successful earlier fallbacks do not require unused keys.
+
+Exit compatibility is unchanged: preflight approval failures return 4; a direct
+missing-key failure returns 5. Existing aggregate/runtime failures can still return
+6 (for example, a model-cache failure discovered during execution). Inspect gate
+metadata as well as the exit code. Resolve the requested action once, then rerun
+only with the user's current approval. Set keys locally in the process environment;
+never paste values into agent conversations or save them in workspace configuration.
+
 `<input>` is a local path, a video URL, or — when a workspace is configured — a **bare filename** that
 resolves against `inbox_dir`.
 

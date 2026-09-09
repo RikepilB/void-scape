@@ -662,6 +662,7 @@ def estimate(inp: str, out_words: int = 600,
         "free": not requires_fetch,
         "needs_install": False,
         "requires_cloud_approval": requires_fetch,
+        "gate": {"type": "cloud_approval", "backend": "article_fetch"} if requires_fetch else None,
         "requires_fetch_approval": requires_fetch,
         "requires_browser_auth": False,
         "browser_auth_note": (
@@ -683,9 +684,9 @@ def run(inp: str, workdir: str | None = None, *,
     resolved = video.resolve_input(inp)
     if video.is_url(resolved):
         if not allow_fetch:
-            raise PermissionError(
+            raise video.ApprovalRequired(
                 "remote article fetch needs explicit consent; review preview, "
-                "then rerun with --allow-fetch"
+                "then rerun with --allow-fetch", "cloud_approval", "article_fetch"
             )
         info = _read_url(resolved)
     else:
@@ -862,10 +863,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as ex:
         exit_code, code, retryable = video._classify_error(ex)
         if args.envelope:
-            error = {
-                "code": code, "message": str(ex),
-                "retryable": retryable, "exit_code": exit_code,
-            }
+            error = video._error_payload(ex)
             print(video._json_text(video._envelope(None, error, args.command), args.compact))
         else:
             print(video._json_text({"error": str(ex)}, args.compact))
