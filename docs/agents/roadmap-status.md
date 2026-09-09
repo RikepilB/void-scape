@@ -13,6 +13,7 @@ does not authorize install, publication, or roadmap expansion.
 | Local/URL video and audio evidence | `shipped` | `skill/scripts/video.py`; video tests |
 | Local image and carousel evidence | `shipped` | `skill/scripts/image.py`; image tests |
 | Local articles, RSS/Atom, approved public article fetch | `shipped` | `skill/scripts/article.py`; article tests |
+| Repeated public feed capture | `dev-only` | [RSS intake helper](../rss-intake.md); captured evidence is separate from analyzed notes; source skill and harness evaluation pending |
 | Local chat export (WhatsApp-style) evidence | `shipped` | `skill/scripts/chat.py`; chat reader tests |
 | Connectors contract page | `shipped` | this tree: `connectors.md` |
 | Harness skill kit (copy-and-adapt templates) | `shipped` | `harness/skills/`; template tests |

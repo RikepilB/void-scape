@@ -31,7 +31,19 @@ jobs:
       - if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - if: runner.os == 'Windows'
-        run: choco install ffmpeg -y --no-progress
+        name: Install pinned FFmpeg package
+        run: |
+          # The metadata endpoint can return 503 while the exact package is available.
+          $packageRoot = Join-Path $env:RUNNER_TEMP 'ffmpeg-package'
+          New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
+          $packagePath = Join-Path $packageRoot 'ffmpeg.9.0.1.nupkg'
+          Invoke-WebRequest -Uri 'https://community.chocolatey.org/api/v2/package/ffmpeg/9.0.1' -OutFile $packagePath -TimeoutSec 120 -MaximumRetryCount 2 -RetryIntervalSec 5
+          $expectedHash = '157C12D0609BE46F17C8ABF7444E6306150DB8FE8AD3E62CD24D60AD0A98D770'
+          if ((Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash -ne $expectedHash) {
+            throw 'FFmpeg package checksum mismatch'
+          }
+          choco install ffmpeg --version 9.0.1 --source $packageRoot -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'FFmpeg package installation failed' }
       - run: ffmpeg -version
       - run: python -m pytest -q -p no:cacheprovider
       - run: python -m compileall -q skill/scripts scripts tests
