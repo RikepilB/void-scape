@@ -343,6 +343,7 @@ def recover(root, notes_root):
 
 def _process(root, notes_root, model, *, backend='auto', port=11434, limit=10, timeout=1800, min_age=60, apply=False):
     if (backend not in LOCAL | {'auto'} or type(port) is not int or not 1 <= port <= 65535 or
+            type(limit) is not int or not 1 <= limit <= 100 or
             not 0 < timeout <= 86400 or not 0 <= min_age <= 86400 or not isinstance(model, str) or
             not re.fullmatch(r'[A-Za-z0-9_.:/-]{1,160}', model)):
         raise ValueError('invalid inbox processing settings')
@@ -350,12 +351,15 @@ def _process(root, notes_root, model, *, backend='auto', port=11434, limit=10, t
     for destination in (notes_root / '03_Media/Transcripts', notes_root / 'Conference'):
         if destination == root or root in destination.parents or destination in root.parents:
             raise ValueError('inbox and note destination must be separate trees')
-    selected = discover(root, limit, min_age=min_age)
     if not apply:
+        selected = discover(root, limit, min_age=min_age)
         return {'mode': 'preview', 'selected': [str(path) for path in selected],
                 'notes_root': str(notes_root), 'min_age': min_age, 'changes': False}
+    if not root.is_dir():
+        raise ValueError('existing inbox required')
     results = []
     with locked(root / '.inbox'):
+        selected = discover(root, limit, min_age=min_age)
         # Recovery also runs under the deadline; rehashing large retained files
         # must not stall the foreground controller indefinitely.
         jobs = ([None] if (root / '.inbox/receipts').exists() else []) + selected

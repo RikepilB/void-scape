@@ -74,6 +74,26 @@ def test_filesystem_permission_error_is_not_reported_as_busy(tmp_path, monkeypat
         inbox.process(tmp_path, tmp_path.parent / 'notes', 'cached', apply=True)
 
 
+def test_busy_run_does_not_scan_files_being_moved(tmp_path, monkeypatch):
+    monkeypatch.setattr(inbox, 'discover', lambda *a, **kw: pytest.fail('busy run must not scan changing input'))
+    with locked(tmp_path / '.inbox'):
+        assert inbox.process(tmp_path, tmp_path.parent / 'notes', 'cached', apply=True)['status'] == 'busy'
+
+
+def test_missing_inbox_is_not_created_during_apply(tmp_path):
+    root = tmp_path / 'missing'
+    with pytest.raises(ValueError, match='existing inbox'):
+        inbox.process(root, tmp_path / 'notes', 'cached', apply=True)
+    assert not root.exists()
+
+
+@pytest.mark.parametrize('limit', [0, 101])
+def test_invalid_limit_does_not_create_lock_state(tmp_path, limit):
+    with pytest.raises(ValueError, match='settings'):
+        inbox.process(tmp_path, tmp_path.parent / 'notes', 'cached', apply=True, limit=limit)
+    assert not (tmp_path / '.inbox').exists()
+
+
 def test_project_skill_and_role_mirrors_match():
     for path, content in rendered_files(ROOT).items():
         assert path.read_text(encoding='utf-8') == content, path
