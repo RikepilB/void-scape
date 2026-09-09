@@ -109,7 +109,7 @@ Error output removes URL credentials/query strings, recognizable credential fiel
 authorization headers, and common provider-token prefixes. This applies before
 fallback logging and before synthetic transcript-gap markers are written. Successful
 source transcripts and article/chat evidence are not rewritten by this sanitizer.
-Raw HTTP rejection bodies and Gemini SDK error details are omitted; backend/status
+Raw HTTP rejection bodies, transport reasons, and Gemini SDK error details are omitted; backend/status
 and error classification remain available. Pattern matching cannot identify every
 possible secret in arbitrary prose, so these raw provider bodies are not logged.
 

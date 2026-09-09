@@ -3,7 +3,7 @@ import io
 import json
 import sys
 from types import SimpleNamespace
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 import pytest
 
@@ -112,6 +112,20 @@ def test_http_rejection_body_is_not_read_or_echoed(monkeypatch):
     assert "HTTP 401" in str(caught.value)
     assert "body omitted" in str(caught.value)
     assert SECRET not in str(caught.value)
+
+
+def test_transport_reason_cannot_echo_an_opaque_secret(monkeypatch, capsys):
+    def fail(*args, **kwargs):
+        raise URLError(SECRET)
+
+    monkeypatch.setattr(video.os.environ, "get", lambda *args: "synthetic-configured-key")
+    monkeypatch.setattr(video, "_build_multipart", lambda *args: (b"", "boundary"))
+    monkeypatch.setattr(video, "urlopen", fail)
+    monkeypatch.setattr(video, "_MAX_ATTEMPTS", 1)
+    with pytest.raises(RuntimeError) as caught:
+        video._api_request("groq", "unused")
+    assert "network request failed" in str(caught.value)
+    assert SECRET not in str(caught.value) + capsys.readouterr().err
 
 
 @pytest.mark.parametrize("original", [RuntimeError(f"429 rate limit {SECRET}"), ValueError(SECRET), OSError(SECRET)])

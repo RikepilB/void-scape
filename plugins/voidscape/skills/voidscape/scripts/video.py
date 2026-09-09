@@ -1454,7 +1454,7 @@ def _api_request(backend: str, audio: str) -> dict[str, Any]:
                     raise RuntimeError(f"{backend} rate-limited: {last}")
             delay = 2.0 * (2 ** attempt)
         except (urllib.error.URLError, TimeoutError, OSError) as ex:
-            last = f"{type(ex).__name__}: {sanitize_error(ex)}"
+            last = f"{type(ex).__name__}: network request failed"
             delay = 2.0 * (attempt + 1)
         if attempt < _MAX_ATTEMPTS - 1:
             print(f"[read-video] {backend} {last} — retry in {delay:.1f}s "
