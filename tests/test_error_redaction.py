@@ -126,6 +126,9 @@ def test_gemini_omits_provider_detail_preserving_classification(monkeypatch, ori
     assert video._classify_error(caught.value) == video._classify_error(original)
     assert SECRET not in str(caught.value)
     assert caught.value.__suppress_context__ is True
+    previous_aggregate = RuntimeError(f"gemini: {type(original).__name__}: {str(original)[:140]}")
+    aggregate = video.BackendFailures(str(caught.value), [caught.value])
+    assert video._classify_error(aggregate) == video._classify_error(previous_aggregate)
 
 
 def test_source_transcript_is_not_rewritten_by_error_sanitizer():

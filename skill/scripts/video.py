@@ -107,6 +107,12 @@ class BackendGateError(RuntimeError):
 class BackendFailures(RuntimeError):
     def __init__(self, message: str, failures: list[Exception]):
         super().__init__(message)
+        self.provider_classification = None
+        if any(isinstance(failure, ProviderFailure) for failure in failures):
+            # Preserve the former aggregate classification without retaining provider prose.
+            hints = [failure.aggregate_hint if isinstance(failure, ProviderFailure)
+                     else f"{type(failure).__name__}: {str(failure)[:140]}" for failure in failures]
+            self.provider_classification = _classify_error(RuntimeError(" | ".join(hints)))
         self.gates = []
         for failure in failures:
             if isinstance(failure, (ApprovalRequired, BackendGateError)):
@@ -123,9 +129,10 @@ class BackendFailures(RuntimeError):
 class ProviderFailure(RuntimeError):
     def __init__(self, backend, original):
         self.classification = _classify_error(original)
-        exit_code, _, retryable = self.classification
-        category = ("temporary failure" if retryable else "dependency not installed" if exit_code == 5
-                    else "invalid media" if exit_code == 3 else "provider failure")
+        aggregate = _classify_error(RuntimeError(f"{type(original).__name__}: {str(original)[:140]}"))
+        self.aggregate_hint = ("invalid media" if aggregate[0] == 3 else "not installed" if aggregate[0] == 5
+                               else "temporary failure" if aggregate[2] else "provider failure")
+        category = "temporary failure" if self.classification[2] else "provider failure"
         super().__init__(f"{backend} {category} ({type(original).__name__}); provider detail omitted")
 
 
@@ -1579,6 +1586,8 @@ def failure_envelope(ex: Exception, command: str | None):
 def _classify_error(ex: Exception) -> tuple[int, str, bool]:
     if isinstance(ex, ProviderFailure):
         return ex.classification
+    if isinstance(ex, BackendFailures) and ex.provider_classification is not None:
+        return ex.provider_classification
     if isinstance(ex, PermissionError):
         return _EXIT_APPROVAL, "approval_required", False
     if isinstance(ex, (FileNotFoundError, ValueError)):
