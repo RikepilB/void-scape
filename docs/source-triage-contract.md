@@ -120,8 +120,18 @@ This is an OS sync request, not proof of filesystem/power-loss guarantees.
 The Codex capture agent contains dry-run and layout-abort rules. The repository
 [note publisher](triage-store.md) provides verified note/category/index handling
 and immutable publication receipts; the analysis agent returns drafts to its
-controller. The repository does not yet ship matching Claude/Agents source workflows,
-an installed Instagram triage skill, or a current source-skill benchmark.
-These are remaining retrofit requirements;
-issue #54 stays open until they are implemented and verified. Existing media-reader
+controller. The repository now contains a project-scoped
+[Instagram triage skill](../.agents/skills/instagram-triage/SKILL.md), matching
+Claude/Agents workflows and generated Codex role files. These are repository
+artifacts, not proof that every target harness has executed the workflow.
+
+The [recorded integration exercise](../evals/instagram-triage/RESULTS.md) verified
+the real guided CLI with synthetic media, canonical URL deduplication, queue-only
+state, and retained note/evidence publication. It also exposed and corrected an
+incorrect CLI-envelope assumption in the skill. No live account mutation was
+performed, and these results are not an independent with-skill/baseline benchmark.
+
+Issue #54 remains open for the outstanding helper coverage, independent skill
+evaluation and representative harness/runtime acceptance. Project mirrors do not
+establish global installation or cross-harness parity. Existing media-reader
 benchmarks do not establish capture-skill compliance.
