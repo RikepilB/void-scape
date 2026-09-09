@@ -343,3 +343,7 @@ compares a transcript with a local script or caption file. It preserves the
 original transcript and start timestamps, records segment provenance, and keeps
 low-similarity segments unchanged with warnings. Reference similarity is not a
 claim that the wording is correct.
+
+Local Whisper also supports [word timing and vocabulary hints](docs/cli-reference.md#local-whisper-controls).
+Opt-in word evidence preserves model-estimated starts/ends and clipping offsets;
+explicit controls retain the model-download gate and never silently degrade.
