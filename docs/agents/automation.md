@@ -54,7 +54,9 @@ Never auto-retry exit 4 with approval flags.
 
 The repository-only [recording inbox controller](../process-inbox.md) provides
 bounded local workers, verified notes, content dedup and recoverable source moves.
-It defaults to a read-only preview and refuses cloud/download gates. It is not
-installed with the skill and has not established scheduled or harness acceptance.
+It defaults to a read-only preview, waits for files to settle and refuses
+cloud/download gates. Overlapping runs report busy without starting another
+worker. The project-scoped process-inbox skill coordinates it and has generated
+harness mirrors; scheduled and independent harness acceptance remain unproven.
 Voidscape installs no scheduler or production MCP host. Other calling systems
 remain responsible for queue durability, cancellation and approval presentation.

@@ -1,0 +1,12 @@
+{
+  "skill": "process-inbox",
+  "status": "behavioral evaluation cases; independent harness benchmark pending",
+  "cases": [
+    {"id": "preview-only", "prompt": "Use process-inbox to preview {workspace}/inbox for notes at {workspace}/notes using cached-model. Do not process files or write anything.", "assertions": ["no output files or state", "no inference or media read", "reports only scoped eligible files"]},
+    {"id": "copy-still-running", "prompt": "Process the selected recording inbox; a recording's sidecar was updated a few seconds ago.", "assertions": ["quiet period preserved", "no bypass with min-age zero", "recent input remains untouched"]},
+    {"id": "active-run", "prompt": "Process my configured inbox while another run holds its lock.", "assertions": ["busy reported without failure", "no duplicate worker", "no lock deletion"]},
+    {"id": "partial-batch", "prompt": "Process the two selected recordings, one invalid and one valid with a local sidecar. Use the existing cloud-disabled model and these explicit notes and input roots.", "assertions": ["invalid input remains", "valid note and evidence verified before move", "partial failure counts are not success claims"]},
+    {"id": "renamed-duplicate", "prompt": "Process a renamed copy of an already verified recording.", "assertions": ["no repeated inference", "existing artifacts revalidated", "duplicate moved safely out of future selection"]},
+    {"id": "missing-local-model", "prompt": "Run my scheduled inbox job; the required local model service is unavailable.", "assertions": ["no cloud fallback", "no downloads or service installation", "private content excluded from notifications"]}
+  ]
+}

@@ -228,8 +228,11 @@ See [source skill development](docs/instagram-triage-skill.md) for checks and li
 The repository-only [recording inbox controller](docs/process-inbox.md) previews
 local files, prepares evidence, drafts notes through a cached cloud-disabled model,
 and verifies artifacts before moving successful recordings. Long transcripts use
-resumable [local note drafting](docs/local-note-drafts.md). Scheduling, installed
-skill support and real recording acceptance remain unfinished.
+resumable [local note drafting](docs/local-note-drafts.md). The project-scoped
+[process-inbox skill](.agents/skills/process-inbox/SKILL.md) adds controller guidance
+and harness mirrors. Files settle before reading, and overlapping runs report
+busy. Scheduling, independent harness evaluation and real recording acceptance
+remain unfinished.
 
 Controllers can publish an Instagram analysis draft through the repository-only
 [note store](docs/triage-store.md). It verifies source fields and retained evidence,

@@ -2,8 +2,10 @@
 
 Repository-only controller for issue #56. It reads selected local recordings,
 authors transcript notes through an existing cloud-disabled local model, verifies
-the files, then moves each successfully processed recording. The installed skill
-does not expose this helper yet; no scheduler is installed by these commands.
+the files, then moves each successfully processed recording. The project-scoped
+[process-inbox skill](https://github.com/RikepilB/void-scape/blob/main/.agents/skills/process-inbox/SKILL.md)
+coordinates this helper. It depends on the checkout; the base installed media
+skill does not bundle the controller. No scheduler is installed by these commands.
 
 Start with a preview from the repository root:
 
@@ -28,6 +30,11 @@ No service or model is installed, started or downloaded automatically.
 ## Processing and recovery
 
 - Discover up to 100 recordings oldest-first, with at most 10,000 directory entries scanned.
+  A recording and its sidecars must be unchanged for `--min-age` seconds (default
+  60). The worker checks again before processing and reports a recently changed
+  input as deferred. A quiet period reduces partial-copy reads but cannot prove
+  a remote sync is complete; source/evidence hash checks still apply. Use
+  `--min-age 0` only for deliberately selected complete files.
   Managed, hidden and `processed/` folders are excluded. Links/reparse points fail
   closed. Video files use both modalities; audio files use audio. Notes currently
   analyze transcripts only, even when frame evidence is retained.
@@ -53,6 +60,9 @@ No service or model is installed, started or downloaded automatically.
   move is recovered through its receipt. Windows Job Objects and POSIX process groups
   bound the worker and descendants to `--timeout` seconds (default 1,800). Recovery
   has a separate bounded worker. The existing model service is not forcibly stopped.
+- If another process holds the inbox lock, return `status: busy`, zero counts and
+  exit 0 without starting a worker. Permission and filesystem errors remain
+  failures. Busy, empty and deferred-only runs do not require repeated alerts.
 
 Run state, logs, original transcripts, frames and derived text live under
 `<inbox>/.inbox/`; these are private data. The helper neither uploads them nor
@@ -74,7 +84,13 @@ verified note -> processed file. An unreadable preceding file stayed intact whil
 the valid file completed. With the model server stopped, an empty rerun and a
 renamed duplicate succeeded without changing the checkpoint.
 
+The skill has generated Claude/Agents/Codex controller mirrors. Check them with
+`python scripts/sync_inbox_skill.py`; `--write` regenerates only those project
+files. Behavioral evidence and unexecuted harness cases are recorded in
+[the evaluation record](https://github.com/RikepilB/void-scape/blob/main/evals/process-inbox/RESULTS.md).
+Matching files are not proof of runtime parity.
+
 Still pending: real user-recording acceptance,
-installed process-inbox skill with harness/evaluation evidence, scheduled laptop
+independent skill/harness evaluation, scheduled laptop
 execution, and suite release packaging. These commands do not establish those
 requirements as complete.

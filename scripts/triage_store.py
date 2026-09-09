@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 from contextlib import contextmanager
 import hashlib
 import html
@@ -116,6 +117,10 @@ def exclusive(path, data):
     stage.unlink()
 
 
+class TriageBusyError(OSError):
+    """Another process owns the publication lock."""
+
+
 @contextmanager
 def locked(root):
     """Use a process lock released by the OS even after a crashed publisher."""
@@ -129,12 +134,17 @@ def locked(root):
             stream.write(b'0')
             stream.flush()
         stream.seek(0)
-        if os.name == 'nt':
-            import msvcrt
-            msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        try:
+            if os.name == 'nt':
+                import msvcrt
+                msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as error:
+            if error.errno in {errno.EACCES, errno.EAGAIN, errno.EDEADLK}:
+                raise TriageBusyError('publication lock is already held') from None
+            raise
         try:
             yield root, control
         finally:

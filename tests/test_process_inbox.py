@@ -237,7 +237,7 @@ def test_failed_file_does_not_block_next_selected_file(roots, monkeypatch):
         result = execute(root, notes, source)
         Path(command[command.index('--result') + 1]).write_text(json.dumps(result))
     monkeypatch.setattr(inbox, 'bounded_worker', runner)
-    result = inbox.process(root, notes, 'cached', apply=True)
+    result = inbox.process(root, notes, 'cached', apply=True, min_age=0)
     assert result['failed'] == 1 and result['processed'] == 1
     assert bad.exists() and not good.exists()
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Process recording inbox"
+  short_description: "Turn local recordings into verified notes"
+  default_prompt: "Use $process-inbox to preview my configured recording folder and note destination."
