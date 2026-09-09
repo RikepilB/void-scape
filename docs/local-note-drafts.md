@@ -31,8 +31,17 @@ reviewable. A draft never authorizes source mutation.
 
 - Completed `captions`, `faster-whisper` or `whisper-cpp` bundle required.
 - Transcript must be inside the evidence folder; links/reparse points are rejected.
-- Maximum 4,000 UTF-8 bytes of transcript. Longer recordings require the pending
-  chunking/reduction stage; the helper rejects them rather than silently truncating.
+- Maximum 1 MiB of transcript and 512 segments. Each generation request receives
+  at most 4,000 UTF-8 bytes. Every nonblank line must have a source timestamp.
+  Long lines split without cutting Unicode characters or inventing timestamps.
+- Every segment contributes its validated actions and key moments. Only the
+  overview is reduced; the full original transcript remains in the draft.
+- Completed generations are stored under `.note-checkpoints` in the evidence
+  folder. Content, model name and schema identify each entry; integrity and
+  citation checks run again on reuse. Interrupted work resumes from valid entries.
+  Checkpoints contain private derived text and inherit the evidence folder's
+  privacy requirements. They store no consent. A changed model under the same
+  name does not automatically invalidate earlier results.
 - Bounded response size and socket timeout. This is not yet the inbox worker's
   hard wall-clock limit for a whole file.
 - Exclusive draft creation; existing drafts remain intact. Transcript changes
@@ -45,6 +54,12 @@ and cloud-disabled runtime status. The generated note preserved the complete
 transcript and grounded moments. No recording moved. Tests also cover refusals
 before any transcript is sent, invalid citations, redirects and oversized replies.
 
-Remaining inbox work: long-transcript chunking, oldest-first file processing,
+Long-input QA used a synthetic 31-entry transcript spanning two model requests.
+The action at `30:00` survived merging, and a replay produced an identical draft
+without any model call. A failed overview generation resumed from both completed
+segments. The overview omitted a deferred decision present in the full transcript;
+this demonstrates why citation validation is not a semantic-completeness guarantee.
+
+Remaining inbox work: oldest-first file processing,
 stable content identity across renames, verified publication/checkpoint recovery,
 source moves, per-file cancellation, scheduler and real recording/harness evidence.
