@@ -19,6 +19,28 @@ INSTAGRAM_CATEGORIES = {
     'System_Design_CS_Fundamentals', 'Security_Privacy', 'Design_UI',
     'Startups_Business_Legal', 'Tools_Utilities', 'Off_Topic_Local', '_Skipped',
 }
+RSS_CATEGORIES = {'AI', 'Design', 'Product', 'Jobs', 'Content', 'Startup',
+                  'Hackathon', 'Tech', 'Software_Developer', 'News', '_Skipped'}
+
+
+def rss_provenance(key, metadata, capture_root):
+    """Bind a draft to retained feed evidence, not a caller-invented URL."""
+    from rss_capture_helper import verify as verify_capture
+    import article
+    if capture_root is None or not re.fullmatch('rss:[a-f0-9]{64}', key):
+        raise ValueError('RSS publication requires a verified capture root and key')
+    capture = verify_capture(capture_root, key[4:])
+    entry = capture['entry']
+    url = entry['link'] or capture['feed_url']
+    try:
+        url, _ = article._evidence_url(url)
+    except ValueError:
+        url = capture['feed_url']
+    if (metadata['source'] != 'rss' or metadata['url'] != url or
+            metadata['author'] != entry['author'] or metadata['date'] != (entry['published'] or None)):
+        raise ValueError('RSS frontmatter does not match retained provenance')
+    folder = checked(capture_root) / '.rss-capture' / key[4:]
+    return entry, [folder / 'entry.json', folder / 'captured.json']
 
 
 def note_metadata(text):
@@ -155,17 +177,17 @@ def locked(root):
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
 
-def prepare(source, key, category, note, evidence, *, skipped=False):
+def prepare(source, key, category, note, evidence, *, skipped=False, capture_root=None):
     """Validate a caller-authored note without interpreting it as instructions."""
     if not re.fullmatch(r'[a-z][a-z0-9_-]{0,31}', source):
         raise ValueError('invalid source')
-    if source != 'instagram':
+    if source not in {'instagram', 'rss'}:
         raise ValueError('source adapter not implemented')
     if not key or len(key) > 2048 or any(c in key for c in '\r\n\x00'):
         raise ValueError('invalid canonical source key')
     if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_-]{0,63}', category):
         raise ValueError('invalid category')
-    if category not in INSTAGRAM_CATEGORIES:
+    if category not in (INSTAGRAM_CATEGORIES if source == 'instagram' else RSS_CATEGORIES):
         raise ValueError('category is not registered for the source')
     if skipped != (category == '_Skipped'):
         raise ValueError('skip records belong in _Skipped')
@@ -177,15 +199,32 @@ def prepare(source, key, category, note, evidence, *, skipped=False):
     metadata = note_metadata(text)
     if not isinstance(metadata['url'], str):
         raise ValueError('source URL is required')
-    code = extract_shortcode(metadata['url'])
-    if (metadata['source'] != source or metadata['category'] != category or
-            metadata['url'] != canonical_url(code) or key != f'instagram:{code}'):
+    if metadata['category'] != category:
         raise ValueError('note provenance does not match the requested source')
+    if source == 'instagram':
+        code = extract_shortcode(metadata['url'])
+        if (capture_root is not None or metadata['source'] != source or
+                metadata['url'] != canonical_url(code) or key != f'instagram:{code}'):
+            raise ValueError('note provenance does not match the requested source')
+    else:
+        entry, retained = rss_provenance(key, metadata, capture_root)
+        evidence = list(dict.fromkeys([*retained, *map(Path, evidence)]))
     if [line for line in text.splitlines() if line.startswith('Source:')] != [f'Source: {key}']:
         raise ValueError('note must contain exactly one matching Source line')
-    required = ('## Reason',) if skipped else ('## Synopsis', '## Action Items', '## Instagram Excerpt', '## Links', '## Evidence')
+    required = ('## Reason',) if skipped else ('## Synopsis', '## Action Items',
+                '## Instagram Excerpt' if source == 'instagram' else '## RSS Excerpt', '## Links', '## Evidence')
+    if source == 'rss' and not skipped:
+        required += ('## Key points',)
     if any(text.splitlines().count(section) != 1 for section in required):
         raise ValueError('note is missing required sections')
+    if source == 'rss' and not skipped:
+        section = re.search(r'^## RSS Excerpt\r?\n(.*?)(?=^## |\Z)', text, re.MULTILINE | re.DOTALL)[1]
+        lines = [line.strip() for line in section.splitlines() if line.strip()]
+        if len(lines) != 2 or lines[0] != 'Untrusted source content:' or not lines[1].startswith('> '):
+            raise ValueError('RSS excerpt must be a labeled single-line quotation')
+        quote = lines[1][2:]
+        if not quote or len(quote.split()) > 25 or quote not in entry['body']:
+            raise ValueError('RSS excerpt must be short and verbatim from retained content')
     titles = re.findall(r'^# ([^\r\n]+)\r?$', text, re.MULTILINE)
     if len(titles) != 1 or len(titles[0]) > 200:
         raise ValueError('note requires one bounded title')
@@ -279,9 +318,14 @@ def update_index(root, control, record):
     stage.replace(path)
 
 
-def publish(root, source, key, category, note, evidence, *, skipped=False):
-    record, raw = prepare(source, key, category, note, evidence, skipped=skipped)
+def publish(root, source, key, category, note, evidence, *, skipped=False, capture_root=None):
+    record, raw = prepare(source, key, category, note, evidence, skipped=skipped, capture_root=capture_root)
     with locked(root) as (root, control):
+        if source == 'rss':
+            previous = lookup(root, source, key)
+            completed = previous['analyzed'] or (previous['skipped'] if skipped else [])
+            if completed:
+                return {**completed[0], 'duplicate': True}
         receipt = control / f"{record['id']}.json"
         exclusive(receipt, encoded(record))
         target = checked(root / record['note'])
@@ -325,6 +369,7 @@ def main(argv=None):
         write.add_argument(field)
     write.add_argument('--evidence', action='append', default=[])
     write.add_argument('--skipped', action='store_true')
+    write.add_argument('--capture-root')
     args = vars(parser.parse_args(argv))
     command = args.pop('command')
     try:
