@@ -135,7 +135,7 @@ def test_skip_does_not_prevent_later_analysis(tmp_path):
     assert result['pending'] == []
 
 
-@pytest.mark.parametrize('change', ['source', 'url', 'category', 'duplicate', 'section', 'frontmatter', 'quote', 'mapping'])
+@pytest.mark.parametrize('change', ['source', 'url', 'category', 'duplicate', 'section', 'frontmatter', 'quote', 'mapping', 'embedded_quote'])
 def test_invalid_provenance_has_no_output(tmp_path, change):
     args = fixture(tmp_path)
     text = args['note'].read_text()
@@ -146,7 +146,8 @@ def test_invalid_provenance_has_no_output(tmp_path, change):
                     'section': ('## Synopsis', '## Missing'),
                     'frontmatter': ('author: null', 'author: !include secret'),
                     'quote': ('author: null', "author: 'unterminated"),
-                    'mapping': ('author: null', 'author: nested: value')}
+                    'mapping': ('author: null', 'author: nested: value'),
+                    'embedded_quote': ('author: null', "author: 'O'Neil'")}
     args['note'].write_text(text.replace(*replacements[change]))
     with pytest.raises(ValueError):
         store.publish(**args)
@@ -197,6 +198,16 @@ def test_note_size_bound_precedes_output(tmp_path):
     with pytest.raises(ValueError, match='4 MiB'):
         store.publish(**args)
     assert not args['root'].exists()
+
+
+@pytest.mark.parametrize('author', ["'O''Neil'", '"O\'Neil"'])
+def test_valid_quoted_author_is_preserved(tmp_path, author):
+    args = fixture(tmp_path)
+    args['note'].write_text(args['note'].read_text().replace('author: null', 'author: ' + author))
+    result = store.publish(**args)
+    text = Path(result['note']).read_text(encoding='utf-8')
+    assert 'author: ' + author in text
+    assert store.note_metadata(text)['author'] == "O'Neil"
 
 
 def test_failed_sync_does_not_publish_partial_artifact(tmp_path, monkeypatch):
