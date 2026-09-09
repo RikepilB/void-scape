@@ -111,9 +111,7 @@ def _recommend_tier(info: dict[str, Any]) -> str:
 def _print_error(ex: Exception, as_json: bool) -> int:
     exit_code, code, retryable = video._classify_error(ex)
     if as_json:
-        print(json.dumps({"ok": False, "error": {"code": code, "message": str(ex),
-                                                  "retryable": retryable,
-                                                  "exit_code": exit_code}},
+        print(json.dumps({"ok": False, "error": video._error_payload(ex)},
                          indent=2, ensure_ascii=False))
     else:
         print(f"Voidscape could not continue: {ex}", file=sys.stderr)
@@ -363,9 +361,9 @@ def read(args: argparse.Namespace) -> int:
                 args.agent_model or _defaults(workspace)["agent_model"],
             )
             if estimate["requires_cloud_approval"] and not args.allow_cloud:
-                raise PermissionError(
+                raise video.ApprovalRequired(
                     "remote article fetch needs explicit consent; review preview, "
-                    "then rerun with --allow-cloud"
+                    "then rerun with --allow-cloud", "cloud_approval", "article_fetch"
                 )
             result = article_engine.run(
                 args.input, args.workdir, allow_fetch=args.allow_cloud,
@@ -375,9 +373,11 @@ def read(args: argparse.Namespace) -> int:
             article_source = False
             estimate = _estimate_from_args(args, workspace)
             if estimate["requires_cloud_approval"] and not args.allow_cloud:
-                raise PermissionError("cloud audio processing needs explicit consent; review preview, then rerun with --allow-cloud")
+                raise video.ApprovalRequired("cloud audio processing needs explicit consent; review preview, then rerun with --allow-cloud",
+                                             "cloud_approval", estimate["backend"])
             if estimate["needs_model_download"] and not args.allow_model_download:
-                raise PermissionError("a local model download needs explicit consent; review preview, then rerun with --allow-model-download")
+                raise video.ApprovalRequired("a local model download needs explicit consent; review preview, then rerun with --allow-model-download",
+                                             "model_download", estimate["backend"])
             if estimate["needs_install"]:
                 raise RuntimeError("the selected local backend is not installed; choose captions or install the backend before reading")
             result = video.run(
