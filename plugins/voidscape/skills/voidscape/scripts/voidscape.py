@@ -114,7 +114,7 @@ def _print_error(ex: Exception, as_json: bool) -> int:
         print(json.dumps(video.failure_envelope(ex, None),
                          indent=2, ensure_ascii=False))
     else:
-        print(f"Voidscape could not continue: {ex}", file=sys.stderr)
+        print(f"Voidscape could not continue: {video.sanitize_error(ex)}", file=sys.stderr)
         failure = video.failure_envelope(ex, None)
         if failure["data"]:
             print(f"  Available evidence: {failure['data']['workdir']}", file=sys.stderr)

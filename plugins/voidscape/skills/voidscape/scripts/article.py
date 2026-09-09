@@ -859,7 +859,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.envelope:
             print(video._json_text(video.failure_envelope(ex, args.command), args.compact))
         else:
-            print(video._json_text({"error": str(ex)}, args.compact))
+            print(video._json_text({"error": video.sanitize_error(ex)}, args.compact))
         return exit_code
     return 0
 
