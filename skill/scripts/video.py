@@ -107,6 +107,12 @@ class BackendGateError(RuntimeError):
 class BackendFailures(RuntimeError):
     def __init__(self, message: str, failures: list[Exception]):
         super().__init__(message)
+        self.provider_classification = None
+        if any(isinstance(failure, ProviderFailure) for failure in failures):
+            # Preserve the former aggregate classification without retaining provider prose.
+            hints = [failure.aggregate_hint if isinstance(failure, ProviderFailure)
+                     else f"{type(failure).__name__}: {str(failure)[:140]}" for failure in failures]
+            self.provider_classification = _classify_error(RuntimeError(" | ".join(hints)))
         self.gates = []
         for failure in failures:
             if isinstance(failure, (ApprovalRequired, BackendGateError)):
@@ -118,6 +124,16 @@ class BackendFailures(RuntimeError):
             for gate in gates:
                 if gate not in self.gates:
                     self.gates.append(gate)
+
+
+class ProviderFailure(RuntimeError):
+    def __init__(self, backend, original):
+        self.classification = _classify_error(original)
+        aggregate = _classify_error(RuntimeError(f"{type(original).__name__}: {str(original)[:140]}"))
+        self.aggregate_hint = ("invalid media" if aggregate[0] == 3 else "not installed" if aggregate[0] == 5
+                               else "temporary failure" if aggregate[2] else "provider failure")
+        category = "temporary failure" if self.classification[2] else "provider failure"
+        super().__init__(f"{backend} {category} ({type(original).__name__}); provider detail omitted")
 
 
 class ReadProgress:
@@ -351,6 +367,23 @@ def redact_remote_url(url: str) -> tuple[str, bool]:
         return sanitized, sanitized != url
     except (TypeError, ValueError):
         return "[REDACTED_URL]", True
+
+
+def sanitize_error(error: Exception | str) -> str:
+    """Redact recognizable credential syntax without consulting environment values."""
+    text = URL_IN_ERROR_RE.sub(lambda match: redact_remote_url(match.group())[0], str(error))
+    text = re.sub(
+        r'''(?im)(\b(?:proxy-)?authorization["']?\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\r\n,;}]+)''',
+        r"\1[REDACTED_SECRET]", text,
+    )
+    text = re.sub(
+        r'''(?ix)(\b(?:[a-z0-9_]*(?:api[_-]?key|token|secret|password)|signature)\b["']?\s*[:=]\s*)
+        (?:"[^"]*"|'[^']*'|[^\s,;}\]]+)''',
+        r"\1[REDACTED_SECRET]", text,
+    )
+    text = re.sub(r"(?i)\b(Bearer|Basic)\s+[a-z0-9+/=_.~-]+", r"\1 [REDACTED_SECRET]", text)
+    return re.sub(r"\b(?:sk-[a-zA-Z0-9_-]{8,}|gsk_[a-zA-Z0-9_-]{8,}|hf_[a-zA-Z0-9]{8,})",
+                  "[REDACTED_SECRET]", text)
 
 
 def run_cmd(args: list[str]) -> subprocess.CompletedProcess:
@@ -1001,7 +1034,7 @@ def _transcribe(orig: str, info: dict[str, Any], media: str | None,
                                    allow_model_download, window_start, window_end)
         except Exception as ex:
             failures.append(ex)
-            errors.append(f"{b}: {type(ex).__name__}: {str(ex)[:140]}")
+            errors.append(f"{b}: {type(ex).__name__}: {sanitize_error(ex)[:140]}")
             _read_warning("backend_fallback", "transcribe", f"Backend {b} failed in the selected fallback chain.")
             print(f"[read-video] backend '{b}' failed -> falling back to next in chain. {errors[-1]}",
                   file=sys.stderr)
@@ -1236,7 +1269,7 @@ def _faster_whisper(audio: str, model_size: str | None = None,
             model, used = _new_whisper(size, download_root, True), size
             break
         except Exception as ex:
-            errors.append(f"{size} offline: {type(ex).__name__}: {str(ex)[:90]}")
+            errors.append(f"{size} offline: {type(ex).__name__}: {sanitize_error(ex)[:90]}")
 
     # Only reached if NOT ONE candidate (requested or a cached fallback) loaded offline -- a real
     # download is required. Only the *requested* size is ever downloaded, never a fallback.
@@ -1250,7 +1283,7 @@ def _faster_whisper(audio: str, model_size: str | None = None,
                 model, used = _new_whisper(requested, download_root, False), requested
                 break
             except Exception as ex:
-                errors.append(f"{requested} online#{attempt + 1}: {type(ex).__name__}: {str(ex)[:90]}")
+                errors.append(f"{requested} online#{attempt + 1}: {type(ex).__name__}: {sanitize_error(ex)[:90]}")
                 if attempt < 2:
                     time.sleep(2.0 * (attempt + 1))
 
@@ -1304,25 +1337,37 @@ def _build_multipart(fields: dict[str, str], path: str) -> tuple[bytes, str]:
     eol = b"\r\n"
     buf = io.BytesIO()
     for name, value in fields.items():
-        buf.write(f"--{boundary}".encode()); buf.write(eol)
-        buf.write(f'Content-Disposition: form-data; name="{name}"'.encode()); buf.write(eol); buf.write(eol)
-        buf.write(str(value).encode()); buf.write(eol)
+        buf.write(f"--{boundary}".encode())
+        buf.write(eol)
+        buf.write(f'Content-Disposition: form-data; name="{name}"'.encode())
+        buf.write(eol)
+        buf.write(eol)
+        buf.write(str(value).encode())
+        buf.write(eol)
     fp = Path(path)
     mime = mimetypes.guess_type(fp.name)[0] or "application/octet-stream"
-    buf.write(f"--{boundary}".encode()); buf.write(eol)
-    buf.write(f'Content-Disposition: form-data; name="file"; filename="{fp.name}"'.encode()); buf.write(eol)
-    buf.write(f"Content-Type: {mime}".encode()); buf.write(eol); buf.write(eol)
-    buf.write(fp.read_bytes()); buf.write(eol)
-    buf.write(f"--{boundary}--".encode()); buf.write(eol)
+    buf.write(f"--{boundary}".encode())
+    buf.write(eol)
+    buf.write(f'Content-Disposition: form-data; name="file"; filename="{fp.name}"'.encode())
+    buf.write(eol)
+    buf.write(f"Content-Type: {mime}".encode())
+    buf.write(eol)
+    buf.write(eol)
+    buf.write(fp.read_bytes())
+    buf.write(eol)
+    buf.write(f"--{boundary}--".encode())
+    buf.write(eol)
     return buf.getvalue(), boundary
 
 
 def _err_body(ex: urllib.error.HTTPError) -> str:
+    # Arbitrary provider prose can echo credentials without recognizable labels.
+    # Status and backend are sufficient diagnostics; never log rejection bodies.
     try:
-        b = ex.read()
-        return f" — {b.decode('utf-8', errors='replace')[:300]}" if b else ""
+        ex.close()
     except Exception:
-        return ""
+        pass
+    return " — provider response body omitted"
 
 
 def _resp_to_text(data: dict[str, Any], offset: float = 0.0) -> str:
@@ -1409,7 +1454,7 @@ def _api_request(backend: str, audio: str) -> dict[str, Any]:
                     raise RuntimeError(f"{backend} rate-limited: {last}")
             delay = 2.0 * (2 ** attempt)
         except (urllib.error.URLError, TimeoutError, OSError) as ex:
-            last = f"{type(ex).__name__}: {ex}"
+            last = f"{type(ex).__name__}: network request failed"
             delay = 2.0 * (attempt + 1)
         if attempt < _MAX_ATTEMPTS - 1:
             print(f"[read-video] {backend} {last} — retry in {delay:.1f}s "
@@ -1433,8 +1478,9 @@ def _api_transcribe(backend: str, audio: str) -> str:
             parts.append(_resp_to_text(_api_request(backend, path), offset))
         except Exception as ex:
             failures.append(ex)
-            parts.append(f"[transcription gap: chunk {i} of {len(chunks)} failed: {str(ex)[:120]}]")
-            print(f"[read-video] {backend} chunk {i}/{len(chunks)} failed: {ex}", file=sys.stderr)
+            safe_error = sanitize_error(ex)
+            parts.append(f"[transcription gap: chunk {i} of {len(chunks)} failed: {safe_error[:120]}]")
+            print(f"[read-video] {backend} chunk {i}/{len(chunks)} failed: {safe_error}", file=sys.stderr)
     if len(failures) == len(chunks):
         raise BackendFailures(f"{backend} transcription failed: all {len(chunks)} chunks failed", failures)
     if failures:
@@ -1452,12 +1498,15 @@ def _gemini(wav: str) -> str:
         from google import genai
     except ImportError:
         raise RuntimeError("pip install google-genai (needed for backend 'gemini')")
-    client = genai.Client(api_key=key)
-    up = client.files.upload(file=wav)
-    r = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=["Transcribe this audio verbatim. Prefix each line with an [MM:SS] timestamp.", up])
-    return r.text or ""
+    try:
+        client = genai.Client(api_key=key)
+        up = client.files.upload(file=wav)
+        r = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=["Transcribe this audio verbatim. Prefix each line with an [MM:SS] timestamp.", up])
+        return r.text or ""
+    except Exception as ex:
+        raise ProviderFailure("gemini", ex) from None
 
 
 # --------------------------------------------------------------------------- cli
@@ -1535,6 +1584,10 @@ def failure_envelope(ex: Exception, command: str | None):
 
 
 def _classify_error(ex: Exception) -> tuple[int, str, bool]:
+    if isinstance(ex, ProviderFailure):
+        return ex.classification
+    if isinstance(ex, BackendFailures) and ex.provider_classification is not None:
+        return ex.provider_classification
     if isinstance(ex, PermissionError):
         return _EXIT_APPROVAL, "approval_required", False
     if isinstance(ex, (FileNotFoundError, ValueError)):
@@ -1557,7 +1610,7 @@ def _classify_error(ex: Exception) -> tuple[int, str, bool]:
 
 def _error_payload(ex: Exception) -> dict[str, Any]:
     exit_code, code, retryable = _classify_error(ex)
-    error = {"code": code, "message": str(ex), "retryable": retryable, "exit_code": exit_code}
+    error = {"code": code, "message": sanitize_error(ex), "retryable": retryable, "exit_code": exit_code}
     if isinstance(ex, (ApprovalRequired, BackendGateError)):
         error["gate"] = ex.gate
     elif isinstance(ex, BackendFailures) and ex.gates:
@@ -1741,7 +1794,7 @@ def main(argv: list[str] | None = None) -> int:
         if a.envelope:
             print(_json_text(failure_envelope(ex, a.cmd), a.compact))
         else:
-            print(_json_text({"error": str(ex)}, a.compact))
+            print(_json_text({"error": sanitize_error(ex)}, a.compact))
         return exit_code
     return 0
 

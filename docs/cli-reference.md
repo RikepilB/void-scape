@@ -105,6 +105,14 @@ metadata as well as the exit code. Resolve the requested action once, then rerun
 only with the user's current approval. Set keys locally in the process environment;
 never paste values into agent conversations or save them in workspace configuration.
 
+Error output removes URL credentials/query strings, recognizable credential fields,
+authorization headers, and common provider-token prefixes. This applies before
+fallback logging and before synthetic transcript-gap markers are written. Successful
+source transcripts and article/chat evidence are not rewritten by this sanitizer.
+Raw HTTP rejection bodies, transport reasons, and Gemini SDK error details are omitted; backend/status
+and error classification remain available. Pattern matching cannot identify every
+possible secret in arbitrary prose, so these raw provider bodies are not logged.
+
 `<input>` is a local path, a video URL, or — when a workspace is configured — a **bare filename** that
 resolves against `inbox_dir`.
 
