@@ -1,12 +1,14 @@
 {
-  "_note": "Editable rate table read by scripts/video.py. transcription_per_min = USD per minute of audio. model_per_mtok = API-equivalent USD per 1,000,000 tokens. Codex subscription usage may not be billed per API token. Update as provider prices drift. Updated July 2026.",
+  "_note": "Editable estimates, not billing quotes. USD per minute / per million tokens. OpenAI standard short-context and Groq large-v3 rates reviewed 2026-09-08. OpenRouter and Gemini remain legacy estimates, not verified quotes. Codex subscriptions, long context, caching, regional processing, retries and minimum charges can differ.",
+  "_reviewed_on": "2026-09-08",
+  "_sources": ["https://developers.openai.com/api/docs/pricing", "https://console.groq.com/docs/speech-to-text"],
   "transcription_per_min": {
     "captions": 0.0,
     "sidecar": 0.0,
     "local": 0.0,
     "trx": 0.0,
     "faster-whisper": 0.0,
-    "groq": 0.0007,
+    "groq": 0.00185,
     "openai-mini": 0.003,
     "openai": 0.006,
     "openrouter": 0.006,
@@ -14,9 +16,9 @@
   },
   "model_per_mtok": {
     "_active": "gpt-5.6-terra",
-    "gpt-5.6-sol":   { "input": 5.0,  "output": 30.0, "vision_estimator": "openai_patch32" },
-    "gpt-5.6-terra": { "input": 2.5,  "output": 15.0, "vision_estimator": "openai_patch32" },
-    "gpt-5.6-luna":  { "input": 1.0,  "output": 6.0,  "vision_estimator": "openai_patch32" }
+    "gpt-5.6-sol":   { "input": 4.0,  "output": 20.0, "vision_estimator": "openai_patch32" },
+    "gpt-5.6-terra": { "input": 2.0,  "output": 12.0, "vision_estimator": "openai_patch32" },
+    "gpt-5.6-luna":  { "input": 0.2,  "output": 1.2, "vision_estimator": "openai_patch32" }
   },
   "frame": {
     "target_width": 512,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import platform
@@ -13,7 +14,6 @@ from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
 
 
 PROTOCOL_VERSION = "1.0"
@@ -188,12 +188,20 @@ def _validate_screenpipe_url(value: str) -> str:
 
 
 def _fetch_health(url: str) -> dict[str, Any] | None:
-    request = Request(f"{url}/health", headers={"Accept": "application/json"})
+    parsed = urlparse(_validate_screenpipe_url(url))
+    host = "::1" if parsed.hostname == "::1" else "127.0.0.1"
+    connection = http.client.HTTPConnection(host, parsed.port or 80, timeout=2)
     try:
-        with urlopen(request, timeout=2) as response:
-            raw = response.read(1_048_577)
-    except (HTTPError, URLError, TimeoutError, OSError):
+        # Direct loopback transport never consults proxies or follows redirects.
+        connection.request("GET", "/health", headers={"Accept": "application/json"})
+        response = connection.getresponse()
+        if response.status != 200:
+            return None
+        raw = response.read(1_048_577)
+    except (http.client.HTTPException, HTTPError, URLError, TimeoutError, OSError):
         return None
+    finally:
+        connection.close()
     if len(raw) > 1_048_576:
         raise _operation_error("screenpipe health response exceeded the safe size limit")
     try:

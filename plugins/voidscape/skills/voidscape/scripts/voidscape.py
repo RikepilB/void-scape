@@ -732,6 +732,8 @@ def main(argv: list[str] | None = None) -> int:
     sources_parser.add_argument("--json", action="store_true")
     sources_parser.set_defaults(handler=list_sources)
     args = parser.parse_args(args_list)
+    if hasattr(args, "input") and args.input.strip().lower().startswith(("http://", "https://")):
+        args.input = args.input.strip()
     return args.handler(args)
 
 
