@@ -19,6 +19,15 @@ AGENT_DOCS = REPO / "docs" / "agents"
 AGENT_INDEX = AGENT_DOCS / "index.md"
 AGENT_MANIFEST = AGENT_DOCS / "manifest.json"
 ROADMAP_STATUS = AGENT_DOCS / "roadmap-status.md"
+
+
+def test_search_index_preserves_recovery_filename():
+    entries = json.loads((AGENT_DOCS / "_assets/search-index.json").read_text(encoding="utf-8"))
+    workflow = next(entry for entry in entries if entry["url"] == "workflow.html")
+    assert ".agent/latest-read.json" in workflow["text"]
+    assert ".agent/latest read.json" not in workflow["text"]
+
+
 IA_SPEC = (
     REPO / "docs" / "superpowers" / "specs"
     / "2026-08-29-agent-docs-information-architecture.md"

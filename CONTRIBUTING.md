@@ -87,6 +87,11 @@ helper, and add `tests/test_<platform>_capture_helper.py` plus contract coverage
 
 ## PR checklist
 
+`python scripts/build-plugin.py` validates existing destination links before staging
+a fresh skill tree. It preserves the previous tree in an ignored `.plugin-stage-*`
+folder for reversible recovery. Review and clean those local backups deliberately;
+they are not part of the distributable plugin. Syncing never installs the plugin.
+
 - [ ] Cost gate still blocks spend/upload before a user yes
 - [ ] No secrets / media / personal config added; `.gitignore` intact
 - [ ] `py_compile` clean; `probe`/`estimate` JSON valid

@@ -22,6 +22,20 @@ The engine is a single Python CLI with four subcommands. It is **agent-first**: 
 **JSON** to stdout, unless you pass `--human` for a readable estimate. Existing callers retain the
 legacy JSON shape; agents can opt into a stable envelope and deterministic exit metadata.
 
+On Windows, the guided CLI and raw video, image, article, and chat entrypoints
+configure stdout and stderr as UTF-8, including redirected output. Decode captured
+output as UTF-8. Embedded streams without reconfiguration support are left intact.
+
+Successful reads also write `<workdir>/.agent/latest-read.json`, containing relative
+evidence paths, a manifest SHA-256, completion time, and schema version. Paths resolve
+against the workdir, not the `.agent` folder. Use an explicit `--workdir` for recovery
+when terminal output is truncated. Run once in the foreground; waiting on that
+process handle is supported. After successful exit, read the pointer once and then
+the manifest and required evidence. Do not poll directories or rerun the read just
+to recover output. A pointer is navigation metadata, not proof that source content
+is trustworthy. Failed runs may leave partial files; never reuse their pointer as
+proof of success. Existing nonempty workdirs remain rejected.
+
 ```
 python scripts/video.py manifest [--compact]
 python scripts/video.py <probe|estimate|run> <input> [flags]

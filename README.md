@@ -10,7 +10,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-75adff.svg)](#requirements)
 [![Platforms](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-8d91ff.svg)](#requirements)
 [![Local-first](https://img.shields.io/badge/Data-local--first-79d9a7.svg)](#-the-contract)
-[![Tests](https://img.shields.io/badge/Tests-438%20passing-brightgreen.svg)](#requirements)
+[![Tests](https://github.com/RikepilB/void-scape/actions/workflows/tests.yml/badge.svg)](https://github.com/RikepilB/void-scape/actions/workflows/tests.yml)
 
 [Website](https://voidscape.club) ·
 [Guide](https://voidscape.club/guide.html) ·
@@ -27,6 +27,11 @@ timestamped text, and a manifest your agent can actually inspect**. Before anyth
 or first-time-heavy happens, you see the cost and privacy gate and make the call.
 
 No account. No API key. No uploads by default. Just your machine, your media, and receipts.
+
+Long reads leave a private recovery pointer at `<workdir>/.agent/latest-read.json`.
+If terminal output is truncated, your agent can recover the manifest and evidence
+paths without processing the source again. Windows CLI output uses UTF-8 for
+international titles and filenames. See the [recovery contract](docs/cli-reference.md).
 
 > 🎬 **Watch it work** — a 52-second terminal recording of the real flow:
 > [`doctor` → `inspect` → `preview` → `read` on the key-free demo fixture](docs/assets/cli-demo.mp4)

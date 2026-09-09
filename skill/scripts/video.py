@@ -17,6 +17,7 @@ missing optional dependency never breaks probe/estimate.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import ipaddress
 import json
@@ -34,7 +35,7 @@ import urllib.error
 import uuid
 from pathlib import Path
 from shutil import which
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
@@ -612,6 +613,7 @@ def run(inp: str, tier: str = "both", frames: int | None = None, backend: str = 
         result["transcript"] = tpath
         result["transcript_chars"] = len(text)
     (wd / "manifest.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    write_read_pointer(result)
     return result
 
 
@@ -1420,15 +1422,60 @@ def _fmt_estimate(o: dict[str, Any]) -> str:
 
 
 def _emit(obj: dict[str, Any], human: bool, envelope: bool = False,
-          compact: bool = False, command: str | None = None) -> None:
+          compact: bool = False, command: str | None = None, *,
+          formatter: Callable[[dict[str, Any]], str] | None = None) -> None:
     if human and "cost_usd" in obj:
-        print(_fmt_estimate(obj))
+        print((formatter or _fmt_estimate)(obj))
     else:
         payload = _envelope(obj, None, command) if envelope else obj
         print(_json_text(payload, compact))
 
 
+def write_read_pointer(result: dict[str, Any]) -> None:
+    """Record only confined output paths; the manifest remains the evidence record."""
+    root = Path(result["workdir"]).resolve()
+    manifest = root / "manifest.json"
+    paths = []
+    candidates = [frame["file"] for frame in result.get("frames", [])]
+    if result.get("transcript"):
+        candidates.append(result["transcript"])
+    for collection in ("images", "entries"):
+        candidates.extend(item["file"] for item in result.get(collection, []) if "file" in item)
+    for value in candidates:
+        path = Path(value)
+        path = (path if path.is_absolute() else root / path).resolve()
+        paths.append(path.relative_to(root).as_posix())
+    pointer = {
+        "schema_version": 1,
+        "status": "success",
+        "manifest": "manifest.json",
+        "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+        "evidence": sorted(set(paths)),
+        "completed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    directory = root / ".agent"
+    directory.mkdir(exist_ok=False)
+    with (directory / "latest-read.json").open("x", encoding="utf-8") as output:
+        json.dump(pointer, output, indent=2, ensure_ascii=False)
+        output.write("\n")
+
+
+def configure_cli_streams() -> None:
+    """Keep Windows console and redirected output safe for arbitrary media titles."""
+    if sys.platform != "win32":
+        return
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8")
+            except (OSError, ValueError, TypeError):
+                # Embedded hosts can expose a stream that cannot be reconfigured.
+                pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    configure_cli_streams()
     args_list = list(sys.argv[1:] if argv is None else argv)
     commands = {"manifest", "probe", "estimate", "run"}
     command = next((arg for arg in args_list if arg in commands), None)
