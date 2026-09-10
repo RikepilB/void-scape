@@ -303,8 +303,11 @@ can bind authored RSS notes to those entries. The project-scoped
 [substack-ingest skill](.agents/skills/substack-ingest/SKILL.md) coordinates capture,
 retained-entry resume and publication. A selected public article can also be read
 through `scripts/rss_read.py` with explicit fetch approval; notes bind its verified
-bundle using `--read-root`. Media enclosure reads and independent harness evaluation
-remain pending; selecting a resource does not fetch it.
+bundle using `--read-root`. Selected audio/video enclosures use the bounded
+`rss_download.py` acquisition helper, then `rss_media.py` for governed local reads.
+`scripts/triage_store.py publish --read-root` publishes timestamp-cited notes bound
+to that verified evidence. Selecting a resource does not fetch it. Independent
+harness evaluation and representative source acceptance remain pending.
 
 For scripts, subagents, and integrations, the raw engine remains stable:
 

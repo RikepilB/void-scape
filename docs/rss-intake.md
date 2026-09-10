@@ -61,7 +61,7 @@ Capture dedup remains separate: controllers must consult note lookup before
 authoring a retained entry. The project-scoped
 [substack-ingest skill](../.agents/skills/substack-ingest/SKILL.md) coordinates this
 workflow. Remaining issue #57 work includes independent harness evaluation,
-complete paywall/media routing workflows. Public YouTube ingest is implemented
+representative paywall/media acceptance. Public YouTube ingest is implemented
 separately; its independent source/harness acceptance remains pending.
 
 ## Resume retained entries
@@ -151,5 +151,64 @@ are rejected as the wrong resource type. No authenticated fallback is attempted.
 
 `rss_resource.py --resource enclosure --enclosure 1` selects a one-based audio or
 video enclosure and proposes its reader/tier. It does not download or read it.
-Bounded enclosure acquisition, media receipt binding, and representative live
-paywall/media/harness acceptance remain unfinished issue #57 work.
+Use the separate acquisition/read workflow below for a specifically requested
+enclosure. Representative live paywall/media/harness acceptance remains issue #57 work.
+
+## Selected media enclosures
+
+```powershell
+python scripts/rss_resource.py ./capture rss:<capture-id> --resource enclosure --enclosure 1
+python scripts/rss_download.py ./capture rss:<capture-id> ./enclosure --enclosure 1
+python scripts/rss_download.py ./capture rss:<capture-id> ./enclosure --enclosure 1 --allow-fetch
+python -m skill.scripts.voidscape inspect ./enclosure/media.mkv --reader video --json
+python -m skill.scripts.voidscape preview ./enclosure/media.mkv --reader video --tier audio --backend faster-whisper --transcribe-mode fast --json
+python scripts/rss_media.py ./capture rss:<capture-id> ./enclosure ./media-read --enclosure 1 --tier audio --allow-read
+python scripts/triage_store.py publish ./notes rss rss:<capture-id> Tech ./draft.md --capture-root ./capture --read-root ./media-read
+```
+
+The acquisition command defaults to preview: no HTTP request or local write.
+With the selected fetch approved, it downloads up to 128 MiB by default (512 MiB
+maximum via `--max-bytes`) under a 300-second default deadline (1800 maximum).
+Each redirect uses the existing DNS/IP-pinned public transport; HTTPS downgrade,
+private destinations, missing/invalid media type, unsupported HTTP compression,
+oversized or truncated bodies stop acquisition. URL query redaction still makes
+an original resource unavailable. Redirect URLs are not retained because they
+can contain expiring tokens. Responses must explicitly declare audio/video;
+generic octet-stream responses are currently unsupported.
+
+FFmpeg must support the `fd` protocol for both input and output. Availability is
+checked before fetching; no binary is installed automatically. The worker supplies
+an already-open source descriptor, enables only that input protocol and a bounded
+list of media demuxers, and remuxes only the first video/audio streams into
+`media.mkv`. Supported input demuxers are AAC, AVI, FLAC, Matroska/WebM, MOV/MP4,
+MP3, MPEG/MPEG-TS, Ogg and WAV. Playlists such as HLS and concat are rejected.
+Metadata, chapters, subtitles and attachments are not copied. Original bytes
+remain in `source.bin`; both artifacts and their hashes are retained. Preview
+also shows the remux size ceiling (twice the download budget plus 1 MiB) and
+1 MiB remux diagnostic cap; excessive decoder logging terminates that child. This is
+protocol/demuxer restriction and process deadline control, not an OS sandbox or
+a guarantee against decoder vulnerabilities. See [FFmpeg fd documentation](https://ffmpeg.org/ffmpeg-protocols.html#fd).
+
+Processing is a separate `--allow-read` action. Audio enclosures default to the
+audio tier; video defaults to both. Use `--tier visual` when only frames are
+requested. `rss_media.py` repeats inspect/preview/read and accepts only installed
+local `faster-whisper` or `whisper-cpp` backends with no required model download;
+the visual tier uses no transcription backend. Unverified adjacent transcript
+sidecars are rejected. There is no cloud or model-download fallback. Read timeout
+defaults to 1800 seconds, maximum 7200. Download/read children are owned by the
+deadline worker. Changed or incomplete artifacts stop resume; preserve partial
+work and use a fresh work directory instead of overwriting it.
+
+Media notes use `## Key moments` instead of an RSS/Article Excerpt. Cite only
+actual retained `[MM:SS]` transcript/frame labels. Include the normal Synopsis,
+Key points, Action Items, Links and Evidence sections. The publisher retains the
+feed capture, download receipt, original media, remux, read receipt and evidence
+bundle. Its Evidence section labels the selected enclosure and normalized-media
+timeline; it does not promise original broadcast timing. Existing note dedup is
+still per feed entry: selecting another resource does not overwrite a prior note.
+
+HTTP 401/403 returns sanitized `rss_access_denied` with the observed status and
+no authenticated fallback. An explicit `_Skipped` note can record that denial
+with its capture evidence. A denial is not proof of a paywall, and a successful
+fetch is not proof of complete publisher content. Live provider variety, real
+podcasts/paywalls and independent skill/harness evaluation remain incomplete.

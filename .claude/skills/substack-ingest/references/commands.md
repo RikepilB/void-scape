@@ -28,7 +28,26 @@ Replace the example URL with the exact selection. Article-bound notes use
 article body, and cite `[article 1]`. Receipt verification is not semantic review
 or proof of full article coverage. Do not publish a login message as analysis.
 The resource selector can also inspect `--resource enclosure --enclosure 1`;
-enclosure downloads/reads are not implemented by these helpers.
+selection alone performs no download. For a specifically requested enclosure:
+
+```powershell
+python scripts/rss_download.py ./capture rss:<capture-id> ./enclosure --enclosure 1
+python scripts/rss_download.py ./capture rss:<capture-id> ./enclosure --enclosure 1 --allow-fetch
+python -m skill.scripts.voidscape inspect ./enclosure/media.mkv --reader video --json
+python -m skill.scripts.voidscape preview ./enclosure/media.mkv --reader video --tier audio --backend faster-whisper --transcribe-mode fast --json
+python scripts/rss_media.py ./capture rss:<capture-id> ./enclosure ./media-read --enclosure 1 --tier audio --allow-read
+python scripts/triage_store.py publish ./publication-notes rss rss:<capture-id> Tech ./draft.md --capture-root ./capture --read-root ./media-read
+```
+
+Choose audio/both/visual for the requested scope; do not imply a visual-only run
+transcribed speech. Download preview does no network/write work. Acquisition uses
+128 MiB/300 seconds by default; formats/protocols are constrained and FFmpeg fd
+support is required. Media processing needs a separate approval and available
+local backend; there is no cloud/download fallback. For media notes replace the
+Excerpt section with `## Key moments` citing actual retained timestamps. Read
+[full limits and failure handling](../../../../docs/rss-intake.md#selected-media-enclosures)
+before widening budgets. HTTP 401/403 is an observed access denial, not proof of
+a paywall. Preserve partial work; do not overwrite a failed or different resource.
 
 Public fetch and local writes are separate flags. `--since YYYY-MM-DD` is an
 inclusive UTC date filter for capture; unknown dates remain eligible and flagged.

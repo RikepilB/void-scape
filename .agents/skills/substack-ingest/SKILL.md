@@ -47,6 +47,10 @@ Read [commands](references/commands.md) for the actual CLI and note schema.
    directly or overwrite an existing note to make a retry pass.
    For fetched articles, pass the verified `--read-root`, cite `[article 1]`, and
    use `## Article Excerpt` with a short verbatim quote from that article's body.
+   For a selected enclosure, preview `rss_download.py` and acquire only with scoped
+   fetch approval. Inspect/preview its normalized media before `rss_media.py` with
+   processing approval. Publish with that read root, `## Key moments` and actual
+   retained timestamps. Follow the commands reference for limits and backend gates.
 
 For an observed access wall, stop fetching; do not bypass it or use browser
 credentials. An explicit skip note may record the observed limitation, with
@@ -54,7 +58,9 @@ source evidence and a reason. Do not infer a paywall from the feed format.
 Article links and enclosures are not fetched by the capture helper. Additional
 reading needs the selected supported reader and its own scope/approval checks.
 Media follows `inspect -> preview -> read`; do not pass a redacted enclosure URL
-as though it were the original resource. Automated media routing is not implemented.
+as though it were the original resource. A selected enclosure can use the bounded
+helper workflow; do not process every enclosure implicitly. Access denial stops
+the run and supports an explicit observed-limitation skip, not a guessed paywall.
 
 Report captured, analyzed, skipped, incomplete and failed separately with relevant
 artifact paths. Inventory counts cover scanned entries, not a whole-publication

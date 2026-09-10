@@ -14,3 +14,10 @@ The prompts in cases.json still require independent with-skill/baseline runs and
 representative target-harness execution when delegation is authorized. No grades,
 agent pass rate or cross-harness success are claimed. A public feed excerpt is
 not proof of access to its complete linked article or subscriber content.
+
+The [article QA](../../docs/qa/2026-09-10-rss-article-read.md) and
+[enclosure QA](../../docs/qa/2026-09-10-rss-enclosure-read.md) add real public article
+and media fetching, controlled local ASR, inspected evidence and verified notes.
+These are same-controller integration checks, not independent runs of cases.json.
+The expanded case set adds article binding, enclosure preview/selection, absent
+model consent and observed access denial. No independent grades are assigned.
