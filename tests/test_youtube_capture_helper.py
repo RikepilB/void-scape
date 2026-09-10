@@ -392,6 +392,40 @@ def test_find_title_after_empty_page():
     assert client.find_playlist_by_title("Queue")["playlist_id"] == PLAYLIST_ID
 
 
+@pytest.mark.parametrize("title", [None, "Selected queue"])
+def test_inspect_resolves_selected_or_default_title(title):
+    expected = title or youtube.DEFAULT_QUEUE_TITLE
+    client = _client_with_responses([
+        {"items": [{"id": PLAYLIST_ID, "snippet": {"title": expected}}]},
+        {"items": [ITEM_ONE]},
+    ])
+    result = inspect_queue(client, playlist_title=title)
+    assert result["playlist_id"] == PLAYLIST_ID
+    assert result["item_count"] == 1
+
+
+def test_disappearing_duplicate_stops_before_playlist_delete(tmp_path, monkeypatch):
+    queue = tmp_path / "urls.md"
+    queue.write_text(canonical_url("vid001abc") + "\n")
+    client = _client_with_responses([{"items": [ITEM_ONE]}])
+
+    def removed_before_confirmation(url, path):
+        path.write_text("")
+        return False
+
+    monkeypatch.setattr(youtube, "confirm_existing_entry", removed_before_confirmation)
+    with pytest.raises(YouTubePartialWriteError, match="disappeared"):
+        process_capture(client, queue, playlist_id=PLAYLIST_ID)
+    assert queue.read_text() == ""
+
+
+def test_cli_invalid_command_rejected_before_transport(monkeypatch):
+    monkeypatch.setattr(youtube, "YouTubeClient", lambda *args: pytest.fail("transport started"))
+    with pytest.raises(SystemExit) as result:
+        youtube.main(["unsupported-command"])
+    assert result.value.code == 2
+
+
 def test_missing_title_and_missing_match_id_have_controlled_errors():
     with pytest.raises(youtube.YouTubeCaptureError, match="no owned playlist"):
         _client_with_responses([{}]).find_playlist_by_title("Queue")
