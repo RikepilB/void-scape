@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'skill/scripts'))
 import article
-from triage_store import checked, digest, encoded, exclusive, file_digest, locked
+from triage_store import checked, digest, encoded, exclusive, file_digest, locked, lookup
 
 MAX_BYTES = 4 * 1024 * 1024
 
@@ -166,17 +166,73 @@ def capture(source, root, *, identity_url=None, allow_fetch=False, since=None, l
         return run()
 
 
+def retained(root, notes_root, *, limit=10, identity_url=None):
+    """Find captured entries still needing notes without fetching or changing state."""
+    select('', {'entries': [], 'skipped': []}, limit=limit)
+    root, notes_root = checked(root), checked(notes_root)
+    identity_url = feed_url(identity_url) if identity_url is not None else None
+    control = checked(root / '.rss-capture')
+    result = {'results': [], 'analyzed': 0, 'skipped': 0, 'incomplete': 0, 'other_feeds': 0,
+              'mode': 'retained', 'changes': False, 'content_trust': 'untrusted'}
+    if not control.exists():
+        return result
+    folders = []
+    for count, path in enumerate(control.iterdir(), 1):
+        if count > 10000:
+            raise ValueError('capture inventory exceeds limit')
+        if path.name == '.triage':
+            continue
+        if not re.fullmatch('[a-f0-9]{64}', path.name):
+            raise ValueError('unexpected capture inventory entry')
+        path = checked(path)
+        if not path.is_dir():
+            raise ValueError('capture inventory entry must be a directory')
+        folders.append(path)
+    for folder in sorted(folders):
+        if not (folder / 'captured.json').exists():
+            result['incomplete'] += 1
+            continue
+        record = verify(root, folder.name)
+        if identity_url is not None and record['feed_url'] != identity_url:
+            result['other_feeds'] += 1
+            continue
+        state = lookup(notes_root, 'rss', record['key'])
+        if state['analyzed']:
+            result['analyzed'] += 1
+        elif state['skipped']:
+            result['skipped'] += 1
+        else:
+            result['results'].append({'key': record['key'], 'evidence': str(folder / 'entry.json'),
+                                      'status': 'needs_note', 'publication_pending': bool(state['pending'])})
+            if len(result['results']) == limit:
+                break
+    return result
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('source')
+    parser.add_argument('source', nargs='?')
     parser.add_argument('--root', required=True)
     parser.add_argument('--feed-url', dest='identity_url')
     parser.add_argument('--allow-fetch', action='store_true')
     parser.add_argument('--since')
     parser.add_argument('--limit', type=int, default=10)
     parser.add_argument('--apply', action='store_true')
+    parser.add_argument('--list-retained', action='store_true')
+    parser.add_argument('--notes-root')
     try:
-        data = capture(**vars(parser.parse_args(argv)))
+        options = vars(parser.parse_args(argv))
+        list_retained = options.pop('list_retained')
+        notes_root = options.pop('notes_root')
+        if list_retained:
+            if (not notes_root or options['source'] is not None or
+                    options['allow_fetch'] or options['since'] is not None or options['apply']):
+                raise ValueError('retained inventory requires only roots and a limit')
+            data = retained(options['root'], notes_root, limit=options['limit'], identity_url=options['identity_url'])
+        else:
+            if options['source'] is None or notes_root is not None:
+                raise ValueError('capture requires a source and no note lookup root')
+            data = capture(**options)
         print(json.dumps({'ok': True, 'data': data, 'error': None,
                           'meta': {'command': 'rss_capture', 'content_trust': 'untrusted'}}, ensure_ascii=False))
         return 0
