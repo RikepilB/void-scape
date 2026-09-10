@@ -1,7 +1,9 @@
 import json
+import os
 from pathlib import Path
 import runpy
 import sys
+import subprocess
 
 import pytest
 
@@ -9,6 +11,25 @@ import article
 import rss_capture_helper as rss
 
 URL = 'https://example.com/feed'
+
+
+@pytest.mark.parametrize('apply', [False, True])
+def test_cli_unicode_title_on_legacy_console(tmp_path, apply):
+    title = 'Ideas 🧠 — 日本語'
+    path = feed(tmp_path, f'<item><title>{title}</title><guid>unicode:1</guid></item>')
+    root = tmp_path / 'capture'
+    command = [sys.executable, str(Path(rss.__file__)), str(path), '--feed-url', URL,
+               '--root', str(root)] + (['--apply'] if apply else [])
+    result = subprocess.run(command, capture_output=True, timeout=30,
+                            env={**os.environ, 'PYTHONIOENCODING': 'cp1252'})
+    assert result.returncode == 0, result.stderr.decode('ascii', errors='replace')
+    output = json.loads(result.stdout.decode('ascii'))
+    assert output['ok'] and output['data']['results'][0]['title'] == title
+    if apply:
+        key = output['data']['results'][0]['key']
+        assert rss.verify(root, key[4:])['entry']['title'] == title
+    else:
+        assert not root.exists()
 
 
 def feed(tmp_path, items=None):

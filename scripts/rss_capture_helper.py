@@ -233,8 +233,9 @@ def main(argv=None):
             if options['source'] is None or notes_root is not None:
                 raise ValueError('capture requires a source and no note lookup root')
             data = capture(**options)
+        # ASCII JSON preserves Unicode values without depending on console encoding.
         print(json.dumps({'ok': True, 'data': data, 'error': None,
-                          'meta': {'command': 'rss_capture', 'content_trust': 'untrusted'}}, ensure_ascii=False))
+                          'meta': {'command': 'rss_capture', 'content_trust': 'untrusted'}}))
         return 0
     except FetchApprovalRequired:
         print(json.dumps({'ok': False, 'data': None, 'error': {

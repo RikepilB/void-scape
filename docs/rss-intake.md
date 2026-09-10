@@ -22,6 +22,10 @@ are unsupported. The existing article fetcher enforces public destinations,
 bounded responses and validated redirects without browser credentials or proxies.
 Remote `--allow-fetch` is separate from local `--apply`.
 
+CLI envelopes use ASCII JSON escapes for non-ASCII characters. JSON consumers
+recover the original Unicode titles; retained evidence remains UTF-8. This avoids
+reporting successful capture as a failure on legacy Windows console encodings.
+
 `--limit` accepts 1–100 selected entries after verified capture deduplication.
 `--since YYYY-MM-DD` is inclusive from UTC midnight. Missing, malformed or
 timezone-free publication dates remain eligible with `date_filter_uncertain`.
