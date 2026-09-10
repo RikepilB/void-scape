@@ -23,17 +23,33 @@ to { transform: translateX(0); } }
 alt="Delayed blue rectangle: pending">
 <div class="spacer">Below-viewport content follows</div>
 <section id="bottom">RED BOTTOM MARKER</section>
+<img id="lazy" width="160" height="80" alt="Lazy purple rectangle: pending">
 <script>
 const image = document.querySelector('#delayed');
 function ready() {
   document.documentElement.dataset.imageReady = image.complete && image.naturalWidth > 0;
+  if (image.complete && image.naturalWidth > 0) image.alt = 'Loaded blue rectangle';
 }
 image.addEventListener('load', ready); ready();
 document.querySelector('#moving').addEventListener('animationend', () => {
   document.documentElement.dataset.animationReady = 'true';
 });
+const lazy = document.querySelector('#lazy');
+document.documentElement.dataset.lazyReady = 'false';
+lazy.addEventListener('load', () => {
+  document.documentElement.dataset.lazyReady = 'true';
+  lazy.alt = 'Loaded purple rectangle';
+});
+const observer = new IntersectionObserver(entries => {
+  if (entries.some(entry => entry.isIntersecting)) {
+    lazy.src = '/lazy.svg';
+    observer.disconnect();
+  }
+}, {rootMargin: '0px', threshold: 0});
+observer.observe(lazy);
 </script></html>"""
 SVG = b'<svg xmlns="http://www.w3.org/2000/svg" width="160" height="80"><rect width="160" height="80" fill="blue"/></svg>'
+LAZY_SVG = SVG.replace(b'fill="blue"', b'fill="purple"')
 
 
 class FixtureHandler(BaseHTTPRequestHandler):
@@ -50,6 +66,8 @@ class FixtureHandler(BaseHTTPRequestHandler):
         elif self.path == "/delayed.svg":
             time.sleep(0.5)
             payload, media_type = SVG, "image/svg+xml"
+        elif self.path == "/lazy.svg":
+            payload, media_type = LAZY_SVG, "image/svg+xml"
         else:
             self.send_error(404, "Unknown fixture route")
             return

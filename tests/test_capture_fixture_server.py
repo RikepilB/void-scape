@@ -59,3 +59,13 @@ def test_delayed_resource_does_not_block_other_requests(fixture_url):
     assert not thread.is_alive()
     assert time.monotonic() - start >= 0.5
     assert result and b'fill="blue"' in result[0]
+
+
+def test_lazy_image_requires_page_trigger(fixture_url):
+    with fetch(fixture_url + "/fixture") as response:
+        body = response.read()
+    assert b'<img id="lazy" width="160" height="80"' in body
+    assert b'<img id="lazy" src=' not in body
+    with fetch(fixture_url + "/lazy.svg") as response:
+        assert response.headers["Content-Type"] == "image/svg+xml"
+        assert b'fill="purple"' in response.read()
