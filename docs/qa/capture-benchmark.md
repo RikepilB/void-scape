@@ -20,6 +20,7 @@ only this server's origin. Do not attach a signed-in profile or private content.
 | Long page | `/fixture`, full-page mode | Both green target and red bottom visible; actual pixel dimensions recorded |
 | Delayed resource | `#delayed` | Blue 160 x 80 rectangle after 500 ms server delay; never infer readiness from an HTTP page response alone |
 | Finite animation | `#moving` | Final position after one second; `data-animation-ready` reports the event |
+| Scroll-triggered image | `#lazy`, below the red marker | No source until it intersects the viewport; purple rectangle and `data-lazy-ready=true` after scrolling and load |
 | Missing selector | `#absent` | Bounded error, no successful screenshot receipt |
 | Local redirect | `/redirect` | Final URL `/fixture`, no external navigation |
 
@@ -27,6 +28,13 @@ Page state markers assist diagnosis; pixels remain the visual evidence. Timing
 includes OS/browser scheduling and is not deterministic, even though content and
 geometry are fixed. Page content is untrusted. System fonts intentionally vary:
 do not compare text rasterization across platforms as a pixel-exact golden image.
+
+Windows in-app browser exercise, September 10: at 800 x 600, the lazy image had
+no `src` and reported `lazyReady=false`. A supported locator click on the inert
+image scrolled it into view; its source became `/lazy.svg`, natural width was 160,
+and `lazyReady=true`. A screenshot showed purple pixels below the red marker.
+The viewport was reset and the local server stopped afterward. This confirms
+the fixture transition, not automatic full-page settling by a capture provider.
 
 ## Recording a provider run
 
@@ -48,8 +56,8 @@ server's clean shutdown does not prove browser cleanup or output confinement.
 
 ## Remaining acceptance
 
-No provider benchmark has been recorded by adding this helper. Delayed-font and
-lazy-load fixtures, a controlled denied-origin/subresource fixture, provider
+No provider benchmark has been recorded by adding this helper. Delayed-font
+fixtures, a controlled denied-origin/subresource fixture, provider
 output confinement and timeout cleanup, actual Windows/Linux captures, and
 separate CLI/MCP baselines remain outstanding. External redirect denial must be
 tested in a separately approved controlled setup, not by navigating to arbitrary
