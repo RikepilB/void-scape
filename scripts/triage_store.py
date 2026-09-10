@@ -22,6 +22,22 @@ INSTAGRAM_CATEGORIES = {
 RSS_CATEGORIES = {'AI', 'Design', 'Product', 'Jobs', 'Content', 'Startup',
                   'Hackathon', 'Tech', 'Software_Developer', 'News', '_Skipped'}
 YOUTUBE_CATEGORIES = set(RSS_CATEGORIES)
+LINKEDIN_CATEGORIES = {'Writing', 'News', 'Resources', 'Concepts', 'Jobs', 'Events',
+                       'Off_Topic', '_Skipped'}
+
+
+def linkedin_provenance(key, metadata, capture_root):
+    """Bind a note to a verified typed post observation, never an inferred ID."""
+    from linkedin_capture_helper import location, verify as verify_capture
+    if capture_root is None or not key.startswith('linkedin:'):
+        raise ValueError('LinkedIn publication requires a verified capture root and key')
+    identity = 'urn:li:' + key[len('linkedin:'):]
+    entry = verify_capture(capture_root, identity)
+    if any(metadata[field] != value for field, value in
+           [('source', 'linkedin'), ('url', entry['url']), ('author', entry['author']), ('date', entry['date'])]):
+        raise ValueError('LinkedIn frontmatter does not match retained provenance')
+    folder, selected = location(capture_root, identity)
+    return entry, [folder / 'entry.json', folder / 'captured.json']
 
 
 def youtube_provenance(key, metadata, capture_root, read_root, *, skipped=False):
@@ -213,13 +229,14 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
     """Validate a caller-authored note without interpreting it as instructions."""
     if not re.fullmatch(r'[a-z][a-z0-9_-]{0,31}', source):
         raise ValueError('invalid source')
-    if source not in {'instagram', 'rss', 'youtube'}:
+    if source not in {'instagram', 'rss', 'youtube', 'linkedin'}:
         raise ValueError('source adapter not implemented')
     if not key or len(key) > 2048 or any(c in key for c in '\r\n\x00'):
         raise ValueError('invalid canonical source key')
     if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_-]{0,63}', category):
         raise ValueError('invalid category')
-    if category not in {'instagram': INSTAGRAM_CATEGORIES, 'rss': RSS_CATEGORIES, 'youtube': YOUTUBE_CATEGORIES}[source]:
+    if category not in {'instagram': INSTAGRAM_CATEGORIES, 'rss': RSS_CATEGORIES,
+                       'youtube': YOUTUBE_CATEGORIES, 'linkedin': LINKEDIN_CATEGORIES}[source]:
         raise ValueError('category is not registered for the source')
     if skipped != (category == '_Skipped'):
         raise ValueError('skip records belong in _Skipped')
@@ -243,13 +260,17 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
     elif source == 'rss':
         entry, retained = rss_provenance(key, metadata, capture_root)
         evidence = list(dict.fromkeys([*retained, *map(Path, evidence)]))
+    elif source == 'linkedin':
+        entry, retained = linkedin_provenance(key, metadata, capture_root)
+        evidence = list(dict.fromkeys([*retained, *map(Path, evidence)]))
     else:
         citations, retained = youtube_provenance(key, metadata, capture_root, read_root, skipped=skipped)
         evidence = list(dict.fromkeys([*retained, *map(Path, evidence)]))
     if [line for line in text.splitlines() if line.startswith('Source:')] != [f'Source: {key}']:
         raise ValueError('note must contain exactly one matching Source line')
     required = ('## Reason',) if skipped else ('## Synopsis', '## Action Items',
-                {'instagram': '## Instagram Excerpt', 'rss': '## RSS Excerpt', 'youtube': '## Key moments'}[source],
+                {'instagram': '## Instagram Excerpt', 'rss': '## RSS Excerpt',
+                 'youtube': '## Key moments', 'linkedin': '## Post Excerpt'}[source],
                 '## Links', '## Evidence')
     if source == 'rss' and not skipped:
         required += ('## Key points',)
@@ -260,14 +281,16 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
         moments = re.search(r'^## Key moments\r?\n(.*?)(?=^## |\Z)', text, re.MULTILINE | re.DOTALL)[1]
         if not cited or not cited <= citations or not re.search(r'\[\d{2,}:[0-5]\d(?::[0-5]\d)?\]', moments):
             raise ValueError('YouTube notes require actual reader timestamps in key moments')
-    if source == 'rss' and not skipped:
-        section = re.search(r'^## RSS Excerpt\r?\n(.*?)(?=^## |\Z)', text, re.MULTILINE | re.DOTALL)[1]
+    if source in {'rss', 'linkedin'} and not skipped:
+        heading = 'RSS Excerpt' if source == 'rss' else 'Post Excerpt'
+        label = 'RSS' if source == 'rss' else 'LinkedIn'
+        section = re.search(r'^## ' + heading + r'\r?\n(.*?)(?=^## |\Z)', text, re.MULTILINE | re.DOTALL)[1]
         lines = [line.strip() for line in section.splitlines() if line.strip()]
         if len(lines) != 2 or lines[0] != 'Untrusted source content:' or not lines[1].startswith('> '):
-            raise ValueError('RSS excerpt must be a labeled single-line quotation')
+            raise ValueError(f'{label} excerpt must be a labeled single-line quotation')
         quote = lines[1][2:]
-        if not quote or len(quote.split()) > 25 or quote not in entry['body']:
-            raise ValueError('RSS excerpt must be short and verbatim from retained content')
+        if not quote or len(quote.split()) > 25 or quote not in entry['body' if source == 'rss' else 'text']:
+            raise ValueError(f'{label} excerpt must be short and verbatim from retained content')
     titles = re.findall(r'^# ([^\r\n]+)\r?$', text, re.MULTILINE)
     if len(titles) != 1 or len(titles[0]) > 200:
         raise ValueError('note requires one bounded title')
@@ -364,7 +387,7 @@ def update_index(root, control, record):
 def publish(root, source, key, category, note, evidence, *, skipped=False, capture_root=None, read_root=None):
     record, raw = prepare(source, key, category, note, evidence, skipped=skipped, capture_root=capture_root, read_root=read_root)
     with locked(root) as (root, control):
-        if source in {'rss', 'youtube'}:
+        if source in {'rss', 'youtube', 'linkedin'}:
             previous = lookup(root, source, key)
             completed = previous['analyzed'] or (previous['skipped'] if skipped else [])
             if completed:

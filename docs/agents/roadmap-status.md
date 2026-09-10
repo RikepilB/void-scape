@@ -35,7 +35,7 @@ Closing a design or spike issue only completes that scope. It never ships a prod
 | Source capability registry and reader override | `shipped` | merged PR #45; supported `voidscape route`, `voidscape sources`; source tests |
 | Instagram URL queue helper | `dev-only` | repository script; not installed with the skill |
 | Instagram triage and verified notes | `dev-only` | merged project skill/controller and note store (#77–#80); independent behavior and live harness acceptance remain #54 |
-| LinkedIn local observation helper | `dev-only` | merged #97: typed identities, local durable records and selected resume; full skill, analysis notes/index and browser acceptance remain #55 |
+| LinkedIn observed-post capture and notes | `dev-only` | [local workflow](../linkedin-capture.md): typed identities, verified notes/index and selected resume; full skill and permitted browser acceptance remain #55 |
 | Instagram follow-relationship audit (read-only) | `dev-only` | repository script; local exports only; never unfollows |
 | YouTube private-playlist queue adapter | `dev-only` | repository script; official API; not installed with the skill |
 | Public YouTube capture and notes | `dev-only` | [source workflow](../youtube-ingest.md); real local capture/read/note proof, independent skill/harness acceptance pending |

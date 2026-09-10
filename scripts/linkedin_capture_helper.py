@@ -7,7 +7,7 @@ import json
 import re
 from urllib.parse import parse_qsl, unquote, urlsplit
 
-from triage_store import checked, digest, encoded, exclusive, file_digest, locked
+from triage_store import checked, digest, encoded, exclusive, file_digest, locked, lookup
 
 
 IDENTITY = re.compile(r'urn:li:(activity|share|ugcPost):([1-9][0-9]{9,21})')
@@ -129,12 +129,14 @@ def capture(root, observation, *, apply=False):
     return process()
 
 
-def retained(root, identities):
+def retained(root, identities, notes_root=None):
     if not isinstance(identities, list) or not 1 <= len(identities) <= 100:
         raise ValueError('select between one and 100 identities')
     selections = [location(root, identity) for identity in identities]
     if len({selected['key'] for _, selected in selections}) != len(selections):
         raise ValueError('duplicate selected identity')
+    if notes_root is not None:
+        notes_root = checked(notes_root)
     results = []
     for folder, selected in selections:
         status = 'missing'
@@ -143,7 +145,14 @@ def retained(root, identities):
             status = 'captured'
         elif (folder / 'entry.json').exists():
             status = 'incomplete'
-        results.append({**selected, 'status': status, 'analyzed': False})
+        item = {**selected, 'status': status, 'analyzed': False}
+        if notes_root is not None:
+            state = lookup(notes_root, 'linkedin', selected['key']) if status == 'captured' else {}
+            item.update(analyzed=bool(state.get('analyzed')),
+                        analysis='analyzed' if state.get('analyzed') else
+                                 'skipped' if state.get('skipped') else 'unverified',
+                        publication_pending=bool(state.get('pending')))
+        results.append(item)
     return {'results': results, 'changes': False, 'source_action_authorized': False,
             'content_trust': 'untrusted'}
 
@@ -160,6 +169,7 @@ def main(argv=None):
     resume = sub.add_parser('retained')
     resume.add_argument('identities', nargs='+')
     resume.add_argument('--root', required=True)
+    resume.add_argument('--notes-root')
     args = vars(parser.parse_args(argv))
     command = args.pop('command')
     try:
