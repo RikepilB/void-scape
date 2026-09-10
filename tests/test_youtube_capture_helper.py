@@ -17,6 +17,7 @@ from youtube_capture_helper import (
     YouTubeClient,
     YouTubePartialWriteError,
     YouTubeQuotaError,
+    _parse_api_error,
     append_and_confirm,
     canonical_url,
     inspect_queue,
@@ -27,6 +28,21 @@ from youtube_capture_helper import (
 
 REPO = Path(__file__).resolve().parent.parent
 HELPER_SCRIPT = REPO / "scripts" / "youtube_capture_helper.py"
+
+
+@pytest.mark.parametrize("payload", [None, [], 1, "error", {"error": None},
+    {"error": []}, {"error": {"message": [], "errors": 1}},
+    {"error": {"errors": [None, 1, [], {"reason": []}]}}])
+def test_unexpected_api_error_shape_preserves_http_classification(payload):
+    error = _parse_api_error(403, json.dumps(payload))
+    assert isinstance(error, YouTubeAuthError)
+    assert error.details["reason"] == ""
+
+
+def test_api_error_skips_malformed_reasons_before_quota():
+    error = _parse_api_error(403, json.dumps({"error": {"errors": [
+        None, {"reason": []}, {"reason": "quotaExceeded"}]}}))
+    assert isinstance(error, YouTubeQuotaError)
 
 PLAYLIST_ID = "PLqueue123"
 ITEM_ONE = {
