@@ -35,7 +35,7 @@ saved-collection capture, permission to use account credentials or permission to
 | Public Substack/RSS | Bounded capture, retained entries, verified notes and project skill (#85, #87, #88) | Complete article/media/paywall routing and independent skill/harness acceptance: [#57](https://github.com/RikepilB/void-scape/issues/57) |
 | Public YouTube selections | Bounded discovery, dedup, local read worker, verified notes and project skill (#89), wrapper-reference fix (#90) | Independent skill/harness acceptance: [#57](https://github.com/RikepilB/void-scape/issues/57) |
 | Local recording inbox | Local note author, resumable long drafts, controller and project skill (#81–#84) | Real recording/harness proof; scheduling is next, not shipped: [#56](https://github.com/RikepilB/void-scape/issues/56) |
-| LinkedIn observations | Typed post identities, local capture/checkpoints (#97), verified note/excerpt/index publication and selected resume; no browser/network access | Full triage skill and permitted browser acceptance remain next: [#55](https://github.com/RikepilB/void-scape/issues/55) |
+| LinkedIn observations | Typed post identities, local capture/checkpoints (#97), verified note/excerpt/index publication and selected resume; no browser/network access | Project skill handles supplied observations; independent harness and permitted live acceptance remain: [#55](https://github.com/RikepilB/void-scape/issues/55) |
 | Browser QA | Prior selected-page checks and intermittent successful Chrome sessions | Reproducible supported recovery and outstanding source checks: [#42](https://github.com/RikepilB/void-scape/issues/42) |
 | Release acceptance | Existing tests, installers, demos and deployed docs | Exact release-tree tests, installer and public claims: [#91](https://github.com/RikepilB/void-scape/issues/91) |
 
@@ -52,7 +52,7 @@ The target is to finish these gaps before expanding every source at once.
   No 24/7 job is created by installing Voidscape.
 - **LinkedIn saved-post triage — [#55](https://github.com/RikepilB/void-scape/issues/55).**
   Build on the merged local observation helper (#97), then bounded read-and-store selection.
-  Verified analysis-note integration is implemented; the full skill and live acceptance remain incomplete.
+  Verified analysis notes, legacy assessment and the supplied-observation project skill are implemented; independent harness and live acceptance remain incomplete.
   Dry-run writes nothing. Event identity is not post/activity identity. Notes never grant unsave permission;
   account actions require separate approval and a [permitted acquisition path](linkedin-source-scope.md).
 - **Browser integration — [#58](https://github.com/RikepilB/void-scape/issues/58).**
