@@ -157,6 +157,46 @@ def retained(root, identities, notes_root=None):
             'content_trust': 'untrusted'}
 
 
+def legacy_notes(identity, notes):
+    """Find identity claims in explicitly selected old notes, never certify them."""
+    selected = selection(identity)
+    if not isinstance(notes, list) or not 1 <= len(notes) <= 100:
+        raise ValueError('select between one and 100 note files')
+    paths = [checked(note) for note in notes]
+    if len(set(paths)) != len(paths):
+        raise ValueError('duplicate selected note path')
+    results = []
+    for path in paths:
+        if path.suffix.lower() != '.md' or not path.is_file():
+            raise ValueError('expected a selected Markdown note')
+        with path.open('rb') as stream:
+            raw = stream.read(MAX_RECORD + 1)
+        if len(raw) > MAX_RECORD:
+            raise ValueError('legacy note exceeds limit')
+        claims, invalid = set(), False
+        for line in raw.decode('utf-8-sig').splitlines():
+            match = re.fullmatch(r'(Source|Activity-ID):\s*(.*?)\s*', line)
+            if not match:
+                continue
+            value = match[2]
+            if value.startswith('linkedin:'):
+                value = 'urn:li:' + value[len('linkedin:'):]
+            elif match[1] == 'Activity-ID' and re.fullmatch(r'[1-9][0-9]{9,21}', value):
+                value = 'urn:li:activity:' + value
+            try:
+                claims.add(selection(value)['key'])
+            except ValueError:
+                invalid = True
+        status = ('ambiguous' if invalid or len(claims) > 1 else
+                  'candidate' if selected['key'] in claims else
+                  'different_identity' if claims else 'no_identity')
+        results.append({'path': str(path), 'sha256': digest(raw), 'status': status,
+                        'claimed_keys': sorted(claims), 'analyzed': False})
+    return {**selected, 'results': results, 'changes': False,
+            'source_action_authorized': False, 'content_trust': 'untrusted',
+            'scope': 'selected_files_only'}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -170,6 +210,9 @@ def main(argv=None):
     resume.add_argument('identities', nargs='+')
     resume.add_argument('--root', required=True)
     resume.add_argument('--notes-root')
+    legacy = sub.add_parser('legacy-notes')
+    legacy.add_argument('identity')
+    legacy.add_argument('notes', nargs='+')
     args = vars(parser.parse_args(argv))
     command = args.pop('command')
     try:
@@ -177,6 +220,8 @@ def main(argv=None):
             data = selection(args['identity'])
         elif command == 'capture':
             data = capture(args['root'], read_json(args['observation']), apply=args['apply'])
+        elif command == 'legacy-notes':
+            data = legacy_notes(**args)
         else:
             data = retained(**args)
         print(json.dumps({'ok': True, 'data': data, 'error': None}))
