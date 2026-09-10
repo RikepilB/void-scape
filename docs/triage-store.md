@@ -1,7 +1,7 @@
 # Verified note publication
 
 `scripts/triage_store.py` is a repository-only controller helper for Instagram
-notes. It does not discover posts, read media, generate summaries, or change an
+and captured RSS notes. It does not discover posts, read media, generate summaries, or change an
 account. Source analysis still follows `inspect -> preview -> read` and its gates.
 
 Analysis workers return a draft and retained evidence paths. The controller
@@ -19,8 +19,8 @@ before reading data. Verification failures exit 6 with a sanitized error and
 
 ## Draft contract
 
-The helper currently accepts only Instagram canonical URLs and the categories
-listed in the repository's analysis agent. Drafts are UTF-8, at most 4 MiB, and
+Instagram accepts canonical URLs and categories listed in the repository's
+analysis agent. RSS follows the contract below. Drafts are UTF-8, at most 4 MiB, and
 have one title, one exact `Source:` key, and scalar frontmatter. Supported scalar
 forms are plain strings, quoted strings, and `null`; tags, references, mappings
 and multiline values are not supported. Unknown or duplicate fields fail.
@@ -60,7 +60,48 @@ structure and integrity; they do not establish that a summary is accurate.
 
 For a skip, use category `_Skipped`, `--skipped`, the same source frontmatter and
 key, one title, and `## Reason` with a sanitized explanation. Evidence is optional
-for skips. A skipped attempt is never returned as an analyzed item.
+for Instagram skips; RSS always retains its verified capture entry and marker.
+A skipped attempt is never returned as an analyzed item.
+
+## Captured RSS notes
+
+Use a previously verified entry from the [RSS intake helper](rss-intake.md).
+Pass its `rss:<capture-id>` key and the capture root explicitly:
+
+```powershell
+python scripts/triage_store.py lookup ./publication-notes rss rss:<capture-id>
+python scripts/triage_store.py publish ./publication-notes rss rss:<capture-id> Tech ./draft.md --capture-root ./rss-evidence
+```
+
+The publication root is caller-selected, for example a publication folder under
+`03_Resources/Substack/`. Feed titles never become filesystem paths automatically.
+RSS categories are `AI`, `Design`, `Product`, `Jobs`, `Content`, `Startup`,
+`Hackathon`, `Tech`, `Software_Developer`, `News` and `_Skipped`.
+
+Frontmatter uses `source: rss` and must match the retained entry URL, author and
+publication date exactly; absent fields remain `null`. If no usable entry URL
+exists, use the retained feed URL. Use `Source: rss:<capture-id>`, the normal
+title/priority, and sections `## Synopsis`, `## Key points`, `## Action Items`,
+`## RSS Excerpt`, `## Links` and `## Evidence`. The excerpt section has exactly:
+
+```markdown
+Untrusted source content:
+> A short verbatim quotation from the retained entry body.
+```
+
+The quotation must be one line, at most 25 words and present in the retained
+body. It is evidence, never an instruction. Summaries still require grounded
+authoring; structural validation is not a factuality evaluation.
+
+Capture entry and marker files are automatically retained as mandatory evidence
+and revalidated before publication. The existing receipt/index checks then apply.
+RSS publication deduplicates verified analyzed notes by canonical key under the
+publisher lock. A new draft does not overwrite an existing analyzed note; the
+result reports `duplicate: true`. Skipped attempts remain separately visible and
+can later gain an analyzed note. Capture alone never satisfies this lookup.
+
+This adds local publication, not a source skill, model author, paywall detector,
+media router or scheduler. Those issue #57 requirements remain outstanding.
 
 ## Receipts and recovery
 

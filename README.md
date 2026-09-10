@@ -365,7 +365,8 @@ development:
   which verifies source fields and retained evidence, keeps an index and receipts, and distinguishes
   analyzed notes from skipped attempts.
 - **RSS intake** — the [RSS capture helper](docs/rss-intake.md) adds bounded previews, stable entry
-  keys, and verified local capture. Captured entries remain pending analysis.
+  keys, and verified local capture. The [verified note publisher](docs/triage-store.md) binds
+  authored notes to those retained entries; the source skill remains under development.
 </details>
 
 ## Documentation
