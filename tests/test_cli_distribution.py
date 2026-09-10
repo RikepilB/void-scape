@@ -15,7 +15,7 @@ def test_pyproject_exposes_voidscape_console_script():
 
     assert 'name = "voidscape"' in project
     assert 'voidscape = "skill.scripts.voidscape:main"' in project
-    assert 'dependencies = ["yt-dlp>=2024.1.1"]' in project
+    assert 'dependencies = ["yt-dlp>=2026.8.19"]' in project
 
 
 def test_packaged_module_help_uses_global_command_name():

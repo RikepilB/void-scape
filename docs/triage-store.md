@@ -1,7 +1,7 @@
 # Verified note publication
 
-`scripts/triage_store.py` is a repository-only controller helper for Instagram
-and captured RSS notes. It does not discover posts, read media, generate summaries, or change an
+`scripts/triage_store.py` is a repository-only controller helper for Instagram,
+captured RSS and public YouTube notes. It does not discover posts, read media, generate summaries, or change an
 account. Source analysis still follows `inspect -> preview -> read` and its gates.
 
 Analysis workers return a draft and retained evidence paths. The controller
@@ -20,7 +20,7 @@ before reading data. Verification failures exit 6 with a sanitized error and
 ## Draft contract
 
 Instagram accepts canonical URLs and categories listed in the repository's
-analysis agent. RSS follows the contract below. Drafts are UTF-8, at most 4 MiB, and
+analysis agent. RSS and YouTube follow the contracts below. Drafts are UTF-8, at most 4 MiB, and
 have one title, one exact `Source:` key, and scalar frontmatter. Supported scalar
 forms are plain strings, quoted strings, and `null`; tags, references, mappings
 and multiline values are not supported. Unknown or duplicate fields fail.
@@ -53,15 +53,31 @@ None beyond the source.
 This section is populated from the controller's selected evidence files.
 ```
 
-Pass up to 100 retained evidence files. The helper hashes them and replaces the
+Pass up to100 retained evidence files for Instagram/RSS, or515 for a YouTube
+capture plus its bounded read bundle. The helper hashes them and replaces the
 draft's Evidence section with local links to those exact files. It never deletes
 evidence or fetches remote content. Required note fields and hashes establish
 structure and integrity; they do not establish that a summary is accurate.
 
 For a skip, use category `_Skipped`, `--skipped`, the same source frontmatter and
 key, one title, and `## Reason` with a sanitized explanation. Evidence is optional
-for Instagram skips; RSS always retains its verified capture entry and marker.
+for Instagram skips; RSS and YouTube retain their verified capture entry and marker.
 A skipped attempt is never returned as an analyzed item.
+
+## Public YouTube notes
+
+Use the [YouTube workflow](youtube-ingest.md) to retain the video identity and a
+completed read bundle. Publish with `--capture-root <captures>` and
+`--read-root <completed-work>`. Frontmatter uses `source: youtube`, the exact
+canonical URL and captured author/date; missing fields remain null. Use
+`Source: youtube:<video-id>` and the normal title/priority plus Synopsis, Action
+Items, Key moments, Links and Evidence sections. Key moments must cite actual
+transcript/frame `[MM:SS]` labels. The publisher verifies retained hashes and
+source/read bindings; the author remains responsible for semantic accuracy.
+
+YouTube uses the same eleven categories as RSS. A skip requires its capture root
+but omits the completed read root. Verified analyzed notes deduplicate by video ID
+across playlists; a skip is never treated as analyzed.
 
 ## Captured RSS notes
 

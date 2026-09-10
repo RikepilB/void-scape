@@ -225,6 +225,11 @@ It defaults to dry-run and keeps saved items. Its Claude/Codex role files share
 one source; packaging tests do not establish live browser or harness compatibility.
 See [source skill development](docs/instagram-triage-skill.md) for checks and limits.
 
+The repository [public YouTube workflow](docs/youtube-ingest.md) captures bounded
+video/playlist selections, resumes unfinished notes and binds publication to
+verified media evidence. Its project skill preserves local read gates and actual
+timestamp citations; independent harness evaluation remains pending.
+
 The repository-only [recording inbox controller](docs/process-inbox.md) previews
 local files, prepares evidence, drafts notes through a cached cloud-disabled model,
 and verifies artifacts before moving successful recordings. Long transcripts use
