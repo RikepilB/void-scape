@@ -184,7 +184,7 @@
     },
     {
       "id": "discovery.source_registry",
-      "status": "release-candidate",
+      "status": "shipped",
       "entry_point": "guided"
     },
     {

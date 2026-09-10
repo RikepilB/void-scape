@@ -1,8 +1,9 @@
 # LinkedIn observed-post capture
 
 Development helper for issue55, not a complete saved-posts triage skill. It accepts
-local observations from a separately approved browser workflow or user-provided
-text. It does not open LinkedIn, enumerate saved items, read credentials, or unsave
+synthetic or user-supplied permitted observations. Any future service acquisition
+must satisfy the [source-scope gate](linkedin-source-scope.md); a signed-in browser
+alone does not establish permission. It does not open LinkedIn, enumerate saved items, read credentials, or unsave
 anything. The separate [verified publisher](triage-store.md) can now bind a draft
 note to the retained observation and update the managed index.
 

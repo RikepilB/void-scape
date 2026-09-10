@@ -285,7 +285,9 @@ def test_website_guide_tells_the_current_workflow_and_labels_capability_boundari
         assert f"<code>{command}</code>" in guide
     assert 'id="commands"' not in landing
     assert 'id="capabilities"' in landing
-    assert "03 / Exploration, not promised" in landing
+    assert "02 / In progress" in landing
+    assert "03 / Next" in landing
+    assert "04 / Later" in landing
     assert "01 / Available now" in landing
 
 
