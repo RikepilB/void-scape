@@ -116,8 +116,17 @@ publisher lock. A new draft does not overwrite an existing analyzed note; the
 result reports `duplicate: true`. Skipped attempts remain separately visible and
 can later gain an analyzed note. Capture alone never satisfies this lookup.
 
-This adds local publication, not a source skill, model author, paywall detector,
-media router or scheduler. Those issue #57 requirements remain outstanding.
+For a separately requested public article, use the [selected article workflow](rss-intake.md#selected-public-article-reads)
+and pass `--read-root <article-read>` alongside the capture root. Its receipt,
+manifest and text are mandatory verified evidence. Replace `## RSS Excerpt` with
+`## Article Excerpt`, quote the actual retained article body, and cite `[article 1]`
+in supported findings. Feed-only notes cannot claim article citations; skip records
+cannot attach a completed article read. Existing canonical-key dedup still applies:
+this does not silently upgrade or overwrite an already analyzed feed-only note.
+
+The project source skill coordinates these commands. Automated enclosure reads,
+representative paywall handling and independent harness evaluation remain issue
+#57 work; the publisher is not an automatic author or paywall detector.
 
 ## Receipts and recovery
 

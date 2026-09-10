@@ -12,6 +12,24 @@ python scripts/triage_store.py publish ./publication-notes rss rss:<capture-id> 
 python scripts/triage_store.py inspect ./publication-notes <receipt-id>
 ```
 
+For a specifically requested linked public article, select the retained resource,
+inspect/preview its returned URL, then fetch with scoped approval:
+
+```powershell
+python scripts/rss_resource.py ./capture rss:<capture-id>
+python -m skill.scripts.voidscape inspect https://example.com/post --reader article --json
+python -m skill.scripts.voidscape preview https://example.com/post --reader article --json
+python scripts/rss_read.py ./capture rss:<capture-id> ./article-read --allow-fetch
+python scripts/triage_store.py publish ./publication-notes rss rss:<capture-id> Tech ./draft.md --capture-root ./capture --read-root ./article-read
+```
+
+Replace the example URL with the exact selection. Article-bound notes use
+`## Article Excerpt` instead of `## RSS Excerpt`, quoting the actual retained
+article body, and cite `[article 1]`. Receipt verification is not semantic review
+or proof of full article coverage. Do not publish a login message as analysis.
+The resource selector can also inspect `--resource enclosure --enclosure 1`;
+enclosure downloads/reads are not implemented by these helpers.
+
 Public fetch and local writes are separate flags. `--since YYYY-MM-DD` is an
 inclusive UTC date filter for capture; unknown dates remain eligible and flagged.
 Local UTF-8 feeds use `feed.xml --feed-url https://example.com/feed`. Retained
