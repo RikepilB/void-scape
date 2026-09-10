@@ -67,7 +67,8 @@ The target is to finish these gaps before expanding every source at once.
   Design scope closed; no running scheduler is shipped. Approved pages, deterministic comparisons first, bounded AI when useful, meaningful-change
   notifications, allowlists, cadence/timezone, budgets, retention, cancellation and audit.
 - **Capture benchmarks — [#94](https://github.com/RikepilB/void-scape/issues/94).**
-  Synthetic fixtures, explicit geometry, failure behavior, Windows/Linux evidence and separate
+  [Local synthetic fixture server and measurement protocol](qa/capture-benchmark.md) available;
+  provider captures remain unverified. Explicit geometry, failure behavior, Windows/Linux evidence and separate
   CLI/MCP startup/reuse measurements. Blocked providers need adoption approval first.
 - **X bookmarks, TikTok favorites and Reddit saves — [#95](https://github.com/RikepilB/void-scape/issues/95).**
   Select one source; evaluate permitted API/export/browser paths and platform constraints.
