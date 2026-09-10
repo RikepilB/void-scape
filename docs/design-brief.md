@@ -69,3 +69,17 @@ status, reader contracts, adapters, automation, and troubleshooting.
   the production deployment is ready.
 - Verify both themes, sticky navigation, logo rendering, use-case autoplay/manual-stop behavior,
   Download anchors, and the back-to-top threshold/action.
+
+## 2026-09-10 acceptance review
+
+Reviewed the live capabilities section against this brief using the approved Chrome
+harness. The available/in-progress/next/later disclosures preserve a readable hierarchy,
+concrete mechanism and honest boundaries. Keep the existing restrained dark treatment
+and native disclosure interaction; no visual redesign is indicated by this state.
+
+Visual verdict: **partial / mobile unverified**. The desktop screenshot and opening
+the in-progress disclosure succeeded. A subsequent 390 x 844 responsive request timed
+out, reset the connection, and Chrome could not be reselected. Therefore this pass does
+not establish mobile overflow, focus/keyboard, light-theme or reduced-motion acceptance.
+Recheck those states after supported connection recovery (#42), rather than treating
+passing Python/site tests as visual proof. No public UI files were changed in this pass.
