@@ -61,7 +61,8 @@ Capture dedup remains separate: controllers must consult note lookup before
 authoring a retained entry. The project-scoped
 [substack-ingest skill](../.agents/skills/substack-ingest/SKILL.md) coordinates this
 workflow. Remaining issue #57 work includes independent harness evaluation,
-complete paywall/media routing workflows and YouTube ingest.
+complete paywall/media routing workflows. Public YouTube ingest is implemented
+separately; its independent source/harness acceptance remains pending.
 
 ## Resume retained entries
 
@@ -105,3 +106,50 @@ An unchanged feed compared with a pre-flag capture can report `changed` because
 its parsed metadata now includes these fields. That is not proof the publisher
 edited the post. The original capture and its verification marker stay intact;
 no automatic rewrite or provenance backfill occurs.
+
+## Selected public article reads
+
+Select one retained entry before requesting additional evidence:
+
+```powershell
+python scripts/rss_resource.py ./capture rss:<capture-id>
+python -m skill.scripts.voidscape inspect https://example.com/post --reader article --json
+python -m skill.scripts.voidscape preview https://example.com/post --reader article --json
+python scripts/rss_read.py ./capture rss:<capture-id> ./article-read --allow-fetch
+python scripts/triage_store.py publish ./notes rss rss:<capture-id> Tech ./draft.md --capture-root ./capture --read-root ./article-read
+```
+
+Use the exact URL returned by resource selection, not the example URL. Selection
+does no network work or writes and grants no permission. Missing/redacted URL
+provenance stops follow-up; it never reconstructs a removed query. Inspect and
+preview expose the public-fetch gate. Only the user's scoped public article read
+authorizes `--allow-fetch`; feed capture alone does not authorize every linked page.
+
+The read worker repeats inspect/preview, checks the source and expected article
+fetch gate, and uses the existing DNS-pinned public article fetcher. It does not
+use browser credentials, cloud transcription or model downloads. The parent
+maps this helper's `--allow-fetch` to the guided CLI's historical `--allow-cloud`
+flag only with `--reader article` and the verified `article_fetch` gate. This is
+permission for the public HTTP request, not an AI upload. The parent
+enforces an overall deadline (180 seconds default, 600 maximum), owns the child
+process tree and verifies a hash-bound receipt before reporting ready. A repeat
+run verifies existing artifacts instead of fetching again; changed artifacts stop
+the run. Failed runs preserve diagnostics but do not publish a ready receipt.
+
+An article-bound note uses `## Article Excerpt` instead of `## RSS Excerpt`, with
+the same untrusted label and one verbatim quotation of at most 25 words from the
+retained article body. Cite `[article 1]` in supported findings. The publisher
+retains and hashes the capture, read receipt, manifest and text. Ordinary feed-only
+notes still use `## RSS Excerpt`; they cannot claim an article citation. Skip notes
+cannot claim a completed article read.
+
+Coverage means fetched public text, not proof of the complete publisher article.
+HTTP access denial stops the fetch; a successful response may still contain only
+an excerpt or login message. Inspect the actual text, record observed access walls
+as explicit skips, and never infer a paywall from short text alone. Returned feeds
+are rejected as the wrong resource type. No authenticated fallback is attempted.
+
+`rss_resource.py --resource enclosure --enclosure 1` selects a one-based audio or
+video enclosure and proposes its reader/tier. It does not download or read it.
+Bounded enclosure acquisition, media receipt binding, and representative live
+paywall/media/harness acceptance remain unfinished issue #57 work.

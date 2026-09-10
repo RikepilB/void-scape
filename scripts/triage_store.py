@@ -240,8 +240,8 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
         raise ValueError('category is not registered for the source')
     if skipped != (category == '_Skipped'):
         raise ValueError('skip records belong in _Skipped')
-    if source != 'youtube' and read_root is not None:
-        raise ValueError('reader binding is only implemented for YouTube')
+    if source not in {'youtube', 'rss'} and read_root is not None:
+        raise ValueError('reader binding is only implemented for YouTube and RSS')
     with checked(note).open('rb') as stream:
         raw = stream.read(4 * 1024 * 1024 + 1)
     if len(raw) > 4 * 1024 * 1024:
@@ -259,6 +259,12 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
             raise ValueError('note provenance does not match the requested source')
     elif source == 'rss':
         entry, retained = rss_provenance(key, metadata, capture_root)
+        if read_root is not None:
+            if skipped:
+                raise ValueError('RSS skip cannot claim a completed article read')
+            from rss_read import verify_read
+            _, article_manifest, article_artifacts = verify_read(capture_root, key, read_root)
+            retained.extend(article_artifacts)
         evidence = list(dict.fromkeys([*retained, *map(Path, evidence)]))
     elif source == 'linkedin':
         entry, retained = linkedin_provenance(key, metadata, capture_root)
@@ -269,11 +275,14 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
     if [line for line in text.splitlines() if line.startswith('Source:')] != [f'Source: {key}']:
         raise ValueError('note must contain exactly one matching Source line')
     required = ('## Reason',) if skipped else ('## Synopsis', '## Action Items',
-                {'instagram': '## Instagram Excerpt', 'rss': '## RSS Excerpt',
+                {'instagram': '## Instagram Excerpt', 'rss': '## Article Excerpt' if read_root is not None else '## RSS Excerpt',
                  'youtube': '## Key moments', 'linkedin': '## Post Excerpt'}[source],
                 '## Links', '## Evidence')
     if source == 'rss' and not skipped:
         required += ('## Key points',)
+        article_citations = set(re.findall(r'\[article ([^\]\r\n]+)\]', text))
+        if (read_root is None and article_citations) or (read_root is not None and article_citations != {'1'}):
+            raise ValueError('RSS article citations require matching verified article evidence')
     if any(text.splitlines().count(section) != 1 for section in required):
         raise ValueError('note is missing required sections')
     if source == 'youtube' and not skipped:
@@ -282,14 +291,22 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
         if not cited or not cited <= citations or not re.search(r'\[\d{2,}:[0-5]\d(?::[0-5]\d)?\]', moments):
             raise ValueError('YouTube notes require actual reader timestamps in key moments')
     if source in {'rss', 'linkedin'} and not skipped:
-        heading = 'RSS Excerpt' if source == 'rss' else 'Post Excerpt'
+        heading = ('Article Excerpt' if read_root is not None else 'RSS Excerpt') if source == 'rss' else 'Post Excerpt'
         label = 'RSS' if source == 'rss' else 'LinkedIn'
         section = re.search(r'^## ' + heading + r'\r?\n(.*?)(?=^## |\Z)', text, re.MULTILINE | re.DOTALL)[1]
         lines = [line.strip() for line in section.splitlines() if line.strip()]
         if len(lines) != 2 or lines[0] != 'Untrusted source content:' or not lines[1].startswith('> '):
             raise ValueError(f'{label} excerpt must be a labeled single-line quotation')
         quote = lines[1][2:]
-        if not quote or len(quote.split()) > 25 or quote not in entry['body' if source == 'rss' else 'text']:
+        quote_source = entry['body' if source == 'rss' else 'text']
+        if source == 'rss' and read_root is not None:
+            article_file = checked(article_manifest['entries'][0]['file'])
+            with article_file.open('rb') as stream:
+                article_raw = stream.read(8 * 1024 * 1024 + 1)
+            if len(article_raw) > 8 * 1024 * 1024:
+                raise ValueError('article evidence exceeds note quotation limit')
+            quote_source = article_raw.decode('utf-8').replace('\r\n', '\n').partition('\n\n')[2]
+        if not quote or len(quote.split()) > 25 or quote not in quote_source:
             raise ValueError(f'{label} excerpt must be short and verbatim from retained content')
     titles = re.findall(r'^# ([^\r\n]+)\r?$', text, re.MULTILINE)
     if len(titles) != 1 or len(titles[0]) > 200:

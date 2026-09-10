@@ -4,7 +4,11 @@ For repeated intake, the repository-only [RSS helper](../../rss-intake.md) adds
 bounded public-feed capture and revalidated entry dedup. It stores untrusted
 evidence, not analyzed notes. The project-scoped
 [substack-ingest skill](../../../.agents/skills/substack-ingest/SKILL.md) coordinates
-retained-entry resume and verified note publication; independent harness checks remain pending.
+retained-entry resume and verified note publication. `scripts/rss_resource.py`
+selects an unchanged retained article URL or a typed enclosure without fetching.
+`scripts/rss_read.py` binds an explicitly approved public article read to that
+capture; `triage_store --read-root` verifies the bundle and `[article 1]` citation.
+Media enclosure reads and independent harness checks remain pending.
 
 The article reader prepares deterministic text evidence from local documents, feeds, and explicitly
 approved public article fetches.

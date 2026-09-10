@@ -301,7 +301,10 @@ adds bounded previews, stable entry keys and verified local capture. Captured
 entries remain pending analysis. The [verified note publisher](docs/triage-store.md)
 can bind authored RSS notes to those entries. The project-scoped
 [substack-ingest skill](.agents/skills/substack-ingest/SKILL.md) coordinates capture,
-retained-entry resume and publication; independent harness evaluation remains pending.
+retained-entry resume and publication. A selected public article can also be read
+through `scripts/rss_read.py` with explicit fetch approval; notes bind its verified
+bundle using `--read-root`. Media enclosure reads and independent harness evaluation
+remain pending; selecting a resource does not fetch it.
 
 For scripts, subagents, and integrations, the raw engine remains stable:
 
