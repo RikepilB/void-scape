@@ -342,6 +342,7 @@ def _parse_feed_xml(text: str) -> dict[str, Any]:
         # Retain distinct query-based identities without persisting URL secrets.
         if guid and _sanitize_evidence_link(guid) != guid:
             guid = "url-sha256:" + hashlib.sha256(guid.encode('utf-8')).hexdigest()
+        original_link = link
         link = _sanitize_evidence_link(link)
         published = _child_text(raw, ("pubDate", "published", "updated"))
         # Prefer full content even when a summary appears first in document order.
@@ -364,21 +365,25 @@ def _parse_feed_xml(text: str) -> dict[str, Any]:
             skipped.append({"title": title or guid, "reason": "duplicate"})
             continue
         seen.add(dedupe_key)
+        enclosures = []
+        for child in raw:
+            if (_local_tag(child.tag) == "enclosure" or
+                    (_local_tag(child.tag) == "link" and child.attrib.get("rel") == "enclosure")):
+                original = child.attrib.get("url") or child.attrib.get("href", "")
+                sanitized = _sanitize_evidence_link(original)
+                enclosures.append({"url": sanitized, "url_redacted": sanitized != original,
+                                   "type": child.attrib.get("type", "")})
         entries.append({
             "title": title or "(untitled)",
             "link": link,
+            "link_redacted": link != original_link,
             "published": published,
             "guid": guid,
             "identity_kind": identity_kind,
             "body": body,
             "author": _child_text(raw, ("author", "creator")) or None,
             "content_kind": _local_tag(content.tag) if content is not None else "missing",
-            "enclosures": [
-                {"url": _sanitize_evidence_link(child.attrib.get("url") or child.attrib.get("href", "")),
-                 "type": child.attrib.get("type", "")}
-                for child in raw if _local_tag(child.tag) == "enclosure" or
-                (_local_tag(child.tag) == "link" and child.attrib.get("rel") == "enclosure")
-            ],
+            "enclosures": enclosures,
             "word_count": _word_count(body or title),
         })
     if not entries and not raw_items:
