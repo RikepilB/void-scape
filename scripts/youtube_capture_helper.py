@@ -158,22 +158,24 @@ class YouTubeClient:
 
     def find_playlist_by_title(self, title: str) -> dict[str, Any]:
         page_token = ""
+        seen_tokens: set[str] = set()
         while True:
             params = {"part": "snippet", "mine": "true", "maxResults": "50"}
             if page_token:
                 params["pageToken"] = page_token
             data = self._request("GET", "playlists", params)
-            for item in data.get("items") or []:
-                snippet = item.get("snippet") or {}
+            page_items, next_token = _playlist_page(data)
+            for item in page_items:
+                snippet = _object_field(item, "snippet")
                 if snippet.get("title") == title:
                     playlist_id = item.get("id")
-                    if not playlist_id:
+                    if not isinstance(playlist_id, str) or not playlist_id:
                         raise YouTubeApiShapeError("playlist match missing id", details={"item": item})
                     return {
                         "playlist_id": playlist_id,
                         "title": snippet.get("title") or title,
                     }
-            page_token = data.get("nextPageToken") or ""
+            page_token = _next_token(next_token, seen_tokens)
             if not page_token:
                 break
         raise YouTubeCaptureError(
@@ -184,6 +186,7 @@ class YouTubeClient:
     def list_playlist_items(self, playlist_id: str) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []
         page_token = ""
+        seen_tokens: set[str] = set()
         while True:
             params = {
                 "part": "snippet,contentDetails",
@@ -193,11 +196,12 @@ class YouTubeClient:
             if page_token:
                 params["pageToken"] = page_token
             data = self._request("GET", "playlistItems", params)
-            for raw in data.get("items") or []:
+            page_items, next_token = _playlist_page(data)
+            for raw in page_items:
                 parsed = _parse_playlist_item(raw)
                 if parsed is not None:
                     items.append(parsed)
-            page_token = data.get("nextPageToken") or ""
+            page_token = _next_token(next_token, seen_tokens)
             if not page_token:
                 break
         return items
@@ -206,14 +210,45 @@ class YouTubeClient:
         self._request("DELETE", "playlistItems", {"id": playlist_item_id})
 
 
+def _playlist_page(data: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
+    items = data.get("items")
+    items = [] if items is None else items
+    token = data.get("nextPageToken")
+    token = "" if token is None else token
+    if not isinstance(items, list) or any(not isinstance(item, dict) for item in items):
+        raise YouTubeApiShapeError("playlist items must be a list of objects")
+    if not isinstance(token, str):
+        raise YouTubeApiShapeError("next page token must be a string")
+    return items, token
+
+
+def _next_token(token: str, seen: set[str]) -> str:
+    if token:
+        if token in seen:
+            raise YouTubeApiShapeError("playlist pagination repeated a page token")
+        seen.add(token)
+    return token
+
+
+def _object_field(item: dict[str, Any], name: str) -> dict[str, Any]:
+    value = item.get(name)
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise YouTubeApiShapeError(f"playlist {name} must be an object")
+    return value
+
+
 def _parse_playlist_item(raw: dict[str, Any]) -> dict[str, Any] | None:
     playlist_item_id = raw.get("id")
-    snippet = raw.get("snippet") or {}
-    content = raw.get("contentDetails") or {}
-    resource = snippet.get("resourceId") or {}
+    snippet = _object_field(raw, "snippet")
+    content = _object_field(raw, "contentDetails")
+    resource = _object_field(snippet, "resourceId")
     video_id = resource.get("videoId") or content.get("videoId")
     if not playlist_item_id or not video_id:
         return None
+    if not isinstance(playlist_item_id, str) or not isinstance(video_id, str):
+        raise YouTubeApiShapeError("playlist item and video IDs must be strings")
     return {
         "playlist_item_id": playlist_item_id,
         "video_id": video_id,
