@@ -118,3 +118,21 @@ Consequently the intended viewport reset could not be confirmed. Desktop renderi
 and the source results above remain valid observations; mobile QA and durable
 connection recovery do not pass. #42 remains open. This record must not auto-close
 it or be used to claim a repaired host. No unsupported repair was attempted.
+
+### September 10 follow-up: communication recovered, cause unresolved
+
+A later supported Chrome session successfully loaded the public Voidscape landing,
+the previously requested Substack archive and Reddit home. The exact X `/i/histo`
+route again displayed the missing-page message; the visible `/i/history` link was
+not followed during this retry. No account collection was read or modified.
+
+On the public landing, setting a 390 x 844 viewport succeeded and the DOM overflow
+check returned false. The viewport reset call completed without a timeout, and a
+subsequent page evaluation succeeded. That evaluation still reported width 390,
+so restoration of the original viewport dimensions was not verified.
+
+No extension, native-host, profile or authentication configuration was changed.
+These observations establish communication recovery and one successful narrow
+viewport check. They do not isolate the earlier failure, establish lasting
+reliability, or prove that a code change repaired the connection. Issue #42 remains
+open. The earlier failure record above is retained as evidence of intermittency.
