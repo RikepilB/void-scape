@@ -91,10 +91,13 @@ def _parse_api_error(status: int, body: str) -> YouTubeCaptureError:
     message = body
     try:
         payload = json.loads(body)
-        err = payload.get("error", {})
-        message = err.get("message") or message
-        for item in err.get("errors") or []:
-            if item.get("reason"):
+        err = payload.get("error") if isinstance(payload, dict) else None
+        err = err if isinstance(err, dict) else {}
+        if isinstance(err.get("message"), str):
+            message = err["message"] or message
+        errors = err.get("errors")
+        for item in errors if isinstance(errors, list) else []:
+            if isinstance(item, dict) and isinstance(item.get("reason"), str) and item["reason"]:
                 reason = item["reason"]
                 break
     except json.JSONDecodeError:
