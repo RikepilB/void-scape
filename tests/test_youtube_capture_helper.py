@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+import youtube_capture_helper as youtube
 
 from youtube_capture_helper import (
     YouTubeApiShapeError,
@@ -291,7 +292,8 @@ def test_find_playlist_by_title():
     assert found == {"playlist_id": PLAYLIST_ID, "title": "Read Video Queue"}
 
 
-def test_cli_preview_requires_token(tmp_path):
+def test_cli_preview_requires_token(tmp_path, monkeypatch):
+    monkeypatch.delenv("YOUTUBE_ACCESS_TOKEN", raising=False)
     urls_md = tmp_path / "urls.md"
     result = subprocess.run(
         [
@@ -304,7 +306,94 @@ def test_cli_preview_requires_token(tmp_path):
         ],
         capture_output=True,
         text=True,
+        timeout=20,
     )
     assert result.returncode == 1
     payload = json.loads(result.stdout)
     assert payload["error_type"] == "authorization"
+
+
+@pytest.mark.parametrize("command", ["inspect", "preview", "process"])
+def test_cli_routes_commands_without_live_transport(command, tmp_path, monkeypatch, capsys):
+    client = _client_with_responses([{"items": [ITEM_ONE]}, {}])
+    monkeypatch.setattr(youtube, "YouTubeClient", lambda token: client)
+    monkeypatch.setenv("YOUTUBE_ACCESS_TOKEN", "synthetic-test-token")
+    queue = tmp_path / "urls.md"
+    args = [command, "--playlist-id", PLAYLIST_ID]
+    if command != "inspect":
+        args.append(str(queue))
+    assert youtube.main(args) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["playlist_id"] == PLAYLIST_ID
+    if command == "process":
+        assert queue.read_text().strip() == canonical_url("vid001abc")
+        assert payload["summary"]["removed_from_playlist"] == 1
+    else:
+        assert not queue.exists()
+
+
+@pytest.mark.parametrize("command", ["inspect", "preview", "process"])
+def test_cli_network_failure_preserves_queue(command, tmp_path, monkeypatch, capsys):
+    client = _client_with_responses([urllib.error.URLError("synthetic network failure")])
+    monkeypatch.setattr(youtube, "YouTubeClient", lambda token: client)
+    queue = tmp_path / "urls.md"
+    queue.write_text("existing evidence\n")
+    args = [command, "--access-token", "synthetic-test-token", "--playlist-id", PLAYLIST_ID]
+    if command != "inspect":
+        args.append(str(queue))
+    assert youtube.main(args) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["error_type"] == youtube.YouTubeCaptureError.error_type
+    assert "network error" in payload["error"]
+    assert queue.read_text() == "existing evidence\n"
+
+
+def test_client_rejects_json_array_response():
+    client = _client_with_responses([[]])
+    with pytest.raises(YouTubeApiShapeError, match="top-level"):
+        client.list_playlist_items(PLAYLIST_ID)
+
+
+def test_non_auth_http_error_with_unreadable_body_is_controlled():
+    body = MagicMock()
+    body.read.side_effect = OSError("synthetic read failure")
+    error = urllib.error.HTTPError("https://example.invalid", 500, "Server error", None, body)
+    with pytest.raises(youtube.YouTubeCaptureError) as result:
+        _client_with_responses([error]).list_playlist_items(PLAYLIST_ID)
+    assert type(result.value) is youtube.YouTubeCaptureError
+
+
+def test_empty_delete_response_succeeds():
+    response = _response({})
+    response.read.return_value = b""
+    client = YouTubeClient("synthetic-test-token", urlopen_fn=lambda *args, **kwargs: response)
+    assert client.delete_playlist_item("synthetic-item") is None
+
+
+@pytest.mark.parametrize("item", [
+    {"id": "item", "snippet": {"resourceId": []}},
+    {"id": "item", "contentDetails": []},
+    {"id": 12, "contentDetails": {"videoId": "video"}},
+    {"id": "item", "contentDetails": {"videoId": 12}},
+])
+def test_invalid_nested_item_data_rejected(item):
+    with pytest.raises(YouTubeApiShapeError):
+        _client_with_responses([{"items": [item]}]).list_playlist_items(PLAYLIST_ID)
+
+
+def test_unavailable_item_skipped_without_losing_valid_successor():
+    client = _client_with_responses([{"items": [{"id": "unavailable"}, ITEM_ONE]}])
+    assert [item["video_id"] for item in client.list_playlist_items(PLAYLIST_ID)] == ["vid001abc"]
+
+
+def test_find_title_after_empty_page():
+    client = _client_with_responses([{"items": [], "nextPageToken": "next"},
+        {"items": [{"id": PLAYLIST_ID, "snippet": {"title": "Queue"}}]}])
+    assert client.find_playlist_by_title("Queue")["playlist_id"] == PLAYLIST_ID
+
+
+def test_missing_title_and_missing_match_id_have_controlled_errors():
+    with pytest.raises(youtube.YouTubeCaptureError, match="no owned playlist"):
+        _client_with_responses([{}]).find_playlist_by_title("Queue")
+    with pytest.raises(YouTubeApiShapeError, match="missing id"):
+        _client_with_responses([{"items": [{"snippet": {"title": "Queue"}}]}]).find_playlist_by_title("Queue")

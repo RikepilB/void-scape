@@ -20,6 +20,11 @@ REPO = Path(__file__).resolve().parent.parent
 HELPER_SCRIPT = REPO / "scripts" / "instagram_capture_helper.py"
 
 
+def test_canonical_url_rejects_invalid_shortcode():
+    with pytest.raises(ValueError, match="invalid Instagram shortcode"):
+        canonical_url("../not-a-shortcode")
+
+
 def test_extract_shortcode_from_reel_url():
     assert extract_shortcode("https://www.instagram.com/reel/Cx1AbC2DeFg/") == "Cx1AbC2DeFg"
 
