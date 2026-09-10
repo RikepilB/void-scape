@@ -1,7 +1,6 @@
 import io
 import json
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 from urllib.error import HTTPError
@@ -65,12 +64,16 @@ def test_redirects_do_not_retain_secret_destination(tmp_path):
     assert result['redirects'] == 1 and 'private' not in json.dumps(result)
 
 
-@pytest.mark.parametrize('code,location', [(302, 'http://example.com/media'), (302, ''), (401, ''), (403, ''), (500, '')])
-def test_denied_fetch_has_no_fallback(tmp_path, code, location):
+@pytest.mark.parametrize('code,location,expected', [
+    (302, 'http://example.com/media', ValueError), (302, '', ValueError),
+    (401, '', download.AccessDenied), (403, '', download.AccessDenied), (500, '', ValueError)])
+def test_denied_fetch_has_no_fallback(tmp_path, code, location, expected):
     def opener(request, timeout):
         raise HTTPError(request.full_url, code, 'denied', {'Location': location}, None)
-    with pytest.raises((ValueError, PermissionError)):
+    with pytest.raises(expected) as error:
         download.fetch('https://example.com/audio', tmp_path / 'source', 10, opener=opener)
+    if expected is download.AccessDenied:
+        assert error.value.status == code
     assert not (tmp_path / 'source').exists()
 
 
@@ -98,7 +101,7 @@ def test_real_pinned_transport_rejects_private_redirect(tmp_path, monkeypatch):
     assert len(calls) == 2
 
 
-@pytest.mark.skipif(not shutil.which('ffmpeg'), reason='FFmpeg required')
+@pytest.mark.skipif(not download.ffmpeg_ready(), reason='FFmpeg with fd protocol support required')
 def test_actual_descriptor_remux_and_retained_resume(tmp_path):
     root, key, _ = capture_fixture(tmp_path)
     work = tmp_path / 'work'
@@ -118,7 +121,7 @@ def test_actual_descriptor_remux_and_retained_resume(tmp_path):
         download.verify_download(root, key, work)
 
 
-@pytest.mark.skipif(not shutil.which('ffmpeg'), reason='FFmpeg required')
+@pytest.mark.skipif(not download.ffmpeg_ready(), reason='FFmpeg with fd protocol support required')
 @pytest.mark.parametrize('content', ['#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nhttp://127.0.0.1/never\n',
     "ffconcat version 1.0\nfile 'canary.wav'\n"])
 def test_playlist_demuxers_rejected(tmp_path, content):

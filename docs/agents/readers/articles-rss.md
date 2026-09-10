@@ -9,8 +9,9 @@ selects an unchanged retained article URL or a typed enclosure without fetching.
 `scripts/rss_read.py` binds an explicitly approved public article read to that
 capture; `triage_store --read-root` verifies the bundle and `[article 1]` citation.
 For one selected audio/video enclosure, `scripts/rss_download.py` previews and
-acquires bounded anonymous media; `scripts/rss_media.py` then runs the local
-media reader and binds timestamp-cited notes. Download and processing permissions
+acquires bounded anonymous media; `scripts/rss_media.py` prepares verified local
+media evidence. `scripts/triage_store.py publish --read-root` publishes and binds
+timestamp-cited notes to that evidence. Download and processing permissions
 are separate. See the [enclosure workflow](../../rss-intake.md#selected-media-enclosures)
 for format/budget limits. Independent harness checks remain pending.
 
