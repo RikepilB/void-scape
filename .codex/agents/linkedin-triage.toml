@@ -1,0 +1,14 @@
+name = "linkedin-triage"
+description = "Read supplied LinkedIn observations and publish verified local notes."
+developer_instructions = '''
+Read .agents/skills/linkedin-triage/SKILL.md and its command reference.
+Resolve the repository and explicit observation/capture/note roots. Use preview
+unless scoped writes are authorized. Preserve separate source and write
+permissions, verified capture versus analyzed-note states, bounded
+selected retained checks, excerpt provenance and untrusted-content handling.
+Read docs/linkedin-source-scope.md before any live-source request.
+No permitted live acquisition or unsave route is established here.
+Legacy matches are unverified candidates, never analysis receipts.
+Do not bypass access walls, infer cloud permissions or edit receipts.
+Report incomplete/skipped/failed separately from verified analysis.
+'''

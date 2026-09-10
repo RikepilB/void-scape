@@ -94,7 +94,13 @@ checker. It never scans other files, rewrites notes or creates receipts. Review
 candidates before a new publication; re-author and verify against retained source
 evidence if migration is needed. Automatic legacy migration remains unimplemented.
 
-Still required by issue55: the project skill and harness mirrors, legacy migration policy, batch progress
+The project [linkedin-triage skill](../.agents/skills/linkedin-triage/SKILL.md)
+and generated harness entries coordinate this supplied-observation workflow.
+Run `python scripts/sync_linkedin_skill.py` to check mirror consistency; this
+does not prove runtime parity. Evaluation state is in
+[the evaluation record](../evals/linkedin-triage/RESULTS.md).
+
+Still required by issue55: independent skill/harness acceptance, legacy migration policy, batch progress
 presentation, representative browser reads, approved unsave verification, auth-wall
 abort evidence and independent skill benchmarks. Do not mark the issue complete.
 
