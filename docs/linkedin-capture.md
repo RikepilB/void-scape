@@ -2,8 +2,9 @@
 
 Development helper for issue55, not a complete saved-posts triage skill. It accepts
 local observations from a separately approved browser workflow or user-provided
-text. It does not open LinkedIn, enumerate saved items, write analysis notes,
-read credentials, or unsave anything.
+text. It does not open LinkedIn, enumerate saved items, read credentials, or unsave
+anything. The separate [verified publisher](triage-store.md) can now bind a draft
+note to the retained observation and update the managed index.
 
 ## Identity and scope
 
@@ -59,8 +60,8 @@ primitive, reads it back and verifies its hash, then writes `captured.json` and
 revalidates both files. The immutable marker is the per-item capture checkpoint.
 The shared root lock serializes applied captures; paths reject symlink traversal.
 
-`retained` checks only the supplied1..100 unique identities. It distinguishes
-`captured`, `incomplete` and `missing`, with no directory-wide/account enumeration
+`retained` checks only the supplied 1..100 unique identities. It distinguishes
+`captured`, `incomplete` and `missing`, with no capture-directory or account enumeration
 and no writes. Captured means a verified local observation, never analyzed.
 
 A retry with identical data can finish an interrupted capture. A conflicting
@@ -71,12 +72,50 @@ truth of caller-supplied text or capture time. Results never authorize unsaving.
 
 ## Verification and remaining acceptance
 
-The initial47 synthetic tests cover aliases, typed identities, rejected scope,
+The initial 47 synthetic tests cover aliases, typed identities, rejected scope,
 schema/size bounds, dry-run, complete/partial duplicates, corruption, failed
 read-back, selected resume, symlink rejection, and CLI behavior. Measured helper
-statement/branch coverage is100%; this is not browser or independent agent QA.
+statement/branch coverage is 100%; this is not browser or independent agent QA.
 
-Still required by issue55: verified note/excerpt publication and index integration,
-the project skill and harness mirrors, legacy-note dedup assessment, batch progress
+Still required by issue55: the project skill and harness mirrors, legacy-note dedup assessment, batch progress
 presentation, representative browser reads, approved unsave verification, auth-wall
 abort evidence and independent skill benchmarks. Do not mark the issue complete.
+
+## Publish a verified note
+
+Use `source: linkedin`, the exact canonical URL and observed author/date in scalar
+frontmatter. Categories are `Writing`, `News`, `Resources`, `Concepts`, `Jobs`,
+`Events`, `Off_Topic`, and `_Skipped`. Include one title and exact typed `Source:`
+key, a reasoned priority, `## Synopsis`, `## Action Items`, `## Post Excerpt`,
+`## Links` and `## Evidence`.
+
+The excerpt section contains exactly the line `Untrusted source content:` and one
+blockquote line of at most 25 words copied verbatim from captured visible text.
+The publisher retains and hashes the capture entry and marker automatically.
+Unknown authors/dates stay null. It checks excerpt provenance and artifact
+integrity, not the truth or quality of the summary and proposed actions. Analyze
+the actually retained text before drafting; linked articles/media are not included
+unless separately read through their supported gates and cited as evidence.
+
+```powershell
+python scripts/triage_store.py publish notes linkedin linkedin:activity:7341234567890123456 Events draft.md --capture-root captures
+python scripts/triage_store.py inspect notes RECEIPT_ID
+python scripts/linkedin_capture_helper.py retained 'urn:li:activity:7341234567890123456' --root captures --notes-root notes
+```
+
+Publication is an explicit local write, not a dry-run command. A previously
+verified analysis for the same typed key is returned without overwriting its note.
+The serialized publisher alone updates `_index.md`; a receipt left before an
+interruption remains pending until the note, evidence and index reference verify.
+Skips use `_Skipped`, `--skipped` and `## Reason`; a skipped item may be analyzed
+later and is not considered completed analysis.
+
+With `--notes-root`, retained lookup remains read-only and adds `analysis`,
+`analyzed` and `publication_pending` fields. Missing/incomplete capture never
+becomes analyzed based on an unrelated note. Legacy Markdown files without
+verified publication receipts are not counted as analyzed; migration/dedup review
+of those files remains a separate acceptance gap. Completion and skip records
+never authorize unsaving or other account changes.
+
+Note lookup scans metadata in the supplied notes root's `.triage` receipt store
+and verifies the matching selected items; it does not enumerate the LinkedIn account.

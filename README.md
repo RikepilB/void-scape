@@ -230,6 +230,11 @@ video/playlist selections, resumes unfinished notes and binds publication to
 verified media evidence. Its project skill preserves local read gates and actual
 timestamp citations; independent harness evaluation remains pending.
 
+The repository [LinkedIn observation workflow](docs/linkedin-capture.md) retains
+selected post text and binds authored notes to verified captures and verbatim
+excerpts. It does not browse saved posts or unsave items; the complete source skill
+and live browser acceptance remain pending.
+
 The repository-only [recording inbox controller](docs/process-inbox.md) previews
 local files, prepares evidence, drafts notes through a cached cloud-disabled model,
 and verifies artifacts before moving successful recordings. Long transcripts use

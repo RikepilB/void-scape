@@ -25,6 +25,7 @@ does not authorize install, publication, or roadmap expansion.
 | Instagram follow-relationship audit (read-only) | `dev-only` | repository script; local exports only; never unfollows |
 | YouTube private-playlist queue adapter | `dev-only` | repository script; official API; not installed with the skill |
 | Public YouTube capture and notes | `dev-only` | [source workflow](../youtube-ingest.md); real local capture/read/note proof, independent skill/harness acceptance pending |
+| LinkedIn observed-post capture and notes | `dev-only` | [local workflow](../linkedin-capture.md); synthetic capture/publication/resume proof; source skill, real browser and unsave acceptance pending |
 | Agent documentation tree | `shipped` | this page and sibling pages |
 | Machine-readable agent discovery manifest | `shipped` | `docs/agents/manifest.json` |
 | Observe-and-capture playbook | `shipped` | `docs/agents/observe-and-capture.md` |
