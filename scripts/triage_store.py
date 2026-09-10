@@ -21,6 +21,38 @@ INSTAGRAM_CATEGORIES = {
 }
 RSS_CATEGORIES = {'AI', 'Design', 'Product', 'Jobs', 'Content', 'Startup',
                   'Hackathon', 'Tech', 'Software_Developer', 'News', '_Skipped'}
+YOUTUBE_CATEGORIES = set(RSS_CATEGORIES)
+
+
+def youtube_provenance(key, metadata, capture_root, read_root, *, skipped=False):
+    """Require captured identity and completed reader evidence for video analysis."""
+    from youtube_ingest_helper import capture_root as control_root, verify as verify_capture
+    from youtube_read import verify_read
+    if capture_root is None:
+        raise ValueError('YouTube publication requires a verified capture root')
+    entry = verify_capture(capture_root, key)
+    if any(metadata[field] != value for field, value in
+           [('source', 'youtube'), ('url', entry['url']), ('author', entry['author']), ('date', entry['date'])]):
+        raise ValueError('YouTube frontmatter does not match retained provenance')
+    folder = control_root(capture_root) / 'videos' / key[8:]
+    evidence = [folder / 'entry.json', folder / 'captured.json']
+    if skipped:
+        if read_root is not None:
+            raise ValueError('skip records do not claim completed reader evidence')
+        return set(), evidence
+    if read_root is None:
+        raise ValueError('YouTube analysis requires completed reader evidence')
+    ready, manifest, artifacts = verify_read(read_root, key)
+    if ready['url'] != entry['url']:
+        raise ValueError('read URL does not match the captured video')
+    citations = {frame['t'] for frame in manifest.get('frames', [])}
+    if manifest.get('transcript'):
+        with checked(manifest['transcript']).open('rb') as stream:
+            raw = stream.read(16 * 1024 * 1024 + 1)
+        if len(raw) > 16 * 1024 * 1024:
+            raise ValueError('transcript exceeds publication limit')
+        citations.update(re.findall(r'^\[(\d{2,}:[0-5]\d(?::[0-5]\d)?)\]', raw.decode('utf-8'), re.MULTILINE))
+    return citations, [*evidence, *artifacts]
 
 
 def rss_provenance(key, metadata, capture_root):
@@ -177,20 +209,22 @@ def locked(root):
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
 
-def prepare(source, key, category, note, evidence, *, skipped=False, capture_root=None):
+def prepare(source, key, category, note, evidence, *, skipped=False, capture_root=None, read_root=None):
     """Validate a caller-authored note without interpreting it as instructions."""
     if not re.fullmatch(r'[a-z][a-z0-9_-]{0,31}', source):
         raise ValueError('invalid source')
-    if source not in {'instagram', 'rss'}:
+    if source not in {'instagram', 'rss', 'youtube'}:
         raise ValueError('source adapter not implemented')
     if not key or len(key) > 2048 or any(c in key for c in '\r\n\x00'):
         raise ValueError('invalid canonical source key')
     if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_-]{0,63}', category):
         raise ValueError('invalid category')
-    if category not in (INSTAGRAM_CATEGORIES if source == 'instagram' else RSS_CATEGORIES):
+    if category not in {'instagram': INSTAGRAM_CATEGORIES, 'rss': RSS_CATEGORIES, 'youtube': YOUTUBE_CATEGORIES}[source]:
         raise ValueError('category is not registered for the source')
     if skipped != (category == '_Skipped'):
         raise ValueError('skip records belong in _Skipped')
+    if source != 'youtube' and read_root is not None:
+        raise ValueError('reader binding is only implemented for YouTube')
     with checked(note).open('rb') as stream:
         raw = stream.read(4 * 1024 * 1024 + 1)
     if len(raw) > 4 * 1024 * 1024:
@@ -206,17 +240,26 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
         if (capture_root is not None or metadata['source'] != source or
                 metadata['url'] != canonical_url(code) or key != f'instagram:{code}'):
             raise ValueError('note provenance does not match the requested source')
-    else:
+    elif source == 'rss':
         entry, retained = rss_provenance(key, metadata, capture_root)
+        evidence = list(dict.fromkeys([*retained, *map(Path, evidence)]))
+    else:
+        citations, retained = youtube_provenance(key, metadata, capture_root, read_root, skipped=skipped)
         evidence = list(dict.fromkeys([*retained, *map(Path, evidence)]))
     if [line for line in text.splitlines() if line.startswith('Source:')] != [f'Source: {key}']:
         raise ValueError('note must contain exactly one matching Source line')
     required = ('## Reason',) if skipped else ('## Synopsis', '## Action Items',
-                '## Instagram Excerpt' if source == 'instagram' else '## RSS Excerpt', '## Links', '## Evidence')
+                {'instagram': '## Instagram Excerpt', 'rss': '## RSS Excerpt', 'youtube': '## Key moments'}[source],
+                '## Links', '## Evidence')
     if source == 'rss' and not skipped:
         required += ('## Key points',)
     if any(text.splitlines().count(section) != 1 for section in required):
         raise ValueError('note is missing required sections')
+    if source == 'youtube' and not skipped:
+        cited = set(re.findall(r'\[(\d{2,}:[0-5]\d(?::[0-5]\d)?)\]', text))
+        moments = re.search(r'^## Key moments\r?\n(.*?)(?=^## |\Z)', text, re.MULTILINE | re.DOTALL)[1]
+        if not cited or not cited <= citations or not re.search(r'\[\d{2,}:[0-5]\d(?::[0-5]\d)?\]', moments):
+            raise ValueError('YouTube notes require actual reader timestamps in key moments')
     if source == 'rss' and not skipped:
         section = re.search(r'^## RSS Excerpt\r?\n(.*?)(?=^## |\Z)', text, re.MULTILINE | re.DOTALL)[1]
         lines = [line.strip() for line in section.splitlines() if line.strip()]
@@ -233,7 +276,7 @@ def prepare(source, key, category, note, evidence, *, skipped=False, capture_roo
         raise ValueError('analysis note requires a priority and reason')
     if not skipped and not evidence:
         raise ValueError('completed analysis requires retained evidence')
-    if len(evidence) > 100:
+    if len(evidence) > (515 if source == 'youtube' else 100):
         raise ValueError('too many evidence files')
     artifacts = []
     for item in evidence:
@@ -318,10 +361,10 @@ def update_index(root, control, record):
     stage.replace(path)
 
 
-def publish(root, source, key, category, note, evidence, *, skipped=False, capture_root=None):
-    record, raw = prepare(source, key, category, note, evidence, skipped=skipped, capture_root=capture_root)
+def publish(root, source, key, category, note, evidence, *, skipped=False, capture_root=None, read_root=None):
+    record, raw = prepare(source, key, category, note, evidence, skipped=skipped, capture_root=capture_root, read_root=read_root)
     with locked(root) as (root, control):
-        if source == 'rss':
+        if source in {'rss', 'youtube'}:
             previous = lookup(root, source, key)
             completed = previous['analyzed'] or (previous['skipped'] if skipped else [])
             if completed:
@@ -370,6 +413,7 @@ def main(argv=None):
     write.add_argument('--evidence', action='append', default=[])
     write.add_argument('--skipped', action='store_true')
     write.add_argument('--capture-root')
+    write.add_argument('--read-root')
     args = vars(parser.parse_args(argv))
     command = args.pop('command')
     try:

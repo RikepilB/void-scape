@@ -468,17 +468,22 @@ def find_sidecar(path: str) -> str | None:
 
 def ytdlp_meta(url: str) -> dict[str, Any]:
     url = validate_remote_media_url(url)
-    cp = run_cmd(["yt-dlp", "--no-warnings", "--skip-download", "-J", *_ytdlp_cookie_args(url), url])
+    cp = run_cmd([*ytdlp_base_args(), "--no-warnings", "--skip-download", "-J", *_ytdlp_cookie_args(url), url])
     if cp.returncode != 0:
         raise RuntimeError(f"yt-dlp metadata failed: {_ytdlp_error(cp.stderr)}")
     info = json.loads(cp.stdout)
     if info.get("_type") == "playlist" and info.get("entries"):
         info = info["entries"][0]
     caps = bool(info.get("subtitles") or info.get("automatic_captions"))
+    youtube_id = info.get("id") if urlsplit(url).hostname in {
+        "youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"
+    } else None
+    if not isinstance(youtube_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{11}", youtube_id):
+        youtube_id = None
     return {"duration_s": round(float(info.get("duration") or 0.0), 2),
             "width": int(info.get("width") or 0), "height": int(info.get("height") or 0),
             "fps": float(info.get("fps") or 0.0), "has_audio": True,
-            "captions_available": caps, "title": info.get("title")}
+            "captions_available": caps, "title": info.get("title"), "youtube_id": youtube_id}
 
 
 def probe(inp: str) -> dict[str, Any]:
@@ -890,10 +895,16 @@ def _run(progress, inp, tier, frames, backend, start, end, workdir, pr,
     return progress.finish(result, stop_at=stop_at)
 
 
+def ytdlp_base_args() -> list[str]:
+    """Keep agent reads independent of executable user configuration and plugins."""
+    return ["yt-dlp", "--ignore-config", "--no-plugin-dirs", "--no-remote-components",
+            "--no-cache-dir", "--no-playlist", "--no-mark-watched"]
+
+
 def _download(url: str, wd: Path) -> str:
     url = validate_remote_media_url(url)
     out = str(wd / "source.%(ext)s")
-    cp = run_cmd(["yt-dlp", "-f", "bv*[height<=720]+ba/b[height<=720]/b",
+    cp = run_cmd([*ytdlp_base_args(), "-f", "bv*[height<=720]+ba/b[height<=720]/b",
                   "--concurrent-fragments", "8", "-o", out, "--no-warnings",
                   *_ytdlp_cookie_args(url), url])
     if cp.returncode != 0:
@@ -1207,7 +1218,7 @@ def _fetch_captions(url: str, wd: Path, window_start: float | None = None,
                     window_end: float | None = None) -> str | None:
     url = validate_remote_media_url(url)
     out = str(wd / "caps")
-    run_cmd(["yt-dlp", "--skip-download", "--write-subs", "--write-auto-subs",
+    run_cmd([*ytdlp_base_args(), "--skip-download", "--write-subs", "--write-auto-subs",
              "--sub-format", "vtt", "--sub-langs", "en.*,en",
              "-o", out, "--no-warnings", *_ytdlp_cookie_args(url), url])
     vtts = sorted(wd.glob("caps*.vtt"))
