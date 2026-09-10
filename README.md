@@ -308,8 +308,11 @@ bundle using `--read-root`. Selected audio/video enclosures use the bounded
 `scripts/triage_store.py publish --read-root` publishes timestamp-cited notes bound
 to that verified evidence. Selecting a resource does not fetch it.
 The [real podcast QA record](docs/qa/2026-09-10-real-podcast.md) covers one BBC
-episode through local transcription and verified note publication. Independent
-harness evaluation and representative source acceptance remain pending.
+episode through local transcription and verified note publication. The
+[public access-wall QA record](docs/qa/2026-09-10-rss-access-wall.md) covers one
+newsletter whose subscriber-only article was recorded as skipped, without a
+sign-in bypass. Independent harness evaluation and broader provider acceptance
+remain pending; this is not general paywall detection.
 
 For scripts, subagents, and integrations, the raw engine remains stable:
 
