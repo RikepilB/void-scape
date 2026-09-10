@@ -76,7 +76,7 @@ promised; each is listed with what it would take to become real.
 
 | Direction | What it would give you | Standing gates |
 | --- | --- | --- |
-| X bookmarks, TikTok favorites, LinkedIn saves | one evidence library across every platform you save to | per-platform permission review; signed-in capture is never implied by public reading |
+| X bookmarks, TikTok favorites, Reddit saves | one evidence library across more platforms you save to | per-platform permission review; signed-in capture is never implied by public reading |
 | Newsletter collections | inbox reading with sender and issue order preserved | delivery-platform review; no mailbox credentials, ever |
 | Browser bridge (live pages) | read what a page shows at read time, with the page state recorded | site-by-site approval; no credentials, cookies, or storage access |
 | Screenshot CLI/MCP integrations (Iris-style) | turn a visible screen region into citable frames | capture-scope consent; same inspect -> preview -> read discipline |
