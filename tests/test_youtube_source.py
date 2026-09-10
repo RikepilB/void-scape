@@ -4,6 +4,7 @@ from youtube_source import selection
 
 
 @pytest.mark.parametrize('url', [
+    'https://youtu.be/abcdefghijk',
     'https://youtu.be/abcdefghijk?si=tracking',
     'https://www.youtube.com/watch?v=abcdefghijk&utm_source=test',
     'https://m.youtube.com/shorts/abcdefghijk',
@@ -28,6 +29,8 @@ def test_video_aliases_share_identity(url):
     'https://youtube.com/watch?v=abcdefghijk&list=PLabcdefghijk',
     'https://youtube.com/watch?v=abcdefghijk&v=lmnopqrstuv',
     'https://youtube.com/watch?v=abcdefghijk&token=private',
+    'https://youtube.com/watch?v=abcdefghijk&si',
+    'https://youtube.com/watch?v=abcdefghijk&',
     'https://youtube.com/watch?v=abc',
     'https://youtube.com/watch',
     'https://youtube.com/feed/subscriptions',

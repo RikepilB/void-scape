@@ -19,7 +19,9 @@ def selection(value):
             parsed.fragment or parsed.hostname not in {'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'}):
         raise ValueError('expected an explicit public HTTPS YouTube URL')
     query = {}
-    for key, item in parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True):
+    # Python 3.10 treats an empty query as a malformed field in strict mode.
+    pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True) if parsed.query else []
+    for key, item in pairs:
         if key in query:
             raise ValueError('duplicate YouTube query parameter')
         query[key] = item
