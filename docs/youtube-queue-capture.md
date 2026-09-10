@@ -22,6 +22,17 @@ Use a dedicated playlist instead (default title: `Read Video Queue`).
 Flow mirrors Instagram capture: **inspect → preview → process**. Playlist mutation happens only in
 `process`, and only after a durable append to `urls.md` (or a confirmed duplicate already in the vault).
 
+Playlist enumeration validates page item lists, nested object fields and string page
+tokens. Repeated tokens stop with a structured API-shape error rather than requesting
+the same pages indefinitely. Enumeration completes before queue writes or playlist
+deletion, so a malformed later page does not publish a partial queue. Missing video
+identities remain skipped as unavailable items; nonempty identities selected for
+capture must be strings.
+These checks follow the response types in the official
+[playlist-items](https://developers.google.com/youtube/v3/docs/playlistItems/list)
+and [playlists](https://developers.google.com/youtube/v3/docs/playlists/list) references.
+They detect token cycles, not every possible unbounded stream of unique tokens.
+
 ## One-time OAuth setup
 
 1. Create a Google Cloud project and enable **YouTube Data API v3**.

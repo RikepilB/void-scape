@@ -93,6 +93,49 @@ def test_canonical_url():
     assert canonical_url("vid001abc") == "https://www.youtube.com/watch?v=vid001abc"
 
 
+@pytest.mark.parametrize("method", ["find", "items"])
+@pytest.mark.parametrize("payload", [{"items": {}}, {"items": [None]},
+    {"items": [1]}, {"items": [], "nextPageToken": 42},
+    {"items": [{"snippet": []}]}])
+def test_malformed_playlist_page_fails_with_shape_error(method, payload):
+    client = _client_with_responses([payload])
+    with pytest.raises(YouTubeApiShapeError):
+        if method == "find":
+            client.find_playlist_by_title("Queue")
+        else:
+            client.list_playlist_items(PLAYLIST_ID)
+
+
+@pytest.mark.parametrize("method", ["find", "items"])
+def test_pagination_cycle_stops_before_another_request(method):
+    client = _client_with_responses([
+        {"items": [], "nextPageToken": "a"},
+        {"items": [], "nextPageToken": "b"},
+        {"items": [], "nextPageToken": "a"},
+    ])
+    with pytest.raises(YouTubeApiShapeError, match="repeated"):
+        if method == "find":
+            client.find_playlist_by_title("Queue")
+        else:
+            client.list_playlist_items(PLAYLIST_ID)
+
+
+def test_two_page_items_preserve_order():
+    client = _client_with_responses([
+        {"items": [ITEM_ONE], "nextPageToken": "next"}, {"items": [ITEM_TWO]}])
+    assert [item["video_id"] for item in client.list_playlist_items(PLAYLIST_ID)] == [
+        "vid001abc", "vid002def"]
+
+
+def test_malformed_page_prevents_queue_write_or_delete(tmp_path):
+    client = _client_with_responses([
+        {"items": [ITEM_ONE], "nextPageToken": "next"}, {"items": [None]}])
+    queue = tmp_path / "urls.md"
+    with pytest.raises(YouTubeApiShapeError):
+        process_capture(client, queue, playlist_id=PLAYLIST_ID)
+    assert not queue.exists()
+
+
 def test_is_duplicate_and_append(tmp_path):
     urls_md = tmp_path / "urls.md"
     url = canonical_url("vid001abc")
