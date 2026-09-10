@@ -2,7 +2,9 @@
 
 For repeated intake, the repository-only [RSS helper](../../rss-intake.md) adds
 bounded public-feed capture and revalidated entry dedup. It stores untrusted
-evidence, not analyzed notes. Its source skill and note workflow remain pending.
+evidence, not analyzed notes. The project-scoped
+[substack-ingest skill](../../../.agents/skills/substack-ingest/SKILL.md) coordinates
+retained-entry resume and verified note publication; independent harness checks remain pending.
 
 The article reader prepares deterministic text evidence from local documents, feeds, and explicitly
 approved public article fetches.

@@ -58,8 +58,26 @@ is not a completed note checkpoint.
 The [note publisher](triage-store.md#captured-rss-notes) supports authored RSS
 notes bound to verified capture evidence and canonical-key analysis lookup.
 Capture dedup remains separate: controllers must consult note lookup before
-authoring a retained entry. Remaining issue #57 work includes `substack-ingest`,
-harness evaluation, paywall workflow, gated media routing and YouTube ingest.
+authoring a retained entry. The project-scoped
+[substack-ingest skill](../.agents/skills/substack-ingest/SKILL.md) coordinates this
+workflow. Remaining issue #57 work includes independent harness evaluation,
+complete paywall/media routing workflows and YouTube ingest.
+
+## Resume retained entries
+
+```powershell
+python scripts/rss_capture_helper.py --list-retained --root ./rss-evidence --notes-root ./publication-notes --feed-url https://publication.substack.com --limit 10
+```
+
+This local read-only inventory revalidates captures and note lookup, returning
+entries that still need notes even when a feed capture reports only duplicates.
+The optional feed URL restricts selection to that publication; omitting it selects
+the whole capture folder. Incomplete captures are counted without returning their
+unverified bodies. Pending publication is flagged for recovery of the existing
+draft/receipt. Verified skipped records stay distinct from analyzed notes.
+Counts describe scanned entries, not an exhaustive history; the inventory stops
+when its result limit is reached and refuses more than 10,000 directory entries.
+No fetch, apply or date-filter flag is accepted in retained-inventory mode.
 
 ## Validation
 
