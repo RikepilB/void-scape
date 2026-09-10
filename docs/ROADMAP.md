@@ -19,7 +19,7 @@ surfaces. An issue can close after a design or spike without shipping its produc
 - Local video, recordings and audio; supported public media URLs including individual YouTube links.
 - Captions, sidecars and local transcription; explicit approval before cloud transfer or a first model download.
 - Local images and filename-ordered carousels; local articles, Markdown, RSS/Atom and approved public article/feed fetches.
-- Optional screenshot provenance sidecars preserve sanitized capture claims and verified image hashes (#92, merged PR #107); see [image documentation](agents/readers/images.md).
+- Optional screenshot provenance sidecars preserve sanitized capture claims and verified image hashes ([#92](https://github.com/RikepilB/void-scape/issues/92), merged [PR #107](https://github.com/RikepilB/void-scape/pull/107)); see [image documentation](agents/readers/images.md).
 - Local WhatsApp-style chat-export evidence; source content stays untrusted.
 - Guided `inspect -> preview -> read`, source routing/discovery, cost/permission previews,
   timestamped frames, transcripts, ordered images/entries and manifests.
