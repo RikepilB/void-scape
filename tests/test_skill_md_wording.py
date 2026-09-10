@@ -9,8 +9,6 @@ AUTH_GUIDE = REPO / "docs" / "authenticated-sources.md"
 ARCHITECTURE = REPO / "docs" / "architecture.md"
 WORKFLOW = REPO / "docs" / "workflow.md"
 VOIDSCAPE_GUIDE = REPO / "docs" / "voidscape-guide.md"
-SUBMISSION = REPO / "docs" / "build-week-submission.md"
-PROVENANCE = REPO / "docs" / "BUILD_WEEK_PROVENANCE.md"
 CREDITS = REPO / "CREDITS.md"
 IMPORT_AUDIT = REPO / "docs" / "read-video-import-audit.md"
 LANDING_PAGE = REPO / "docs" / "index.html"
@@ -377,14 +375,6 @@ def test_local_image_and_carousel_reader_is_documented_in_release_candidate_sour
     assert "45–60 second image/carousel demo" in demo
     assert "slide1.png" in demo
     assert "slide10.png" in demo
-
-
-def test_submission_records_live_pages_and_published_provenance():
-    submission = SUBMISSION.read_text(encoding="utf-8")
-    provenance = PROVENANCE.read_text(encoding="utf-8")
-    assert "| Public distribution | Present |" in submission
-    assert "needs an authorized commit/push" not in submission
-    assert "52bc01e" in provenance
 
 
 def test_credits_distinguish_gemini_sdk_from_compatible_http_backends():

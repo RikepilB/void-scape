@@ -41,8 +41,8 @@ repository and is never treated as source code.
 
 The initial import is commit `fd4e47f`. Later commits and the current release work add or harden the
 guided product, source-timeline citations, consent enforcement, installer verification, authenticated-
-source guidance, browser/CLI evidence, and submission packaging. See
-[`BUILD_WEEK_PROVENANCE.md`](BUILD_WEEK_PROVENANCE.md) for the dated split between prior and new work.
+source guidance, and browser/CLI evidence. Git history is the source of truth for the split between
+the imported baseline and later work.
 
 ## Verification
 

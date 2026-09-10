@@ -14,14 +14,14 @@ Match the existing Python standard-library style. Keep user-facing approval text
 - Never read browser credentials, cookies, storage, or secrets.
 - Keep `read-video` aliases only as documented backward compatibility.
 - Preserve upstream license attribution in `CREDITS.md`.
-- Do not build unattended orchestration before the 2026-07-21 submission.
+- Do not build unattended orchestration; the manual guided loop stays the product.
 
 ## Workflow
 
-Read `docs/architecture.md`, `docs/BUILD_WEEK_PROVENANCE.md`, and the current handoff before
-changing behavior. Update tests with each behavior change.
+Read `docs/architecture.md`, `docs/decisions.md`, and the current handoff before changing
+behavior. Update tests with each behavior change.
 
 ## Quality
 
 Run `python -m pytest -q -p no:cacheprovider`. Verify the installer and demo fixture for
-submission-critical changes.
+release-critical changes.

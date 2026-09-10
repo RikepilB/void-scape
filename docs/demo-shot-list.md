@@ -33,7 +33,6 @@ Prepare these tabs/windows:
 1. `https://voidscape.club`
 2. PowerShell at the repository root
 3. File Explorer open to the fresh evidence workdir
-4. README at “Built with Codex” and `docs/BUILD_WEEK_PROVENANCE.md`
 
 ## Beats
 
@@ -45,9 +44,8 @@ Prepare these tabs/windows:
 | 4 | Guided preview — GPT-5.6 integration | Run `python skill/scripts/voidscape.py preview samples/build-week-demo.mp4 --tier both --backend captions`. Hold on `agent=gpt-5.6-terra`, `vision=openai_patch32`, token counts, cost, and the local-next-step line. | “Preview prices the job before it runs. GPT-5.6 reads the selected evidence, and Voidscape estimates its 32-by-32 vision patches so scope and API-equivalent cost are visible first.” | 16s |
 | 5 | Read and inspectable artifacts | Run `python skill/scripts/voidscape.py read samples/build-week-demo.mp4 --tier both --backend captions --workdir samples/build-week-output-take1`. Switch to File Explorer and open `frames/`, `transcript.txt`, and `manifest.json`. | “Read prepares only the approved evidence. Here it stays local and free, and an agent can answer from the source timeline instead of guessing from a title.” | 17s |
 | 6 | Privacy proof | Run `python skill/scripts/voidscape.py read samples/privacy-proof.mp4 --tier audio --backend openai --workdir samples/privacy-proof-output-take1` without `--allow-cloud`. Hold on the rejection. | “A cloud backend is blocked before conversion or upload. A key is never consent; cloud transfer and local model downloads have separate approval gates.” | 12s |
-| 7 | Codex contribution, provenance, close | Show README “Built with Codex,” then `BUILD_WEEK_PROVENANCE.md`, ending on the current GitHub URL. | “I chose the local-first boundary and inspect-preview-read flow. During Build Week, Codex audited my existing engine, found timestamp and installer defects, added regression coverage, and helped make the judge path reproducible. The imported baseline and new work are separated in the repo.” | 15s |
 
-**Total: 85 seconds.**
+**Total: 70 seconds.**
 
 ## 45–60 second image/carousel demo
 
