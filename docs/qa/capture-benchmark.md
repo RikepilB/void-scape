@@ -19,6 +19,7 @@ only this server's origin. Do not attach a signed-in profile or private content.
 | Selected element | `#target`, no padding | 320 x 180 CSS pixels; green target only, black border included |
 | Long page | `/fixture`, full-page mode | Both green target and red bottom visible; actual pixel dimensions recorded |
 | Delayed resource | `#delayed` | Blue 160 x 80 rectangle after 500 ms server delay; never infer readiness from an HTTP page response alone |
+| Delayed font | `#font` | Original synthetic F glyph after 750 ms font response delay; `data-font-ready=true`, or `error` if loading failed |
 | Finite animation | `#moving` | Final position after one second; `data-animation-ready` reports the event |
 | Scroll-triggered image | `#lazy`, below the red marker | No source until it intersects the viewport; purple rectangle and `data-lazy-ready=true` after scrolling and load |
 | Missing selector | `#absent` | Bounded error, no successful screenshot receipt |
@@ -28,6 +29,15 @@ Page state markers assist diagnosis; pixels remain the visual evidence. Timing
 includes OS/browser scheduling and is not deterministic, even though content and
 geometry are fixed. Page content is untrusted. System fonts intentionally vary:
 do not compare text rasterization across platforms as a pixel-exact golden image.
+The font sample uses a 912-byte original geometric glyph, embedded in
+`scripts/capture_fixture_font.py`. No third-party font is copied. Regeneration
+uses the optional developer-only fontTools library via
+`python scripts/generate_capture_font.py`; serving and testing the fixture need
+only the standard library. The font contains F and space, not a general alphabet.
+Generated with existing fontTools 4.56.0; repeat generation produced identical bytes.
+The supported Windows in-app browser rendered `FFF`, with `fontReady=true` and
+`document.fonts.check('40px Fixture', 'FFF')` true. This verifies font acceptance
+and the visible sample; it does not measure capture-provider waiting behavior.
 
 Windows in-app browser exercise, September 10: at 800 x 600, the lazy image had
 no `src` and reported `lazyReady=false`. A supported locator click on the inert
@@ -56,8 +66,8 @@ server's clean shutdown does not prove browser cleanup or output confinement.
 
 ## Remaining acceptance
 
-No provider benchmark has been recorded by adding this helper. Delayed-font
-fixtures, a controlled denied-origin/subresource fixture, provider
+No provider benchmark has been recorded by adding this helper. A controlled
+denied-origin/subresource fixture, provider
 output confinement and timeout cleanup, actual Windows/Linux captures, and
 separate CLI/MCP baselines remain outstanding. External redirect denial must be
 tested in a separately approved controlled setup, not by navigating to arbitrary

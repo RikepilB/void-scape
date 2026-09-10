@@ -4,10 +4,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import time
 
+from capture_fixture_font import FONT
+
 
 PAGE = b"""<!doctype html><html lang="en"><meta charset="utf-8">
 <title>Capture reliability fixture</title>
 <style>
+@font-face { font-family: Fixture; src: url('/delayed.ttf') format('truetype'); font-display: swap; }
+#font { font: 40px Fixture, monospace; }
 * { box-sizing: border-box; } body { margin: 0; font: 20px sans-serif; }
 #target { width: 320px; height: 180px; background: #149646; color: white;
 padding: 20px; border: 4px solid black; }
@@ -18,6 +22,7 @@ to { transform: translateX(0); } }
 #bottom { height: 180px; background: #d02030; color: white; }
 </style><h1>PUBLIC SYNTHETIC FIXTURE</h1>
 <section id="target">GREEN TARGET ONLY</section>
+<p id="font" aria-label="Synthetic font sample">FFF</p>
 <p id="moving">ANIMATION END</p>
 <img id="delayed" src="/delayed.svg" width="160" height="80"
 alt="Delayed blue rectangle: pending">
@@ -25,6 +30,10 @@ alt="Delayed blue rectangle: pending">
 <section id="bottom">RED BOTTOM MARKER</section>
 <img id="lazy" width="160" height="80" alt="Lazy purple rectangle: pending">
 <script>
+document.documentElement.dataset.fontReady = 'false';
+document.fonts.load('40px Fixture', 'FFF').then(fonts => {
+  document.documentElement.dataset.fontReady = String(fonts.length > 0);
+}, () => { document.documentElement.dataset.fontReady = 'error'; });
 const image = document.querySelector('#delayed');
 function ready() {
   document.documentElement.dataset.imageReady = image.complete && image.naturalWidth > 0;
@@ -68,6 +77,9 @@ class FixtureHandler(BaseHTTPRequestHandler):
             payload, media_type = SVG, "image/svg+xml"
         elif self.path == "/lazy.svg":
             payload, media_type = LAZY_SVG, "image/svg+xml"
+        elif self.path == "/delayed.ttf":
+            time.sleep(0.75)
+            payload, media_type = FONT, "font/ttf"
         else:
             self.send_error(404, "Unknown fixture route")
             return
@@ -78,6 +90,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Content-Security-Policy",
                          "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; "
+                         "font-src 'self'; "
                          "script-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; "
                          "form-action 'none'; frame-ancestors 'none'")
         self.end_headers()
