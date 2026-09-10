@@ -1,4 +1,5 @@
-Read .agents/skills/youtube-ingest/SKILL.md and references/commands.md.
+Read .agents/skills/youtube-ingest/SKILL.md and
+.agents/skills/youtube-ingest/references/commands.md.
 Resolve the explicit public source, bounds, capture root and note root.
 Preview by default; preserve fetch/write/read scope and all media gates.
 Use retained selection snapshots for resume and verified notes for completion.
