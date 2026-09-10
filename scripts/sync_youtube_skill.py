@@ -11,7 +11,8 @@ def rendered_files(root):
     outputs = {root / '.claude/skills/youtube-ingest' / name:
                (source / name).read_text(encoding='utf-8')
                for name in ('SKILL.md', 'references/commands.md')}
-    body = ('Read .agents/skills/youtube-ingest/SKILL.md and references/commands.md.\n'
+    body = ('Read .agents/skills/youtube-ingest/SKILL.md and\n'
+            '.agents/skills/youtube-ingest/references/commands.md.\n'
             'Resolve the explicit public source, bounds, capture root and note root.\n'
             'Preview by default; preserve fetch/write/read scope and all media gates.\n'
             'Use retained selection snapshots for resume and verified notes for completion.\n'
