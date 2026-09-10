@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import math
 import re
 import shutil
 import subprocess
@@ -10,6 +12,8 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any
+from datetime import datetime
+from urllib.parse import urlsplit
 
 if __package__:
     from . import video
@@ -20,6 +24,147 @@ else:
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 REJECTED_EXTENSIONS = {".gif", ".bmp", ".tif", ".tiff", ".heic", ".heif", ".avif"}
 MAX_IMAGES = 100
+MAX_PROVENANCE_BYTES = 16384
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _capture_provenance(path: Path, width: int, height: int) -> dict[str, Any]:
+    """Validate local claims, never follow paths or URLs supplied by a producer."""
+    verified = {"sha256": _sha256(path), "pixel_width": width, "pixel_height": height}
+    result = {"status": "missing", "content_trust": "untrusted",
+              "coverage": "unknown", "importer_verified": verified,
+              "producer_claims": None}
+    sidecar = path.with_name(path.name + ".capture.json")
+    if sidecar.is_symlink():
+        raise ValueError("capture sidecar cannot be a symlink")
+    if not sidecar.exists():
+        return result
+    if not sidecar.is_file():
+        raise ValueError("capture sidecar must be a regular file")
+    with sidecar.open("rb") as stream:
+        raw = stream.read(MAX_PROVENANCE_BYTES + 1)
+    if len(raw) > MAX_PROVENANCE_BYTES:
+        raise ValueError("capture sidecar exceeds 16384 bytes")
+    def invalid():
+        # Never echo untrusted values: metadata can contain credentials.
+        raise ValueError("invalid capture sidecar schema or geometry")
+    def unique(pairs):
+        obj = {}
+        for key, value in pairs:
+            if key in obj:
+                invalid()
+            obj[key] = value
+        return obj
+    try:
+        data = json.loads(raw.decode("utf-8"), object_pairs_hook=unique)
+    except (ValueError, UnicodeError, RecursionError):
+        invalid()
+    required = {"version", "image_sha256", "producer", "observed_at", "source_url",
+                "final_url", "viewport", "pixels", "scale", "mode", "region",
+                "readiness_warnings", "content_trust", "derived_from"}
+    if not isinstance(data, dict) or set(data) != required:
+        invalid()
+    if type(data["version"]) is not int or data["version"] != 1:
+        raise ValueError("unsupported capture sidecar version")
+    if data["content_trust"] != "untrusted":
+        invalid()
+    def dimensions(obj):
+        if not isinstance(obj, dict) or set(obj) != {"width", "height"}:
+            invalid()
+        if any(type(n) is not int or not 1 <= n <= 1000000 for n in obj.values()):
+            invalid()
+    def sha(value):
+        if not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{64}", value):
+            invalid()
+    sha(data["image_sha256"])
+    if data["image_sha256"] != verified["sha256"]:
+        raise ValueError("capture sidecar image hash mismatch")
+    dimensions(data["pixels"])
+    if data["pixels"] != {"width": width, "height": height}:
+        raise ValueError("capture sidecar image dimensions mismatch")
+    if data["viewport"] is not None:
+        dimensions(data["viewport"])
+    scale = data["scale"]
+    if type(scale) not in (int, float) or not 0 < scale <= 16 or not math.isfinite(scale):
+        invalid()
+    producer = data["producer"]
+    if not isinstance(producer, dict) or set(producer) != {"name", "version"}:
+        invalid()
+    if any(not isinstance(v, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", v)
+           for v in producer.values()):
+        invalid()
+    observed = data["observed_at"]
+    if observed is not None:
+        try:
+            if not isinstance(observed, str) or len(observed) > 40:
+                invalid()
+            if datetime.fromisoformat(observed.replace("Z", "+00:00")).tzinfo is None:
+                invalid()
+        except ValueError:
+            invalid()
+    for key in ("source_url", "final_url"):
+        value = data[key]
+        if value is not None:
+            try:
+                if not isinstance(value, str) or len(value) > 4096:
+                    invalid()
+                parsed = urlsplit(value)
+                if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+                    invalid()
+                port = parsed.port
+                host = parsed.hostname.encode("idna").decode("ascii")
+                if not re.fullmatch(r"[a-zA-Z0-9.:-]+", host):
+                    invalid()
+                host = f"[{host}]" if ":" in host else host
+                # Paths can carry tokens too. Retain only the origin, never userinfo,
+                # paths, query strings or fragments; do not fetch even that origin.
+                data[key] = f"{parsed.scheme}://{host}" + (f":{port}" if port else "")
+            except (ValueError, UnicodeError):
+                invalid()
+    warnings = data["readiness_warnings"]
+    allowed_warnings = {"unknown", "fonts_pending", "images_pending", "animation_active",
+                        "timeout", "partial_capture", "occluded"}
+    if not isinstance(warnings, list) or len(warnings) > 7 or any(
+            not isinstance(v, str) or v not in allowed_warnings for v in warnings):
+        invalid()
+    if data["mode"] not in ("viewport", "full_page", "region", "crop", "unknown"):
+        invalid()
+    parent = data["derived_from"]
+    if parent is not None:
+        if not isinstance(parent, dict) or set(parent) != {"sha256", "pixels"}:
+            invalid()
+        sha(parent["sha256"])
+        dimensions(parent["pixels"])
+    if (data["mode"] == "crop") != (parent is not None):
+        invalid()
+    region = data["region"]
+    if region is not None:
+        if not isinstance(region, dict) or set(region) != {"x", "y", "width", "height"}:
+            invalid()
+        if any(type(v) is not int or not 0 <= v <= 1000000 for v in region.values()):
+            invalid()
+        if region["width"] != width or region["height"] != height:
+            invalid()
+        if parent and (region["x"] + width > parent["pixels"]["width"] or
+                       region["y"] + height > parent["pixels"]["height"]):
+            invalid()
+    if data["mode"] in ("region", "crop") and region is None:
+        invalid()
+    if data["mode"] == "viewport":
+        viewport = data["viewport"]
+        if viewport is None or region is not None or any(
+                abs(data["pixels"][axis] - viewport[axis] * scale) > 1
+                for axis in ("width", "height")):
+            invalid()
+    result.update(status="validated_claims", producer_claims=data)
+    return result
 
 
 def _natural_key(
@@ -124,6 +269,7 @@ def probe(inp: str) -> dict[str, Any]:
             "width": width,
             "height": height,
             "bytes": source.stat().st_size,
+            "provenance": _capture_provenance(source, width, height),
         })
     return {
         "source": "local",
@@ -238,6 +384,10 @@ def _run(progress, inp, workdir):
             shutil.copy2(item["source"], target)
         except OSError as ex:
             raise RuntimeError(f"image copy failed: {ex}") from ex
+        if _sha256(target) != item["provenance"]["importer_verified"]["sha256"]:
+            raise ValueError("image changed after inspection; no completed manifest written")
+        if _ffprobe_image(target) != (item["width"], item["height"]):
+            raise ValueError("copied image dimensions changed; no completed manifest written")
         copied.append({
             "index": item["index"],
             "file": str(target.resolve()),
@@ -245,6 +395,7 @@ def _run(progress, inp, workdir):
             "width": item["width"],
             "height": item["height"],
             "bytes": item["bytes"],
+            "provenance": item["provenance"],
         })
 
     progress.complete("copy")
@@ -287,7 +438,16 @@ def _fmt_estimate(result: dict[str, Any]) -> str:
         f"  agent tokens: ${cost['agent']:.4f}",
         f"  TOTAL:        ${cost['total']:.4f}   (dominant: {result['dominant_cost']})",
         f"  basis: {result['cost_basis']}",
+        _fmt_provenance(result),
     ])
+
+
+def _fmt_provenance(result: dict[str, Any]) -> str:
+    missing = sum(item.get("provenance", {}).get("status", "missing") == "missing"
+                  for item in result["images"])
+    return (f"  Capture provenance: {missing} missing; "
+            f"{len(result['images']) - missing} validated claims (not authenticated). "
+            "Coverage remains unknown.")
 
 
 def _add_output_modes(parser: argparse.ArgumentParser) -> None:
