@@ -306,7 +306,9 @@ through `scripts/rss_read.py` with explicit fetch approval; notes bind its verif
 bundle using `--read-root`. Selected audio/video enclosures use the bounded
 `rss_download.py` acquisition helper, then `rss_media.py` for governed local reads.
 `scripts/triage_store.py publish --read-root` publishes timestamp-cited notes bound
-to that verified evidence. Selecting a resource does not fetch it. Independent
+to that verified evidence. Selecting a resource does not fetch it.
+The [real podcast QA record](docs/qa/2026-09-10-real-podcast.md) covers one BBC
+episode through local transcription and verified note publication. Independent
 harness evaluation and representative source acceptance remain pending.
 
 For scripts, subagents, and integrations, the raw engine remains stable:
