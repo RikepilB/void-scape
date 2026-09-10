@@ -12,7 +12,7 @@ they do not authorize installation or account actions.
 | --- | --- | --- |
 | Completed foundations | Readers, CLI, docs, hardening and scoped design/spike outcomes | [M0](https://github.com/RikepilB/void-scape/milestone/1) |
 | Current verification | Implemented source skills, independent harness acceptance, browser QA and release checks | [M1](https://github.com/RikepilB/void-scape/milestone/2), #42 / #54 / #57 / #91 |
-| Next | Inbox scheduling, LinkedIn triage, bridge pairing/permissions and screenshot provenance | [M2](https://github.com/RikepilB/void-scape/milestone/3), #55 / #56 / #58 / #92 |
+| Next | Inbox scheduling, LinkedIn triage, bridge pairing/permissions | [M2](https://github.com/RikepilB/void-scape/milestone/3), #55 / #56 / #58 |
 | Later / exploration | Visual jobs, capture benchmarks, more saved sources and separate companions | [M3](https://github.com/RikepilB/void-scape/milestone/4), #44 / #93–#96 |
 
 Closing a design or spike issue only completes that scope. It never ships a production integration.
@@ -25,7 +25,8 @@ Closing a design or spike issue only completes that scope. It never ships a prod
 | Local/URL video and audio evidence | `shipped` | `skill/scripts/video.py`; video tests |
 | Local image and carousel evidence | `shipped` | `skill/scripts/image.py`; image tests |
 | Local articles, RSS/Atom, approved public article fetch | `shipped` | `skill/scripts/article.py`; article tests |
-| Public feed capture and notes | `dev-only` | [RSS intake helper](../rss-intake.md), project substack-ingest skill and verified publication; independent harness evaluation and full source acceptance pending |
+| Optional screenshot provenance | `shipped` | [Image sidecar contract](readers/images.md), merged PR #107; local hash/geometry verification, not browser capture or producer authentication |
+| Public feed capture and notes | `dev-only` | [RSS intake helper](../rss-intake.md), selected article/enclosure reads (#109–#111), real podcast QA, project skill and verified publication; access-wall/provider and independent harness acceptance pending |
 | Local chat export (WhatsApp-style) evidence | `shipped` | `skill/scripts/chat.py`; chat reader tests |
 | Connectors contract page | `shipped` | this tree: `connectors.md` |
 | Harness skill kit (copy-and-adapt templates) | `shipped` | `harness/skills/`; template tests |

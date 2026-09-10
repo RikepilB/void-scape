@@ -11,7 +11,7 @@ surfaces. An issue can close after a design or spike without shipping its produc
 | --- | --- | --- |
 | [M0 — Completed foundations](https://github.com/RikepilB/void-scape/milestone/1) | Readers, CLI, docs, reviewed hardening and explicitly scoped design/spike outcomes | Historical completed issue scope; not proof of all account workflows |
 | [M1 — Current: source workflow acceptance](https://github.com/RikepilB/void-scape/milestone/2) | Verify implemented Instagram, RSS, YouTube and inbox workflows, browser recovery and release claims | Independent behavioral evidence, supported-harness checks, exact-main tests and live docs |
-| [M2 — Next: bounded automation and integrations](https://github.com/RikepilB/void-scape/milestone/3) | Inbox scheduling, LinkedIn triage, bridge pairing/permission design and screenshot provenance | Each feature gets its own design, consent boundaries and acceptance; relevant M1 gates first |
+| [M2 — Next: bounded automation and integrations](https://github.com/RikepilB/void-scape/milestone/3) | Inbox scheduling, LinkedIn triage, bridge pairing/permission design | Each feature gets its own design, consent boundaries and acceptance; relevant M1 gates first |
 | [M3 — Later: exploration and companions](https://github.com/RikepilB/void-scape/milestone/4) | More saved sources, visual jobs, capture benchmarks, follower audit and job-search companions | Selected use case/data, platform review, security/adoption and product decisions; no deadline |
 
 ## Available now — the supported reading core
@@ -19,6 +19,7 @@ surfaces. An issue can close after a design or spike without shipping its produc
 - Local video, recordings and audio; supported public media URLs including individual YouTube links.
 - Captions, sidecars and local transcription; explicit approval before cloud transfer or a first model download.
 - Local images and filename-ordered carousels; local articles, Markdown, RSS/Atom and approved public article/feed fetches.
+- Optional screenshot provenance sidecars preserve sanitized capture claims and verified image hashes ([#92](https://github.com/RikepilB/void-scape/issues/92), merged [PR #107](https://github.com/RikepilB/void-scape/pull/107)); see [image documentation](agents/readers/images.md).
 - Local WhatsApp-style chat-export evidence; source content stays untrusted.
 - Guided `inspect -> preview -> read`, source routing/discovery, cost/permission previews,
   timestamped frames, transcripts, ordered images/entries and manifests.
@@ -32,7 +33,7 @@ saved-collection capture, permission to use account credentials or permission to
 | Workstream | Already in the repository | Remaining / issue |
 | --- | --- | --- |
 | Instagram triage | Shared contract, verified note store, controller/project skill and generated harness entries (#75, #77–#80) | Independent behavioral benchmarks and real target-harness proof: [#54](https://github.com/RikepilB/void-scape/issues/54) |
-| Public Substack/RSS | Bounded capture, retained entries, verified notes and project skill (#85, #87, #88) | Complete article/media/paywall routing and independent skill/harness acceptance: [#57](https://github.com/RikepilB/void-scape/issues/57) |
+| Public Substack/RSS | Bounded capture, verified notes, selected public article and enclosure reads (#109–#111), project skill and real podcast QA | Representative access-wall/provider behavior and independent skill/harness acceptance: [#57](https://github.com/RikepilB/void-scape/issues/57) |
 | Public YouTube selections | Bounded discovery, dedup, local read worker, verified notes and project skill (#89), wrapper-reference fix (#90) | Independent skill/harness acceptance: [#57](https://github.com/RikepilB/void-scape/issues/57) |
 | Local recording inbox | Local note author, resumable long drafts, controller and project skill (#81–#84) | Real recording/harness proof; scheduling is next, not shipped: [#56](https://github.com/RikepilB/void-scape/issues/56) |
 | LinkedIn observations | Typed post identities, local capture/checkpoints (#97), verified note/excerpt/index publication and selected resume; no browser/network access | Project skill handles supplied observations; independent harness and permitted live acceptance remain: [#55](https://github.com/RikepilB/void-scape/issues/55) |
@@ -58,15 +59,12 @@ The target is to finish these gaps before expanding every source at once.
 - **Browser integration — [#58](https://github.com/RikepilB/void-scape/issues/58).**
   Design pairing, client permission profiles and audit boundaries in the separate agent-bridge
   repository before expanding the three-verb spike. A separate design and security review is required.
-- **Screenshot provenance — [#92](https://github.com/RikepilB/void-scape/issues/92).**
-  Optional, bounded sidecars preserve origin/time/region and distinguish producer claims from
-  verified image hashes. Keep crops and unknown coverage honest. No Iris dependency or browser
-  access is required for this local evidence contract.
+
 
 ## Later — exploration, not promised
 
 - **Visual change jobs — [#93](https://github.com/RikepilB/void-scape/issues/93).**
-  Approved pages, deterministic comparisons first, bounded AI when useful, meaningful-change
+  Design scope closed; no running scheduler is shipped. Approved pages, deterministic comparisons first, bounded AI when useful, meaningful-change
   notifications, allowlists, cadence/timezone, budgets, retention, cancellation and audit.
 - **Capture benchmarks — [#94](https://github.com/RikepilB/void-scape/issues/94).**
   Synthetic fixtures, explicit geometry, failure behavior, Windows/Linux evidence and separate
@@ -78,7 +76,7 @@ The target is to finish these gaps before expanding every source at once.
   Separate companion; blocked on selected follower/following export files. Non-followback is not
   historical unfollow. No live social API or follow/unfollow automation.
 - **LinkedIn job-search links — [#96](https://github.com/RikepilB/void-scape/issues/96).**
-  Separate project direction: deterministic links and optional approved keyword assistance,
+  Design scope closed; no companion application is shipped. Separate project direction: deterministic links and optional approved keyword assistance,
   not media ingestion, automatic applications or messaging.
 - **Creator analytics, multi-model workflows and hosted edition.** Separate product decisions;
   no shipping commitment. Hosted auth/billing/connector infrastructure needs its own repository,
