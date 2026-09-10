@@ -6,6 +6,7 @@ import urllib.request
 import pytest
 
 from capture_fixture_server import make_server
+from capture_fixture_font import FONT
 
 
 @pytest.fixture
@@ -69,3 +70,11 @@ def test_lazy_image_requires_page_trigger(fixture_url):
     with fetch(fixture_url + "/lazy.svg") as response:
         assert response.headers["Content-Type"] == "image/svg+xml"
         assert b'fill="purple"' in response.read()
+
+
+def test_delayed_font_is_fixed_local_resource(fixture_url):
+    start = time.monotonic()
+    with fetch(fixture_url + "/delayed.ttf") as response:
+        assert response.headers["Content-Type"] == "font/ttf"
+        assert response.read() == FONT
+    assert time.monotonic() - start >= 0.75
