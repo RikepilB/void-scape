@@ -95,7 +95,7 @@ def test_probe_orders_directory_naturally(carousel):
         "source", "input", "kind", "item_count", "within_limit", "images", "skipped",
     }
     assert set(result["images"][0]) == {
-        "index", "source", "source_name", "width", "height", "bytes",
+        "index", "source", "source_name", "width", "height", "bytes", "provenance",
     }
 
 

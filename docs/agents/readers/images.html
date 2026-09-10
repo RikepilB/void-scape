@@ -61,6 +61,7 @@
         <summary>On this page <span>Overview</span></summary>
         <nav aria-label="On this page"><a href="#top" class="toc-level-2">Overview</a>
 <a href="#inputs-and-limits" class="toc-level-2">Inputs and limits</a>
+<a href="#optional-screenshot-provenance-version-1" class="toc-level-2">Optional screenshot provenance (version 1)</a>
 <a href="#guided-use" class="toc-level-2">Guided use</a>
 <a href="#raw-protocol" class="toc-level-2">Raw protocol</a>
 <a href="#citation-contract" class="toc-level-2">Citation contract</a></nav>
@@ -73,6 +74,28 @@
 <h2 id="inputs-and-limits">Inputs and limits<a class="heading-anchor" href="#inputs-and-limits" aria-label="Link to Inputs and limits">#</a></h2>
 <ul><li>One local <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, or <code>.webp</code> file.</li><li>One local folder treated as a non-recursive carousel.</li><li>Natural filename order with deterministic tie breaking.</li><li>Maximum 100 accepted images.</li><li>Symlinks, nested directories, unsupported files, and animated images are rejected or reported according to the probe result.</li></ul>
 <p>The reader copies accepted bytes; it does not resize, transcode, OCR, caption, or modify originals.</p>
+<h2 id="optional-screenshot-provenance-version-1">Optional screenshot provenance (version 1)<a class="heading-anchor" href="#optional-screenshot-provenance-version-1" aria-label="Link to Optional screenshot provenance (version 1)">#</a></h2>
+<p>Place <code>shot.png.capture.json</code> beside a selected <code>shot.png</code> (same rule for JPEG/WebP). Plain images need no sidecar. Inspect and preview report missing provenance explicitly; read retains sanitized claims in each manifest image&#x27;s <code>provenance</code>. This extension is implemented here; release status still requires merge through a supported entry point.</p>
+<div class="code-block"><div class="code-meta"><span>JSON</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-json">{
+  &quot;version&quot;: 1,
+  &quot;image_sha256&quot;: &quot;0000000000000000000000000000000000000000000000000000000000000000&quot;,
+  &quot;producer&quot;: {&quot;name&quot;: &quot;example-capture&quot;, &quot;version&quot;: &quot;1.0&quot;},
+  &quot;observed_at&quot;: null,
+  &quot;source_url&quot;: &quot;https://example.com&quot;,
+  &quot;final_url&quot;: null,
+  &quot;viewport&quot;: {&quot;width&quot;: 800, &quot;height&quot;: 600},
+  &quot;pixels&quot;: {&quot;width&quot;: 800, &quot;height&quot;: 600},
+  &quot;scale&quot;: 1,
+  &quot;mode&quot;: &quot;viewport&quot;,
+  &quot;region&quot;: null,
+  &quot;readiness_warnings&quot;: [&quot;unknown&quot;],
+  &quot;content_trust&quot;: &quot;untrusted&quot;,
+  &quot;derived_from&quot;: null
+}</code></pre></div>
+<p>Replace the placeholder hash with the actual image SHA-256. All keys shown are required; unknown keys/versions, duplicate keys, invalid UTF-8/JSON, symlink sidecars, mismatched hashes/dimensions, invalid geometry and metadata over 16 KiB are rejected. No metadata path fields are supported. Producer identifiers are limited to 64 ASCII letters/digits/dots/underscores/hyphens. Time is a timezone-aware ISO timestamp or <code>null</code> (unknown). Dimensions are positive integers up to one million; scale is finite and greater than zero, at most 16. Viewport dimensions are CSS pixels; image dimensions and region coordinates are device pixels. A viewport capture must match viewport × scale, allowing one pixel of rounding.</p>
+<p>Modes: <code>viewport</code>, <code>full_page</code>, <code>region</code>, <code>crop</code>, <code>unknown</code>. Region/crop require an <code>x</code>, <code>y</code>, <code>width</code>, <code>height</code> object with nonnegative integer coordinates and dimensions matching the image. Only crop accepts/requires <code>derived_from</code>, containing <code>sha256</code> and <code>pixels</code> of the claimed original; the crop must fit inside those dimensions. This identifies a derivative without opening an arbitrary parent path. To retain the actual original as evidence, select it alongside the crop; a parent hash alone does not mean the original was supplied or verified. No crop is created by this reader, and every selected original is preserved byte-for-byte.</p>
+<p>Readiness warnings are bounded codes: <code>unknown</code>, <code>fonts_pending</code>, <code>images_pending</code>, <code>animation_active</code>, <code>timeout</code>, <code>partial_capture</code>, <code>occluded</code>. Free-form instructions are rejected. Source/final URLs are HTTP(S) or <code>null</code>; only their origins survive import. Userinfo, paths, queries and fragments are removed because all can contain secrets. Keep secrets out of producer identifiers and hostnames too: this is not a general secret detector. Raw sidecars are neither copied into the bundle nor modified. URLs are never fetched and metadata is never executed.</p>
+<p><code>importer_verified</code> contains only the image hash and measured pixel dimensions. Everything in <code>producer_claims</code> remains untrusted, including time, viewport, readiness and parent identity. Hash agreement proves byte association, not producer authentication, semantic correctness, page completeness or hidden content. <code>coverage</code> stays <code>unknown</code>, even for <code>full_page</code> claims. Failed copy/hash/dimension checks never produce a completed manifest; partial files may remain in the failed workdir for diagnosis. No capture tool installation or browser access is involved.</p>
 <h2 id="guided-use">Guided use<a class="heading-anchor" href="#guided-use" aria-label="Link to Guided use">#</a></h2>
 <div class="code-block"><div class="code-meta"><span>PowerShell</span><button class="copy-button" type="button">Copy</button></div><pre><code class="language-powershell">voidscape inspect &quot;slides&quot;
 voidscape preview &quot;slides&quot;
@@ -96,6 +119,7 @@ python skill/scripts/image.py run &quot;slides&quot; --workdir image-evidence --
       <strong>On this page</strong>
       <nav><a href="#top" class="toc-level-2">Overview</a>
 <a href="#inputs-and-limits" class="toc-level-2">Inputs and limits</a>
+<a href="#optional-screenshot-provenance-version-1" class="toc-level-2">Optional screenshot provenance (version 1)</a>
 <a href="#guided-use" class="toc-level-2">Guided use</a>
 <a href="#raw-protocol" class="toc-level-2">Raw protocol</a>
 <a href="#citation-contract" class="toc-level-2">Citation contract</a></nav>

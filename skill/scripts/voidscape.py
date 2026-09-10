@@ -239,6 +239,7 @@ def inspect_source(args: argparse.Namespace) -> int:
         print("Voidscape inspection")
         print(f"  {label}: {info['item_count']} {count_label}")
         print("  Order: " + ", ".join(item["source_name"] for item in info["images"]))
+        print(image_engine._fmt_provenance(info))
         _print_image_skipped(info)
         print("  Processing: local only · originals preserved")
         print(f"Next: voidscape preview {_shell_arg(args.input)}")

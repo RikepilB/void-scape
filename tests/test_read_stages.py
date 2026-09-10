@@ -60,10 +60,13 @@ def test_transcript_failure_preserves_frames_and_fails_read(tmp_path, monkeypatc
 def test_image_copy_failure_lists_only_completed_items(tmp_path, monkeypatch):
     source = tmp_path / "source.jpg"
     source.write_bytes(b"fixture")
+    monkeypatch.setattr(image, "_ffprobe_image", lambda path: (1, 1))
     monkeypatch.setattr(image, "probe", lambda inp: {
         "kind": "carousel", "source": "local", "input": inp, "item_count": 2, "skipped": [],
         "images": [{"index": i, "source_name": f"{i}.jpg", "source": str(source),
-                    "width": 1, "height": 1, "bytes": 7} for i in (1, 2)]})
+                    "width": 1, "height": 1, "bytes": 7,
+                    "provenance": image._capture_provenance(source, 1, 1)}
+                   for i in (1, 2)]})
     original = image.shutil.copy2
 
     def copy_one(source, target):
