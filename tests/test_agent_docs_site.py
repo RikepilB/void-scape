@@ -360,6 +360,7 @@ def test_shipped_dev_only_and_candidate_statuses_match_documented_truth():
     manifest = json.loads(_text(AGENT_MANIFEST))
     statuses = {item["id"]: item["status"] for item in manifest["capabilities"]}
     assert statuses["workflow.guided_read"] == "shipped"
+    assert statuses["discovery.source_registry"] == "shipped"
     assert statuses["evidence.image_carousel"] == "shipped"
     assert statuses["evidence.video_audio"] == "shipped"
     assert statuses["evidence.article"] == "shipped"
