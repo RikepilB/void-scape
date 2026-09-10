@@ -146,7 +146,7 @@ def test_atom_alternate_is_not_enclosure():
     entry = parsed['entries'][0]
     assert entry['link'] == 'https://example.com/post'
     assert entry['body'] == 'Text' and entry['author'] == 'Alice'
-    assert entry['enclosures'] == [{'url': 'https://example.com/audio.mp3', 'type': 'audio/mpeg'}]
+    assert entry['enclosures'] == [{'url': 'https://example.com/audio.mp3', 'url_redacted': False, 'type': 'audio/mpeg'}]
 
 
 def test_same_title_without_id_does_not_drop_distinct_entries():
@@ -290,3 +290,36 @@ def test_skipped_entry_output_is_bounded(tmp_path):
     result = invoke(path, tmp_path / 'notes', limit=1)
     assert len(result['feed_skipped']) == 1
     assert result['feed_skipped_total'] == 4
+
+@pytest.mark.parametrize('kind', ['rss', 'atom'])
+@pytest.mark.parametrize('suffix,redacted', [('', False), ('?token=synthetic-secret', True), ('#fragment', True)])
+def test_feed_resource_redaction_is_explicit(kind, suffix, redacted):
+    link = 'https://example.com/post' + suffix
+    media = 'https://example.com/audio.mp3' + suffix
+    if kind == 'rss':
+        xml = f'<rss><channel><item><title>Example</title><link>{link}</link><enclosure url="{media}" type="audio/mpeg"/></item></channel></rss>'
+    else:
+        xml = f'<feed><entry><title>Example</title><link href="{link}"/><link rel="enclosure" href="{media}" type="audio/mpeg"/></entry></feed>'
+    entry = article._parse_feed_xml(xml)['entries'][0]
+    assert entry['link_redacted'] is redacted
+    assert entry['enclosures'][0]['url_redacted'] is redacted
+    assert entry['link'] == 'https://example.com/post'
+    assert entry['enclosures'][0]['url'] == 'https://example.com/audio.mp3'
+    assert 'synthetic-secret' not in json.dumps(entry)
+
+
+def test_legacy_capture_remains_verified_and_is_not_rewritten(tmp_path):
+    path = feed(tmp_path, '<item><title>Legacy</title><guid>old</guid><link>https://example.com/post</link><enclosure url="https://example.com/audio.mp3"/></item>')
+    root = tmp_path / 'notes'
+    selected = rss.select(URL, article._parse_feed_xml(path.read_text()))[0]
+    selected['entry'].pop('link_redacted')
+    selected['entry']['enclosures'][0].pop('url_redacted')
+    folder = root / '.rss-capture' / selected['key'][4:]
+    folder.mkdir(parents=True)
+    raw = rss.encoded(selected)
+    (folder / 'entry.json').write_bytes(raw)
+    (folder / 'captured.json').write_bytes(rss.encoded({'schema': 1, 'key': selected['key'], 'sha256': rss.digest(raw)}))
+    assert 'link_redacted' not in rss.verify(root, selected['key'][4:])['entry']
+    before = {p: p.read_bytes() for p in folder.iterdir()}
+    assert invoke(path, root, apply=True)['results'][0]['status'] == 'changed'
+    assert before == {p: p.read_bytes() for p in folder.iterdir()}

@@ -92,3 +92,16 @@ an end-to-end analyzed-note workflow.
 The helper's regression tests measured 100% statement and branch coverage
 with `coverage.py --branch`. Coverage is scoped to `rss_capture_helper.py`;
 the shared article fetcher's existing tests cover its network boundary.
+
+## Resource URL provenance
+
+New feed entries include `link_redacted`; each enclosure includes `url_redacted`.
+True means the retained URL differs from its supplied source, so it must not be
+replayed as though it were the original resource. Missing flags in older captures
+mean unknown, not false. False only records unchanged text: public destination,
+redirect, access and consent checks still apply before any follow-up read.
+Original query values and credentials are not retained by these flags.
+An unchanged feed compared with a pre-flag capture can report `changed` because
+its parsed metadata now includes these fields. That is not proof the publisher
+edited the post. The original capture and its verification marker stay intact;
+no automatic rewrite or provenance backfill occurs.
