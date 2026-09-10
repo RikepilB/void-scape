@@ -38,6 +38,8 @@ and [Atom specification](https://www.rfc-editor.org/rfc/rfc4287).
 
 The reader prefers full content fields over summaries, separates Atom alternate
 links from enclosures and retains available author metadata. HTML becomes text.
+Body selection uses recognized RSS/Atom content namespaces; Media RSS attachment
+elements cannot replace a description. Empty content falls back to available summaries.
 URL metadata may be redacted by the article reader; a displayed URL is evidence,
 not a promise that it can fetch the same resource. Enclosures are never fetched.
 
