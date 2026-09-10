@@ -183,7 +183,9 @@ list of media demuxers, and remuxes only the first video/audio streams into
 `media.mkv`. Supported input demuxers are AAC, AVI, FLAC, Matroska/WebM, MOV/MP4,
 MP3, MPEG/MPEG-TS, Ogg and WAV. Playlists such as HLS and concat are rejected.
 Metadata, chapters, subtitles and attachments are not copied. Original bytes
-remain in `source.bin`; both artifacts and their hashes are retained. This is
+remain in `source.bin`; both artifacts and their hashes are retained. Preview
+also shows the remux size ceiling (twice the download budget plus 1 MiB) and
+1 MiB remux diagnostic cap; excessive decoder logging terminates that child. This is
 protocol/demuxer restriction and process deadline control, not an OS sandbox or
 a guarantee against decoder vulnerabilities. See [FFmpeg fd documentation](https://ffmpeg.org/ffmpeg-protocols.html#fd).
 

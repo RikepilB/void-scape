@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 from urllib.error import HTTPError
 import wave
 
@@ -174,3 +175,19 @@ def test_worker_access_denial_reaches_safe_cli_status(tmp_path, monkeypatch, cap
     assert json.loads(output)['error']['http_status'] == 403
     assert 'secret' not in output and 'example.com' not in output
     assert not (tmp_path / 'work/download.json').exists()
+
+
+def test_remux_stderr_is_bounded_and_child_reaped(tmp_path, monkeypatch):
+    source, target = tmp_path / 'source.wav', tmp_path / 'media.mkv'
+    wav(source)
+    original = subprocess.Popen
+    processes = []
+    def noisy(command, **kwargs):
+        child = original([sys.executable, '-c', "import sys; sys.stderr.write('x' * (2 * 1024 * 1024))"], **kwargs)
+        processes.append(child)
+        return child
+    monkeypatch.setattr(download.subprocess, 'Popen', noisy)
+    with pytest.raises(ValueError, match='diagnostics exceeded'):
+        download.remux(source, target, 100000)
+    assert target.with_suffix('.stderr').stat().st_size == download.MAX_DIAGNOSTICS
+    assert processes[0].poll() is not None

@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BYTES = 128 * 1024 * 1024
 MAX_BYTES = 512 * 1024 * 1024
 FORMATS = 'aac,avi,flac,matroska,webm,mov,mp3,mpeg,mpegts,ogg,wav'
+MAX_DIAGNOSTICS = 1024 * 1024
 
 
 class AccessDenied(PermissionError):
@@ -114,13 +115,27 @@ def remux(source, target, max_bytes):
                '-copyts', '-start_at_zero', '-c', 'copy', '-fs', str(ceiling), '-f', 'matroska', 'fd:']
     log = checked(Path(target).with_suffix('.stderr'))
     with checked(source).open('rb') as incoming, checked(target).open('xb') as outgoing, log.open('xb') as errors:
-        result = subprocess.run(command, stdin=incoming, stdout=outgoing, stderr=errors,
-                                env={k: v for k, v in os.environ.items() if k.upper() != 'FFREPORT'},
-                                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        process = subprocess.Popen(command, stdin=incoming, stdout=outgoing, stderr=subprocess.PIPE,
+                                   env={k: v for k, v in os.environ.items() if k.upper() != 'FFREPORT'},
+                                   creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        try:
+            written = 0
+            with process.stderr:
+                while chunk := process.stderr.read(65536):
+                    remaining = MAX_DIAGNOSTICS - written
+                    errors.write(chunk[:remaining])
+                    written += min(len(chunk), remaining)
+                    if len(chunk) > remaining:
+                        raise ValueError('remux diagnostics exceeded limit')
+            code = process.wait()
+        finally:
+            if process.poll() is None:
+                process.kill()
+            process.wait()
         outgoing.flush()
         os.fsync(outgoing.fileno())
     size = checked(target).stat().st_size
-    if result.returncode or not 0 < size < ceiling:
+    if code or not 0 < size < ceiling:
         raise ValueError('bounded descriptor-only remux failed; preserve source and diagnostics')
 
 
@@ -190,6 +205,8 @@ def capture(root, key, work, *, enclosure=1, max_bytes=DEFAULT_BYTES, timeout=30
     limits(max_bytes, timeout)
     selected = select(root, key, 'enclosure', enclosure)
     preview = {'status': 'preview', 'selection': selected, 'max_bytes': max_bytes,
+               'max_remux_bytes': max_bytes * 2 + 1024 * 1024,
+               'max_remux_diagnostics': MAX_DIAGNOSTICS,
                'timeout': timeout, 'requires_fetch_approval': True, 'transcribes': False,
                'requires_ffmpeg': not ffmpeg_ready(), 'source_action_authorized': False}
     if not allow_fetch:
