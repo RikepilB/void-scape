@@ -26,7 +26,7 @@ Closing a design or spike issue only completes that scope. It never ships a prod
 | Local image and carousel evidence | `shipped` | `skill/scripts/image.py`; image tests |
 | Local articles, RSS/Atom, approved public article fetch | `shipped` | `skill/scripts/article.py`; article tests |
 | Optional screenshot provenance | `shipped` | [Image sidecar contract](readers/images.md), merged PR #107; local hash/geometry verification, not browser capture or producer authentication |
-| Public feed capture and notes | `dev-only` | [RSS intake helper](../rss-intake.md), selected article/enclosure reads (#109–#111), real podcast QA, project skill and verified publication; access-wall/provider and independent harness acceptance pending |
+| Public feed capture and notes | `dev-only` | [RSS intake helper](../rss-intake.md), selected article/enclosure reads (#109–#111), real podcast QA and [one public access-wall skip](../qa/2026-09-10-rss-access-wall.md); project skill and verified publication implemented; broader provider and independent harness acceptance pending |
 | Local chat export (WhatsApp-style) evidence | `shipped` | `skill/scripts/chat.py`; chat reader tests |
 | Connectors contract page | `shipped` | this tree: `connectors.md` |
 | Harness skill kit (copy-and-adapt templates) | `shipped` | `harness/skills/`; template tests |
