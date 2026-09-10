@@ -158,3 +158,13 @@ def test_deadline_bound_before_work(tmp_path, timeout):
     with pytest.raises(ValueError):
         reader.read(root, key, tmp_path / 'absent', allow_fetch=True, timeout=timeout)
     assert not (tmp_path / 'absent').exists()
+
+
+@pytest.mark.parametrize('payload', [[], None, 'not an object'])
+def test_malformed_receipt_rejected_without_attribute_error(tmp_path, payload):
+    root, key, _ = capture_fixture(tmp_path)
+    work = tmp_path / 'read'
+    work.mkdir()
+    (work / 'ready.json').write_text(json.dumps(payload))
+    with pytest.raises(ValueError):
+        reader.verify_read(root, key, work)

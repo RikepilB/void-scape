@@ -53,7 +53,8 @@ None beyond the source.
 This section is populated from the controller's selected evidence files.
 ```
 
-Pass up to100 retained evidence files for Instagram/RSS/LinkedIn, or515 for a YouTube
+Pass up to100 retained evidence files for Instagram/feed-or-article RSS/LinkedIn,
+518 for an RSS media capture/download/read bundle, or515 for a YouTube
 capture plus its bounded read bundle. The helper hashes them and replaces the
 draft's Evidence section with local links to those exact files. It never deletes
 evidence or fetches remote content. Required note fields and hashes establish
@@ -124,9 +125,16 @@ in supported findings. Feed-only notes cannot claim article citations; skip reco
 cannot attach a completed article read. Existing canonical-key dedup still applies:
 this does not silently upgrade or overwrite an already analyzed feed-only note.
 
-The project source skill coordinates these commands. Automated enclosure reads,
-representative paywall handling and independent harness evaluation remain issue
-#57 work; the publisher is not an automatic author or paywall detector.
+For a verified `rss_media.py` enclosure read, the same `--read-root` selects media
+binding. Use `## Key moments` with actual retained timestamps instead of an
+RSS/Article Excerpt. The publisher verifies capture, original/remuxed enclosure,
+receipts, transcript/frames and labels the normalized timeline in Evidence.
+Article citations cannot substitute for a media read. This is one authored note
+per canonical entry, not an automatic merge of multiple resources or prior notes.
+
+The project source skill coordinates these commands. Representative paywall/media
+acceptance and independent harness evaluation remain issue #57 work; the publisher
+is not an automatic author or paywall detector.
 
 ## Receipts and recovery
 

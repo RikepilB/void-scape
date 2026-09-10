@@ -8,7 +8,11 @@ retained-entry resume and verified note publication. `scripts/rss_resource.py`
 selects an unchanged retained article URL or a typed enclosure without fetching.
 `scripts/rss_read.py` binds an explicitly approved public article read to that
 capture; `triage_store --read-root` verifies the bundle and `[article 1]` citation.
-Media enclosure reads and independent harness checks remain pending.
+For one selected audio/video enclosure, `scripts/rss_download.py` previews and
+acquires bounded anonymous media; `scripts/rss_media.py` then runs the local
+media reader and binds timestamp-cited notes. Download and processing permissions
+are separate. See the [enclosure workflow](../../rss-intake.md#selected-media-enclosures)
+for format/budget limits. Independent harness checks remain pending.
 
 The article reader prepares deterministic text evidence from local documents, feeds, and explicitly
 approved public article fetches.

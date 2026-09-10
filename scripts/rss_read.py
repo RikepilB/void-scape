@@ -21,7 +21,7 @@ def verify_read(root, key, work, *, candidate=None):
     capture = verify_capture(root, key[4:])
     work = checked(work)
     ready = read_json(work / 'ready.json') if candidate is None else candidate
-    if (ready.get('schema') != 1 or ready.get('selection') != selected or
+    if (not isinstance(ready, dict) or ready.get('schema') != 1 or ready.get('selection') != selected or
             ready.get('capture_sha256') != digest(encoded(capture)) or
             ready.get('content_trust') != 'untrusted'):
         raise ValueError('article read provenance mismatch')
@@ -45,7 +45,7 @@ def verify_read(root, key, work, *, candidate=None):
     if manifest_path not in paths:
         raise ValueError('article manifest not retained')
     manifest = read_json(manifest_path)
-    if (manifest.get('status') != 'complete' or manifest.get('kind') != 'article' or
+    if (not isinstance(manifest, dict) or manifest.get('status') != 'complete' or manifest.get('kind') != 'article' or
             manifest.get('entry_kind') != 'article' or manifest.get('source') != 'url' or
             manifest.get('input') != selected['url'] or manifest.get('input_redacted') is not False or
             checked(manifest['workdir']) != bundle or manifest.get('item_count') != 1 or
