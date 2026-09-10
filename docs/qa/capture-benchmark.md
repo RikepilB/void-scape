@@ -66,9 +66,41 @@ server's clean shutdown does not prove browser cleanup or output confinement.
 
 ## Remaining acceptance
 
-No provider benchmark has been recorded by adding this helper. A controlled
-denied-origin/subresource fixture, provider
+No provider benchmark has been recorded by adding these helpers. Provider
 output confinement and timeout cleanup, actual Windows/Linux captures, and
 separate CLI/MCP baselines remain outstanding. External redirect denial must be
 tested in a separately approved controlled setup, not by navigating to arbitrary
 hosts. Iris still needs its pinned scan/review and explicit adoption clearance.
+
+## Controlled policy fixture
+
+`python scripts/capture_policy_fixture.py` starts two ephemeral IPv4 loopback
+origins and prints their addresses. Use only these synthetic origins for an
+explicitly scoped provider test. Ctrl+C closes both listeners. This fixture cannot
+enforce provider permissions: `allowed_origin` and `denied_origin` are test roles,
+not grants. It never proxies URLs, serves files or contacts external hosts.
+
+- Configure the approved provider to allow only `allowed_origin`, including its
+  exact port. Visit its `/redirect` to test denial of the second origin.
+- Visit `/subresource` to test an image request to the second origin. The page
+  deliberately has no blocking CSP; a page-level block must not impersonate a
+  provider-level policy result.
+- Read `/counts` on the first origin before and after each attempt. A successful
+  sentinel request increments `sentinel_requests` on the second origin.
+- Run a separate positive control that permits the sentinel request, confirming
+  that it increments the counter. Restart the fixture between cases so totals
+  cannot be confused with earlier attempts; do not reset or edit counters.
+- Retain the provider's denial/error receipt and the reached source page/result.
+  Zero requests alone is inconclusive: startup failure, a missing page or network
+  failure can also produce zero. A positive control is not a denial-policy pass.
+
+The HTTP tests verify redirect reachability, counter changes, fixed routes and
+listener cleanup after an exception. They do not establish browser policy
+enforcement, DNS-rebinding resistance, general SSRF protection, provider process
+cleanup or permission-grant integrity. Those require the actual approved provider.
+
+Windows in-app browser positive control, September 10: `/counts` started at zero.
+Opening `/subresource` produced the expected heading/image element and increased
+the sentinel count to one. Both origins were selected synthetic loopback servers;
+no denying policy was configured or claimed. The fixture process was stopped
+afterward. This checks browser-driven request detection, not denial enforcement.
