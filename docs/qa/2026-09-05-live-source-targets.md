@@ -107,3 +107,14 @@ bulk capture, private playlist API access, transcription, or any source skill's 
 No private feed bodies, account identifiers, notifications, or browser screenshots are
 included in this public record. The exact historical X target is retained above rather
 than silently replacing it with bookmarks or the corrected History destination.
+
+### Later responsive-check failure: issue remains open
+
+The same session then requested a 390 x 844 viewport and a DOM overflow check.
+That call timed out after 25 seconds and reset the execution session. After reading
+the supported browser/Chrome troubleshooting instructions, reconnecting through
+the explicit Chrome selector returned `Browser is not available: chrome`.
+Consequently the intended viewport reset could not be confirmed. Desktop rendering
+and the source results above remain valid observations; mobile QA and durable
+connection recovery do not pass. #42 remains open. This record must not auto-close
+it or be used to claim a repaired host. No unsupported repair was attempted.
