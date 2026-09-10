@@ -78,7 +78,23 @@ schema/size bounds, dry-run, complete/partial duplicates, corruption, failed
 read-back, selected resume, symlink rejection, and CLI behavior. Measured helper
 statement/branch coverage is 100%; this is not browser or independent agent QA.
 
-Still required by issue55: the project skill and harness mirrors, legacy-note dedup assessment, batch progress
+For selected old Markdown notes, run:
+
+```text
+python scripts/linkedin_capture_helper.py legacy-notes <post-url-or-urn> <note.md> [more.md]
+```
+
+This read-only assessment checks up to100 explicitly selected files,256KiB each.
+Exact `Source:` and `Activity-ID:` lines are untrusted identity claims. Typed keys,
+URNs and supported post URLs are accepted; a numeric `Activity-ID` explicitly
+means activity, never share/event/job. Conflicting or invalid claims are ambiguous.
+Matching files are candidates with hashes, not verified analysis or permission
+to unsave. Quoted lines are ignored; the parser is not a Markdown authenticity
+checker. It never scans other files, rewrites notes or creates receipts. Review
+candidates before a new publication; re-author and verify against retained source
+evidence if migration is needed. Automatic legacy migration remains unimplemented.
+
+Still required by issue55: the project skill and harness mirrors, legacy migration policy, batch progress
 presentation, representative browser reads, approved unsave verification, auth-wall
 abort evidence and independent skill benchmarks. Do not mark the issue complete.
 
