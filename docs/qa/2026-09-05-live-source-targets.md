@@ -78,3 +78,43 @@ Not yet done, and deliberately not claimed: the Substack archive, Reddit, and X 
 **not** retried, because retrying them needs the user to authorize a signed-in session and to select
 which connected browser to drive. Page access remains separate from any reader certification, and no
 representative media `inspect/preview/read` is claimed from this diagnostic.
+
+## Supported Chrome recovery acceptance — 2026-09-10
+
+Issue #42, tested against repository base `f7cf218`. The supported ChatGPT Chrome
+browser-client connection now succeeds through the explicit `chrome` selector.
+Session naming, new-tab navigation, visible DOM reads, a visible-link click, viewport
+control and a public-page screenshot all returned successfully. No extension installation,
+native-host repair, profile inspection, cookies, storage or credentials were used.
+
+The previous failure was in the harness communication path, not evidence that the
+websites or media readers were unavailable. Its underlying intermittent cause was not
+isolated: this is a verified recovery, not a claim that a repository patch repaired the host.
+If communication fails again, follow the installed Chrome skill's supported diagnostics;
+do not attempt native-host hacks or substitute a different signed-in browser.
+
+| Previously incomplete target | Fresh visible-page result |
+| --- | --- |
+| Substack archive | Requested archive loads; Latest tab selected and article previews visible. No article body read or subscription change. |
+| Reddit home | Requested home loads with navigation and Feed heading. No collection selected or post interaction. |
+| Exact X `/i/histo` | Application loads but displays “Hmm...this page doesn’t exist.” This route is invalid, not a browser-connection failure. |
+| X visible History link | Only after observing the navigation link, clicked History; final URL is `https://x.com/i/history`, and the missing-page message is absent. No bookmark/history collection ingestion is claimed. |
+| Public Voidscape landing | Capability disclosure opens and its text is readable; desktop screenshot captured through the same supported connection. |
+
+These observations satisfy the remaining target retry scope of #42. They do not certify
+bulk capture, private playlist API access, transcription, or any source skill's complete
+`inspect -> preview -> read` workflow. Those remain #54/#57/#91 acceptance work.
+No private feed bodies, account identifiers, notifications, or browser screenshots are
+included in this public record. The exact historical X target is retained above rather
+than silently replacing it with bookmarks or the corrected History destination.
+
+### Later responsive-check failure: issue remains open
+
+The same session then requested a 390 x 844 viewport and a DOM overflow check.
+That call timed out after 25 seconds and reset the execution session. After reading
+the supported browser/Chrome troubleshooting instructions, reconnecting through
+the explicit Chrome selector returned `Browser is not available: chrome`.
+Consequently the intended viewport reset could not be confirmed. Desktop rendering
+and the source results above remain valid observations; mobile QA and durable
+connection recovery do not pass. #42 remains open. This record must not auto-close
+it or be used to claim a repaired host. No unsupported repair was attempted.
