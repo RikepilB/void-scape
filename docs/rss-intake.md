@@ -55,9 +55,11 @@ missing; exit 6 reports failure without echoing source URLs or exception data.
 Success always reports `analyzed: 0` and `mutates_source: false`. Captured evidence
 is not a completed note checkpoint.
 
-Remaining issue #57 work: verified note publication and dedup against analyzed
-notes, `substack-ingest` and harness evaluation, explicit paywall skip records,
-gated media routing, and the corresponding YouTube ingest workflow.
+The [note publisher](triage-store.md#captured-rss-notes) supports authored RSS
+notes bound to verified capture evidence and canonical-key analysis lookup.
+Capture dedup remains separate: controllers must consult note lookup before
+authoring a retained entry. Remaining issue #57 work includes `substack-ingest`,
+harness evaluation, paywall workflow, gated media routing and YouTube ingest.
 
 ## Validation
 

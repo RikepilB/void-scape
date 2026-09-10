@@ -286,8 +286,8 @@ missing Chrome site approval are separate common causes — see the
 
 For repeated public-feed intake, the repository-only [RSS capture helper](docs/rss-intake.md)
 adds bounded previews, stable entry keys and verified local capture. Captured
-entries remain pending analysis; note publication and the source skill are still
-under development.
+entries remain pending analysis. The [verified note publisher](docs/triage-store.md)
+can bind authored RSS notes to those entries; the source skill remains under development.
 
 For scripts, subagents, and integrations, the raw engine remains stable:
 
