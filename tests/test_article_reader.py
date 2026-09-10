@@ -583,3 +583,24 @@ def test_video_url_never_dispatches_to_article_engine(monkeypatch):
 
     assert voidscape._is_article_source("https://www.youtube.com/watch?v=abc") is False
     assert voidscape._is_article_source("https://example.com/post") is True
+
+@pytest.mark.parametrize('media_text', ['', 'Attachment label is not article text'])
+def test_media_rss_content_does_not_replace_description(media_text):
+    feed = f'''<rss xmlns:media="http://search.yahoo.com/mrss/"><channel><item>
+      <title>Episode</title><guid>episode-1</guid>
+      <media:content url="https://example.com/audio.mp3" type="audio/mpeg">{media_text}</media:content>
+      <description>Actual episode description.</description>
+    </item></channel></rss>'''
+    entry = article._parse_feed_xml(feed)['entries'][0]
+    assert entry['body'] == 'Actual episode description.'
+    assert entry['content_kind'] == 'description'
+
+
+def test_empty_full_content_falls_back_to_summary():
+    feed = '''<feed xmlns="http://www.w3.org/2005/Atom"><entry>
+      <title>Episode</title><id>episode-1</id><content> </content>
+      <summary>Available summary.</summary>
+    </entry></feed>'''
+    entry = article._parse_feed_xml(feed)['entries'][0]
+    assert entry['body'] == 'Available summary.'
+    assert entry['content_kind'] == 'summary'

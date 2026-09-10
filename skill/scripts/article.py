@@ -346,8 +346,16 @@ def _parse_feed_xml(text: str) -> dict[str, Any]:
         link = _sanitize_evidence_link(link)
         published = _child_text(raw, ("pubDate", "published", "updated"))
         # Prefer full content even when a summary appears first in document order.
-        content = next((element for name in ("encoded", "content", "description", "summary")
-                        if (element := _first_child(raw, (name,))) is not None), None)
+        # Media RSS content describes an attachment, not the article body.
+        body_tags = (
+            "{http://purl.org/rss/1.0/modules/content/}encoded", "encoded",
+            "{http://www.w3.org/2005/Atom}content", "content",
+            "description", "{http://purl.org/rss/1.0/}description",
+            "{http://www.w3.org/2005/Atom}summary", "summary",
+            "{http://www.itunes.com/dtds/podcast-1.0.dtd}summary",
+        )
+        content = next((element for tag in body_tags for element in raw
+                        if element.tag == tag and _text_content(element).strip()), None)
         body = _text_content(content)
         if content is not None and content.attrib.get("type") == "xhtml":
             body = _html_to_text(ET.tostring(content, encoding="unicode"))
