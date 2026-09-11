@@ -27,6 +27,35 @@ to `Conference/<first-subfolder>/`. Notes are named by source SHA256. A model se
 must already be running with cloud disabled; see [local note drafts](local-note-drafts.md).
 No service or model is installed, started or downloaded automatically.
 
+## Optional Windows schedule plan
+
+The schedule helper creates a reviewable configuration and prints the exact
+`schtasks.exe` command that would register it. It does **not** run that command,
+create a task, start a model service, or discover a personal folder. Start with a
+read-only plan using paths and a cached local model you have already chosen:
+
+```powershell
+python scripts/process_inbox_schedule.py --root "C:/Recordings/Inbox" --notes-root "C:/Knowledge" --model gemma3:4b --limit 3 --timeout 600 --interval-minutes 120 --config "C:/Voidscape/process-inbox-schedule.json"
+```
+
+The helper requires existing, separate inbox and note roots; allows only `auto`,
+`captions`, `faster-whisper`, or `whisper-cpp`; and rejects an interval shorter
+than the bounded batch plus recovery window. The preview changes nothing. After
+reviewing the returned configuration and registration command, write the fixed
+configuration explicitly:
+
+```powershell
+python scripts/process_inbox_schedule.py --root "C:/Recordings/Inbox" --notes-root "C:/Knowledge" --model gemma3:4b --limit 3 --timeout 600 --interval-minutes 120 --config "C:/Voidscape/process-inbox-schedule.json" --write-config
+```
+
+Writing the configuration still creates no task. Run the returned `schtasks.exe`
+command yourself only when you want that schedule. The scheduled runner invokes
+the existing controller with the fixed local-only settings and records one durable
+JSONL count summary beside the configuration. It retains no transcript, note text,
+recording name, provider response, browser state, credential, or approval. A busy
+or empty run is not proof that a schedule executed correctly; validate one selected
+local recording end to end before treating the schedule as operational.
+
 ## Processing and recovery
 
 - Discover up to 100 recordings oldest-first, with at most 10,000 directory entries scanned.
@@ -90,7 +119,6 @@ files. Behavioral evidence and unexecuted harness cases are recorded in
 [the evaluation record](https://github.com/RikepilB/void-scape/blob/main/evals/process-inbox/RESULTS.md).
 Matching files are not proof of runtime parity.
 
-Still pending: real user-recording acceptance,
-independent skill/harness evaluation, scheduled laptop
-execution, and suite release packaging. These commands do not establish those
-requirements as complete.
+Still pending: real user-recording acceptance, independent skill/harness evaluation,
+manual task registration plus scheduled laptop execution, and suite release
+packaging. These commands do not establish those requirements as complete.

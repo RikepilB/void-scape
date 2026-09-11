@@ -57,6 +57,9 @@ bounded local workers, verified notes, content dedup and recoverable source move
 It defaults to a read-only preview, waits for files to settle and refuses
 cloud/download gates. Overlapping runs report busy without starting another
 worker. The project-scoped process-inbox skill coordinates it and has generated
-harness mirrors; scheduled and independent harness acceptance remain unproven.
-Voidscape installs no scheduler or production MCP host. Other calling systems
-remain responsible for queue durability, cancellation and approval presentation.
+harness mirrors. A Windows scheduler-plan helper can validate fixed local settings,
+write a reviewed configuration, and print a manual `schtasks.exe` registration
+command; it does not create a task. Scheduled and independent harness acceptance
+remain unproven. Voidscape installs no scheduler or production MCP host. Other
+calling systems remain responsible for queue durability, cancellation and approval
+presentation.

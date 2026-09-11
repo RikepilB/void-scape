@@ -50,7 +50,7 @@ Closing a design or spike issue only completes that scope. It never ships a prod
 | Browser extension spike | `dev-only` | [spike report](../superpowers/specs/2026-09-08-browser-extension-spike-report.md): isolated Chrome three-command proof; real harnesses and signed-in profiles unverified |
 | Codex plugin bundle | `dev-only` | validates locally; SkillSpector `CRITICAL/DO_NOT_INSTALL` gate remains open |
 | Production universal browser extension | `parked` | separate security/repository decision required |
-| Local recording inbox controller | `dev-only` | [repository helper](../process-inbox.md), project skill and local note author merged (#81–#84); real recording/harness acceptance and scheduler pending in #56 |
+| Local recording inbox controller | `dev-only` | [repository helper](../process-inbox.md), project skill, local note author and a manual Windows scheduler-plan helper exist; real recording/harness acceptance and observed scheduled execution remain #56 |
 | Unattended orchestration | `parked` | general orchestration beyond the bounded local inbox work in issue #56 needs separate product/privacy design |
 | Hosted SaaS | `parked` | product, billing, connector, and legal gates required |
 

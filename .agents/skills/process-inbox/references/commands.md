@@ -16,6 +16,19 @@ The model service must already be cloud-disabled and the named model cached.
 Backend `auto` selects local sidecars or installed cached faster-whisper; other
 supported selections are `captions`, `faster-whisper` and `whisper-cpp`.
 
+For an optional Windows schedule, first render a no-write plan with fixed existing
+roots and local-only settings:
+
+```powershell
+python scripts/process_inbox_schedule.py --root "C:/Recordings/Inbox" --notes-root "C:/Knowledge" --model gemma3:4b --limit 3 --timeout 600 --interval-minutes 120 --config "C:/Voidscape/process-inbox-schedule.json"
+```
+
+`--write-config` persists the reviewed configuration only. The returned
+`schtasks.exe` command is not executed by the helper; task registration is a
+separate current user action. A later task uses only the fixed configuration and
+writes sanitized counts to its adjacent JSONL log. Do not present a written config,
+task definition or empty result as proof of a scheduled execution.
+
 Success: `{"ok":true,"data":{"mode":"apply","processed":1,"skipped":0,"failed":0,"deferred":0,"results":[...]},"error":null}`.
 Busy: `data.status` is `busy`, all counts zero, exit 0. A worker can return a
 `deferred` result when recording or sidecar modification is too recent.
