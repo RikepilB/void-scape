@@ -137,7 +137,7 @@ viewport check. They do not isolate the earlier failure, establish lasting
 reliability, or prove that a code change repaired the connection. Issue #42 remains
 open. The earlier failure record above is retained as evidence of intermittency.
 
-### September 11 retry: source checks recovered, viewport override inconclusive
+### September 11 retry: source checks recovered, initial viewport read invalid
 
 A new supported ChatGPT Chrome session connected through the explicit Chrome
 selector and loaded a fresh public Voidscape Agent Docs tab with a complete
@@ -152,13 +152,34 @@ The remaining read-only target checks then completed in the same session:
 | Reddit home | `Reddit - The heart of the internet` loaded at the requested home URL. No collection or post was selected. |
 | Exact X `/i/histo` | The requested URL remained unchanged and X reported its Page not found state after the page settled. No replacement route was followed. |
 
-A temporary 390 x 844 viewport request returned without an error, but read-only
-measurements still reported the normal 1534 x 1023 viewport. The reset request also
-returned normally. This is **not** mobile QA evidence and does not establish that the
-viewport override applied; no retry loop or lower-level workaround was used.
+A temporary 390 x 844 viewport request and reset each returned without an error, but
+the original measurement passed its page function as a string literal. That returned
+the function object instead of executing it, so the reported 1534 x 1023 dimensions
+were not valid viewport evidence. The corrected, bounded measurement is recorded
+below; no lower-level workaround was used.
 
 The source checks confirm that this session's Chrome communication path is usable.
 They do not identify the intermittent extension/runtime cause, prove durable
 stability, certify any source workflow, or replace the separate `inspect -> preview
 -> read` and consent gates. Issue #42 remains open for reproducible diagnosis and
 reliable supported Chrome operation.
+
+### September 11 correction: viewport control works and reset settles asynchronously
+
+The measurement was repeated in a fresh supported Chrome session on the public
+Agent Docs page, using an executable page function. It recorded these values:
+
+| Step | Measured viewport | Document width |
+| --- | --- | --- |
+| Before override | 1534 x 1023 | 1519 |
+| 390 x 844 override | 390 x 844 | 375 |
+| 100 ms after reset | 390 x 844 | 375 |
+| 1 s after reset | 1534 x 1023 | 1519 |
+
+The supported viewport capability therefore applies correctly. Its reset is
+asynchronous, so a measurement immediately after the acknowledgement is not enough
+to prove restoration. This corrects the earlier invalid measurement; it does not
+identify the intermittent Chrome transport failure, prove durable stability, or
+certify a source workflow. No account action, browser-secret access, extension
+change, native-host repair, or substitute browser was used. Issue #42 remains open
+for a reproducible transport failure and a reliable supported-Chrome resolution.
