@@ -2,9 +2,9 @@
 
 Current evidence for [#91](https://github.com/RikepilB/void-scape/issues/91),
 not a release certificate. Tested current main:
-[`3d1d46b`](https://github.com/RikepilB/void-scape/commit/3d1d46bbe8e6277298ad38d6084cab7b8d608e10)
-(`feat: add inbox scheduler plan (#129)`). This supersedes the earlier
-`65deac1` checkpoint for current-main evidence. It does not replace the historical
+[`b9f577a`](https://github.com/RikepilB/void-scape/commit/b9f577a37f475e51156301c3c38c60f62b82320b)
+(`docs: refresh release evidence (#130)`). This supersedes the earlier `3d1d46b`
+and `65deac1` checkpoints for current-main evidence. It does not replace the historical
 [2026-09-10 record](2026-09-10-release-acceptance.md) or any distinct source,
 harness, browser, and external-review gate.
 
@@ -12,10 +12,10 @@ harness, browser, and external-review gate.
 
 | Check | Observed outcome | Scope limit |
 | --- | --- | --- |
-| Full Windows suite | `python -m pytest -q -p no:cacheprovider`: **1322 passed in 101.05s** | Exact tested base above; this does not exercise personal accounts or remote sources. |
+| Full Windows suite | `python -m pytest -q -p no:cacheprovider`: **1322 passed in 100.98s** | Exact tested base above; this does not exercise personal accounts or remote sources. |
 | Installer and demo coverage | The full suite includes `test_install_skill.py` and `test_demo_fixture.py` | Isolated fixture roots, not an upgrade of the user's global installation. |
 | Agent Docs generation | `python scripts/build-agent-docs.py --check`: **21 pages current** | Generated consistency, not visual/mobile acceptance. |
-| Hosted validation | [Tests](https://github.com/RikepilB/void-scape/actions/runs/34566539267) and [Pages deployment](https://github.com/RikepilB/void-scape/actions/runs/34566538600) succeeded for `3d1d46b` on Linux 3.10, Linux 3.12, and Windows 3.12 | Hosted checks are separate from source and harness acceptance. |
+| Hosted validation | [Tests](https://github.com/RikepilB/void-scape/actions/runs/34567347860) and [Pages deployment](https://github.com/RikepilB/void-scape/actions/runs/34567347417) succeeded for `b9f577a` on Linux 3.10, Linux 3.12, and Windows 3.12 | Hosted checks are separate from source and harness acceptance. |
 | Inbox scheduler plan | Preview validates fixed local-only settings; `--write-config` writes a reviewed configuration and prints a manual `schtasks.exe` command | It does not create or start a task, transfer content to cloud services, start/download a model, or prove a scheduled run. |
 | Independent synthetic safety evaluation | Codex baseline and with-project-skills traces each passed **30/30** observable safety assertions | Deliberately no browser, account, network, media, model, cloud, publication, or source mutation. Claude's paired run was unavailable because its local OAuth session had expired. |
 | Fresh supported Chrome tab | A new public Agent Docs tab exposed the responsive menu at 390 x 844 and returned to desktop navigation | Later source-tab creation returned `Browser is not available`; this is bounded recovery evidence, not durable transport acceptance. |
