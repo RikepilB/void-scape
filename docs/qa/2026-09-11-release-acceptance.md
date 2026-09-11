@@ -1,20 +1,22 @@
 # Release acceptance checkpoint — 2026-09-11
 
 Current evidence for [#91](https://github.com/RikepilB/void-scape/issues/91),
-not a release certificate. Tested base:
-[`65deac1`](https://github.com/RikepilB/void-scape/commit/65deac148d9a2aee56f2ed96d1ebf95c18afae79)
-(`docs: record Chrome transport interruption (#127)`). This checkpoint replaces
-neither the historical [2026-09-10 record](2026-09-10-release-acceptance.md) nor
-the distinct source, harness, browser, and external-review gates.
+not a release certificate. Tested current main:
+[`3d1d46b`](https://github.com/RikepilB/void-scape/commit/3d1d46bbe8e6277298ad38d6084cab7b8d608e10)
+(`feat: add inbox scheduler plan (#129)`). This supersedes the earlier
+`65deac1` checkpoint for current-main evidence. It does not replace the historical
+[2026-09-10 record](2026-09-10-release-acceptance.md) or any distinct source,
+harness, browser, and external-review gate.
 
 ## Executed checks
 
 | Check | Observed outcome | Scope limit |
 | --- | --- | --- |
-| Full Windows suite | `python -m pytest -q -p no:cacheprovider`: **1316 passed in 115.67s** | Exact tested base above; this does not exercise personal accounts or remote sources. |
+| Full Windows suite | `python -m pytest -q -p no:cacheprovider`: **1322 passed in 101.05s** | Exact tested base above; this does not exercise personal accounts or remote sources. |
 | Installer and demo coverage | The full suite includes `test_install_skill.py` and `test_demo_fixture.py` | Isolated fixture roots, not an upgrade of the user's global installation. |
 | Agent Docs generation | `python scripts/build-agent-docs.py --check`: **21 pages current** | Generated consistency, not visual/mobile acceptance. |
-| Hosted validation | [Tests](https://github.com/RikepilB/void-scape/actions/runs/34563542518) and [Pages deployment](https://github.com/RikepilB/void-scape/actions/runs/34563542145) succeeded for `65deac1` | Hosted checks are separate from source and harness acceptance. |
+| Hosted validation | [Tests](https://github.com/RikepilB/void-scape/actions/runs/34566539267) and [Pages deployment](https://github.com/RikepilB/void-scape/actions/runs/34566538600) succeeded for `3d1d46b` on Linux 3.10, Linux 3.12, and Windows 3.12 | Hosted checks are separate from source and harness acceptance. |
+| Inbox scheduler plan | Preview validates fixed local-only settings; `--write-config` writes a reviewed configuration and prints a manual `schtasks.exe` command | It does not create or start a task, transfer content to cloud services, start/download a model, or prove a scheduled run. |
 | Independent synthetic safety evaluation | Codex baseline and with-project-skills traces each passed **30/30** observable safety assertions | Deliberately no browser, account, network, media, model, cloud, publication, or source mutation. Claude's paired run was unavailable because its local OAuth session had expired. |
 | Fresh supported Chrome tab | A new public Agent Docs tab exposed the responsive menu at 390 x 844 and returned to desktop navigation | Later source-tab creation returned `Browser is not available`; this is bounded recovery evidence, not durable transport acceptance. |
 
@@ -32,8 +34,9 @@ or real source-workflow completion.
   Independent, fixture-backed skill evaluation; representative harness runs; and
   selected real-source evidence remain distinct requirements.
 - **#55 and #56:** LinkedIn's read-only capture pilot and the inbox controller still
-  require their stated real input and harness evidence. No LinkedIn unsave or
-  unattended schedule is authorized or claimed here.
+  require their stated real input and harness evidence. The inbox now has a manual
+  Windows scheduler-plan helper, but no task registration or unattended schedule is
+  authorized or claimed here. LinkedIn unsave remains out of scope.
 - **#58:** the separate agent-bridge repository now has a proposed
   [pairing and permission design](https://github.com/RikepilB/agent-bridge/pull/4).
   Independent security review and one isolated client proof remain before any
