@@ -1,7 +1,7 @@
 # Release acceptance checkpoint — 2026-09-11
 
 Current evidence for [#91](https://github.com/RikepilB/void-scape/issues/91),
-not a release certificate. Tested current main:
+not a release certificate. Tested source base:
 [`b9f577a`](https://github.com/RikepilB/void-scape/commit/b9f577a37f475e51156301c3c38c60f62b82320b)
 (`docs: refresh release evidence (#130)`). This supersedes the earlier `3d1d46b`
 and `65deac1` checkpoints for current-main evidence. It does not replace the historical
