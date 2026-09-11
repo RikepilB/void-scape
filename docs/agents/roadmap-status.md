@@ -17,6 +17,19 @@ they do not authorize installation or account actions.
 
 Closing a design or spike issue only completes that scope. It never ships a production integration.
 
+## Current-main verification receipt
+
+On `9296ac5`, an isolated Windows acceptance pass copied the primary and compatibility
+skills into temporary roots, generated the deterministic local fixture, and completed
+`inspect -> preview -> read` with captions and three frames. Preview required neither
+cloud approval nor a model download; read produced a manifest, three timestamped
+frames, and a non-empty sidecar-grounded transcript with no warnings. The merge
+commit also passed Linux 3.10, Linux 3.12, Windows 3.12, and Pages deployment.
+
+This confirms the shipped reader's current installation and deterministic local path.
+It does not certify selected real inputs, private-source workflows, independent
+harness behavior, bridge security, provider adoption, or a final release/tag.
+
 ## Capability evidence
 
 | Capability | Status | Evidence |
