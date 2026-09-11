@@ -135,3 +135,19 @@ It does not establish a stable Chrome connection, explain the intermittent timeo
 or complete the remaining Archive, Reddit, and exact X source checks required by
 issue #42. No native-host repair, browser-secret access, extension change, or account
 action occurred.
+
+## 2026-09-11 Chrome transport interruption
+
+Shortly after the fresh-tab retry, a supported request to create the public Archive
+tab returned `Browser is not available`. The one permitted two-second retry, a
+lightweight tab-list request, returned the same result. The three remaining source
+checks in issue #42 (Archive, Reddit, and the exact X route) were therefore blocked
+at the browser transport layer and were not substituted with another browser or
+source.
+
+Read-only supported diagnostics reported that Chrome was running, the selected
+ChatGPT browser extension was enabled, and the Chrome native-host registration
+matched its expected configuration. Those checks rule out basic installation and
+registration errors; they do not establish the cause of the unavailable-browser
+response. No profile content, credentials, cookies, local storage, native-host
+repair, extension change, or account action was used.
