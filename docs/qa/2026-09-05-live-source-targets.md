@@ -136,3 +136,29 @@ These observations establish communication recovery and one successful narrow
 viewport check. They do not isolate the earlier failure, establish lasting
 reliability, or prove that a code change repaired the connection. Issue #42 remains
 open. The earlier failure record above is retained as evidence of intermittency.
+
+### September 11 retry: source checks recovered, viewport override inconclusive
+
+A new supported ChatGPT Chrome session connected through the explicit Chrome
+selector and loaded a fresh public Voidscape Agent Docs tab with a complete
+visible-DOM read. No extension installation, native-host repair, profile inspection,
+cookie/storage access, or account action occurred.
+
+The remaining read-only target checks then completed in the same session:
+
+| Target | Fresh visible-page result |
+| --- | --- |
+| Substack archive | `Archive - Nelson Lee` loaded at the requested archive URL; Archive and Latest were visible. No article body was read. |
+| Reddit home | `Reddit - The heart of the internet` loaded at the requested home URL. No collection or post was selected. |
+| Exact X `/i/histo` | The requested URL remained unchanged and X reported its Page not found state after the page settled. No replacement route was followed. |
+
+A temporary 390 x 844 viewport request returned without an error, but read-only
+measurements still reported the normal 1534 x 1023 viewport. The reset request also
+returned normally. This is **not** mobile QA evidence and does not establish that the
+viewport override applied; no retry loop or lower-level workaround was used.
+
+The source checks confirm that this session's Chrome communication path is usable.
+They do not identify the intermittent extension/runtime cause, prove durable
+stability, certify any source workflow, or replace the separate `inspect -> preview
+-> read` and consent gates. Issue #42 remains open for reproducible diagnosis and
+reliable supported Chrome operation.
