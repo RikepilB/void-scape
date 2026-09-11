@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 import subprocess
-import sys
 
 import pytest
 
@@ -36,6 +35,7 @@ def test_preview_is_read_only_and_exposes_manual_registration(roots):
     assert '--run' in result['registration_command']
     assert '--allow-cloud' not in result['registration_command']
     assert 'never invokes' in result['registration_notice']
+    assert config['task']['python'] == str(schedule._runtime_python())
 
 
 def test_plan_requires_local_paths_and_a_recovery_interval(roots):
@@ -85,7 +85,7 @@ def test_run_records_only_sanitized_counts(monkeypatch, roots):
         'processed': 1, 'skipped': 2, 'failed': 0, 'deferred': 3,
     }
     assert '--apply' in captured['command'] and '--allow-cloud' not in captured['command']
-    assert captured['command'][0] == sys.executable
+    assert captured['command'][0] == str(schedule._runtime_python())
     assert all(part.casefold() != 'schtasks.exe' for part in captured['command'])
     assert captured['kwargs']['stdin'] is subprocess.DEVNULL
     line = Path(config['task']['log']).read_text(encoding='utf-8')

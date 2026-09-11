@@ -76,6 +76,11 @@ def _task_name(value):
     return value
 
 
+def _runtime_python():
+    """Return the current interpreter after resolving its trusted launcher link."""
+    return checked(Path(sys.executable).resolve())
+
+
 def plan(root, notes_root, model, *, backend='auto', port=11434, limit=3, timeout=600,
          min_age=60, interval_minutes=120, config, task_name=DEFAULT_TASK_NAME):
     settings = _settings(root, notes_root, model, backend, port, limit, timeout, min_age, interval_minutes)
@@ -89,7 +94,7 @@ def plan(root, notes_root, model, *, backend='auto', port=11434, limit=3, timeou
         'owner': 'voidscape-process-inbox-schedule',
         'settings': settings,
         'task': {'name': task_name, 'runner': str(runner), 'controller': str(controller),
-                 'python': sys.executable, 'config': str(config), 'log': str(log)},
+                 'python': str(_runtime_python()), 'config': str(config), 'log': str(log)},
     }
 
 
@@ -139,7 +144,7 @@ def _read_config(path):
     config = _config_path(task['config'], root)
     if (config != path or checked(task['runner']) != checked(REPO / 'scripts/process_inbox_schedule.py') or
             checked(task['controller']) != checked(REPO / 'scripts/process_inbox.py') or
-            checked(task['python']) != checked(sys.executable)):
+            checked(task['python']) != _runtime_python()):
         raise ValueError('scheduled inbox executable paths changed')
     log = checked(task['log'])
     if log != checked(config.with_suffix('.runs.jsonl')) or log.parent != config.parent:
@@ -158,7 +163,7 @@ def _append_summary(path, summary):
 def run(config_path):
     config = _read_config(config_path)
     settings, task = config['settings'], config['task']
-    command = [sys.executable, task['controller'], '--root', settings['root'], '--notes-root', settings['notes_root'],
+    command = [task['python'], task['controller'], '--root', settings['root'], '--notes-root', settings['notes_root'],
                '--model', settings['model'], '--backend', settings['backend'], '--port', str(settings['port']),
                '--limit', str(settings['limit']), '--timeout', str(settings['timeout']), '--min-age', str(settings['min_age']), '--apply']
     summary = {'schema': SCHEMA, 'at': datetime.now(timezone.utc).isoformat(), 'status': 'failed',
