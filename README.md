@@ -243,7 +243,9 @@ and verifies artifacts before moving successful recordings. Long transcripts use
 resumable [local note drafting](docs/local-note-drafts.md). The project-scoped
 [process-inbox skill](.agents/skills/process-inbox/SKILL.md) adds controller guidance
 and harness mirrors. Files settle before reading, and overlapping runs report
-busy. Scheduling, independent harness evaluation and real recording acceptance
+busy. A Windows scheduler-plan helper can write a reviewed fixed configuration and
+print a manual registration command; it never creates a task itself. Independent
+harness evaluation, observed scheduled execution and real recording acceptance
 remain unfinished.
 
 Controllers can publish an Instagram analysis draft through the repository-only
