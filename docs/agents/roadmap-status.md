@@ -1,6 +1,6 @@
 # Roadmap status
 
-Updated 2026-09-10. This page distinguishes supported reading from repository workflows still
+Updated 2026-09-11. This page distinguishes supported reading from repository workflows still
 under acceptance and future plans. Milestones are sequencing, not delivery-date promises;
 they do not authorize installation or account actions.
 
@@ -44,7 +44,7 @@ Closing a design or spike issue only completes that scope. It never ships a prod
 | Machine-readable agent discovery manifest | `shipped` | `docs/agents/manifest.json` |
 | Observe-and-capture playbook | `shipped` | `docs/agents/observe-and-capture.md` |
 | Thin observe CLI | `shipped` | `skill/scripts/observe.py`; issue #24 |
-| Browser bridge production integration | `dev-only` | isolated spike complete; pairing, permission profiles and client acceptance are next in #58, separate agent-bridge repository |
+| Browser bridge production integration | `dev-only` | isolated spike complete; a [pairing and permission design](https://github.com/RikepilB/agent-bridge/pull/4) exists in the separate agent-bridge repository, while independent review and isolated client acceptance remain #58 |
 | MCP host spike / decision | `shipped` | no-go report; issue #26 |
 | Production MCP host | `parked` | revisit gates in the #26 spike report |
 | Browser extension spike | `dev-only` | [spike report](../superpowers/specs/2026-09-08-browser-extension-spike-report.md): isolated Chrome three-command proof; real harnesses and signed-in profiles unverified |
