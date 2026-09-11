@@ -117,3 +117,21 @@ error. Thus discovery remained responsive while page control was broken; a missi
 Chrome installation is not established. The final viewport reset could not be
 confirmed, despite the earlier successful landing-page reset. Agent Docs mobile
 acceptance remains unverified. No native-host repair or different browser was used.
+
+## 2026-09-11 fresh Agent Docs tab retry
+
+A controlled retry used the supported external Chrome selector to create a fresh,
+public Agent Docs tab at `/agents/roadmap-status.html`. This avoids reusing the
+previous detached tab; it does not identify why that tab detached.
+
+- The documented visible-DOM API attached and returned the Agent Docs page content.
+- After setting a 390 x 844 viewport, the DOM exposed the responsive `Open
+  documentation menu` control and the associated close control.
+- Resetting the viewport succeeded, and the resulting DOM again exposed the desktop
+  documentation header and site navigation links.
+
+This is bounded recovery evidence for a new tab and responsive navigation controls.
+It does not establish a stable Chrome connection, explain the intermittent timeout,
+or complete the remaining Archive, Reddit, and exact X source checks required by
+issue #42. No native-host repair, browser-secret access, extension change, or account
+action occurred.
