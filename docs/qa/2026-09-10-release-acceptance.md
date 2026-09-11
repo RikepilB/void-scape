@@ -5,6 +5,10 @@ certificate. Tested base: `42b3496` (merged LinkedIn skill PR #101). Preserve th
 distinction between implemented helpers, generated wrappers, actual skill behavior,
 live source access and complete media evidence. This document does not close #91.
 
+> A later checkpoint for current main is available in
+> [2026-09-11-release-acceptance.md](2026-09-11-release-acceptance.md). The historical
+> measurements below remain scoped to this file's exact tested base.
+
 ## Executed checks
 
 | Check | Observed outcome | Scope limit |
