@@ -11,7 +11,7 @@ surfaces. An issue can close after a design or spike without shipping its produc
 | --- | --- | --- |
 | [M0 — Completed foundations](https://github.com/RikepilB/void-scape/milestone/1) | Readers, CLI, docs, reviewed hardening and explicitly scoped design/spike outcomes | Historical completed issue scope; not proof of all account workflows |
 | [M1 — Current: source workflow acceptance](https://github.com/RikepilB/void-scape/milestone/2) | Verify implemented Instagram, RSS, YouTube and inbox workflows, browser recovery and release claims | Independent behavioral evidence, supported-harness checks, exact-main tests and live docs |
-| [M2 — Next: bounded automation and integrations](https://github.com/RikepilB/void-scape/milestone/3) | Inbox scheduling, LinkedIn triage, bridge pairing/permission design | Each feature gets its own design, consent boundaries and acceptance; relevant M1 gates first |
+| [M2 — Next: bounded automation and integrations](https://github.com/RikepilB/void-scape/milestone/3) | Inbox scheduling evidence, LinkedIn independent evaluation, bridge pairing/permission design | Each feature gets its own design, consent boundaries and acceptance; relevant M1 gates first |
 | [M3 — Later: exploration and companions](https://github.com/RikepilB/void-scape/milestone/4) | More saved sources, visual jobs, capture benchmarks, follower audit and job-search companions | Selected use case/data, platform review, security/adoption and product decisions; no deadline |
 
 ## Available now — the supported reading core
@@ -51,11 +51,13 @@ The target is to finish these gaps before expanding every source at once.
   Build on the existing controller. Prove a selected local folder with cached/free backends,
   cloud disabled, deadlines, verified note-before-move behavior, rerun safety and pause controls.
   No 24/7 job is created by installing Voidscape.
-- **LinkedIn saved-post triage — [#55](https://github.com/RikepilB/void-scape/issues/55).**
-  Build on the merged local observation helper (#97), then bounded read-and-store selection.
-  Verified analysis notes, legacy assessment and the supplied-observation project skill are implemented; independent harness and live acceptance remain incomplete.
-  Dry-run writes nothing. Event identity is not post/activity identity. Notes never grant unsave permission;
-  account actions require separate approval and a [permitted acquisition path](linkedin-source-scope.md).
+- **LinkedIn observation triage — [#55](https://github.com/RikepilB/void-scape/issues/55).**
+  Typed local capture, verified analysis notes, legacy assessment and the
+  supplied-observation project skill are implemented. The remaining repository
+  work is independent synthetic and cross-harness evaluation.
+  Do not test through live saved-post enumeration or unsaving: a signed-in browser
+  is not an approval route. Event identity is not post/activity identity, and a
+  future account workflow needs a documented [approved acquisition path](linkedin-source-scope.md).
 - **Browser integration — [#58](https://github.com/RikepilB/void-scape/issues/58).**
   Design pairing, client permission profiles and audit boundaries in the separate agent-bridge
   repository before expanding the three-verb spike. A separate design and security review is required.

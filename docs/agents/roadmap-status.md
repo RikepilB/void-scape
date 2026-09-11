@@ -12,7 +12,7 @@ they do not authorize installation or account actions.
 | --- | --- | --- |
 | Completed foundations | Readers, CLI, docs, hardening and scoped design/spike outcomes | [M0](https://github.com/RikepilB/void-scape/milestone/1) |
 | Current verification | Implemented source skills, independent harness acceptance, browser QA and release checks | [M1](https://github.com/RikepilB/void-scape/milestone/2), #42 / #54 / #57 / #91 |
-| Next | Inbox scheduling, LinkedIn triage, bridge pairing/permissions | [M2](https://github.com/RikepilB/void-scape/milestone/3), #55 / #56 / #58 |
+| Next | Inbox scheduling evidence, LinkedIn independent evaluation, bridge pairing/permissions | [M2](https://github.com/RikepilB/void-scape/milestone/3), #55 / #56 / #58 |
 | Later / exploration | Visual jobs, capture benchmarks, more saved sources and separate companions | [M3](https://github.com/RikepilB/void-scape/milestone/4), #44 / #93–#96 |
 
 Closing a design or spike issue only completes that scope. It never ships a production integration.
@@ -36,7 +36,7 @@ Closing a design or spike issue only completes that scope. It never ships a prod
 | Source capability registry and reader override | `shipped` | merged PR #45; supported `voidscape route`, `voidscape sources`; source tests |
 | Instagram URL queue helper | `dev-only` | repository script; not installed with the skill |
 | Instagram triage and verified notes | `dev-only` | merged project skill/controller and note store (#77–#80); independent behavior and live harness acceptance remain #54 |
-| LinkedIn observed-post capture and notes | `dev-only` | [local workflow](../linkedin-capture.md): typed identities, verified notes/index, legacy assessment and project skill with selected resume; independent harness and permitted live acceptance remain #55 |
+| LinkedIn observed-post capture and notes | `dev-only` | [local workflow](../linkedin-capture.md): typed identities, verified notes/index, legacy assessment and project skill with selected resume; independent harness evaluation remains #55, while any live platform work needs a documented approved route |
 | Instagram follow-relationship audit (read-only) | `dev-only` | repository script; local exports only; never unfollows |
 | YouTube private-playlist queue adapter | `dev-only` | repository script; official API; not installed with the skill |
 | Public YouTube capture and notes | `dev-only` | [source workflow](../youtube-ingest.md); real local capture/read/note proof, independent skill/harness acceptance pending |

@@ -234,8 +234,9 @@ The repository [LinkedIn observation workflow](docs/linkedin-capture.md) retains
 selected post text and binds authored notes to verified captures and verbatim
 excerpts. The project [linkedin-triage skill](.agents/skills/linkedin-triage/SKILL.md)
 coordinates supplied observations, legacy-note review and verified resume. It does
-not browse saved posts or unsave items; independent harness evaluation and a
-permitted live acquisition route remain pending.
+not browse saved posts or unsave items. The [source-scope gate](docs/linkedin-source-scope.md)
+explains why a signed-in browser alone is not an approved acquisition route;
+independent harness evaluation remains pending.
 
 The repository-only [recording inbox controller](docs/process-inbox.md) previews
 local files, prepares evidence, drafts notes through a cached cloud-disabled model,
