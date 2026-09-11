@@ -83,3 +83,37 @@ out, reset the connection, and Chrome could not be reselected. Therefore this pa
 not establish mobile overflow, focus/keyboard, light-theme or reduced-motion acceptance.
 Recheck those states after supported connection recovery (#42), rather than treating
 passing Python/site tests as visual proof. No public UI files were changed in this pass.
+
+## 2026-09-11 supported Chrome recovery check
+
+On deployed base `263db90`, the updated installed Chrome integration
+(`26.903.71938`) connected through the supported explicit Chrome selector. No
+native-host repair, new extension installation, browser-secret access or alternate
+browser was used. This supersedes yesterday's mobile failure only for the states
+actually exercised today; it does not establish the historical timeout's cause.
+
+- Requested a 390 x 844 viewport; observed document width and scroll width were
+  both 375 CSS pixels. The actual mobile screenshot showed a readable hero,
+  navigation, primary Download action, secondary links and product highlights.
+- Pressed Enter on the theme button; the visible control changed from Switch to
+  light mode to Switch to dark mode. This verifies that control's keyboard behavior,
+  not a complete accessibility or light-theme visual audit.
+- Clicked the visible Download navigation link; URL became `#install`.
+- Restored the dark theme and reset the viewport using the documented capability;
+  subsequent document width and scroll width were both 1519 CSS pixels.
+
+Visual verdict: **pass for the observed mobile hero; partial overall**. Preserve
+the approved hierarchy and branding; no redesign or product fix follows from this
+check. Reduced-motion behavior, all-page keyboard/touch coverage, capture-provider
+benchmarks and independent source/harness evaluations remain unverified here.
+Issue #42 remains OPEN because stable recovery/root-cause acceptance is incomplete.
+
+The later Agent Docs navigation/mobile request timed out after 15 seconds and reset
+the execution session. Supported cleanup then reported `Debugger is not attached
+to the tab with id: 556373462.` The Chrome tab list still returned that tab at
+`https://voidscape.club/agents/`. Obtaining a fresh handle for the listed tab and
+using the documented visible-DOM alternative returned the same detached-debugger
+error. Thus discovery remained responsive while page control was broken; a missing
+Chrome installation is not established. The final viewport reset could not be
+confirmed, despite the earlier successful landing-page reset. Agent Docs mobile
+acceptance remains unverified. No native-host repair or different browser was used.
